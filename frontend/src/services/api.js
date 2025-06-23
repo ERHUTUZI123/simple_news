@@ -1,11 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE;
 
-export function fetchTodayNews(offset = 0, limit = 10) {
-  return fetch(`${API_BASE}/news/today?offset=${offset}&limit=${limit}`)
-    .then(res => {
-      if (!res.ok) throw new Error("API error");
-      return res.json();
-    });
+export function fetchTodayNews() {
+  return fetch(`${API_BASE}/news/today`).then(res => res.json());
 }
 
 export function fetchSummary(content) {
