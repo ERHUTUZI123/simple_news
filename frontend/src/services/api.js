@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const API_BASE = "https://simple-news-7g1m.onrender.com";
 
 export function fetchTodayNews(offset = 0, limit = 10) {
