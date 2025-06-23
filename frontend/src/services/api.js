@@ -12,13 +12,13 @@ export function fetchTodayNews(offset = 0, limit = 10) {
 
 export function fetchSummary(content) {
   return axios
-    .post("/news/summary", { content })
+    .post(`${API_BASE}/news/summary`, { content })
     .then(res => res.data.summary);
 }
 
 export function fetchScore(content) {
   return axios
-    .get("/news/score", { params: { text: content } })
+    .get(`${API_BASE}/news/score`, { params: { text: content } })
     .then(res => res.data.ai_score);
 }
 
