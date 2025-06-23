@@ -1,20 +1,24 @@
 const API_BASE = import.meta.env.VITE_API_BASE;
 
-export function fetchTodayNews() {
-  return fetch(`${API_BASE}/news/today`).then(res => res.json());
+export function fetchTodayNews(offset = 0, limit = 10) {
+  return fetch(`${API_BASE}/news/today?offset=${offset}&limit=${limit}`)
+    .then(res => {
+      if (!res.ok) throw new Error("API error");
+      return res.json();
+    });
 }
 
-export function fetchSummary(content) {
-  return axios
-    .post("/news/summary", { content })
-    .then(res => res.data.summary);
-}
+// export function fetchSummary(content) {
+//   return axios
+//     .post("/news/summary", { content })
+//     .then(res => res.data.summary);
+// }
 
-export function fetchScore(content) {
-  return axios
-    .get("/news/score", { params: { text: content } })
-    .then(res => res.data.ai_score);
-}
+// export function fetchScore(content) {
+//   return axios
+//     .get("/news/score", { params: { text: content } })
+//     .then(res => res.data.ai_score);
+// }
 
 export function voteNews(title, delta = 1) {
   return axios
