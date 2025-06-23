@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.orm import Session
-from app.news.fetch_news import get_tech_news
-from app.news.db import SessionLocal
+from backend.news.fetch_news import get_tech_news
+from backend.news.db import SessionLocal
 from backend.models import Vote
 from urllib.parse import urlparse
 import os
