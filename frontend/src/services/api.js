@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = "https://simple-news-7g1m.onrender.com";
 
 export function fetchTodayNews(offset = 0, limit = 10) {
   return fetch(`${API_BASE}/news/today?offset=${offset}&limit=${limit}`)
@@ -22,7 +22,7 @@ export function fetchTodayNews(offset = 0, limit = 10) {
 
 export function voteNews(title, delta = 1) {
   return axios
-    .post("/news/vote", null, { params: { title, delta } })
+    .post(`${API_BASE}/news/vote`, null, { params: { title, delta } })
     .then(res => res.data.count);
 }
 
@@ -32,12 +32,12 @@ export function downvoteNews(title) {
 
 export function fetchVote(title) {
   return axios
-    .get("/news/vote", { params: { title } })
+    .get(`${API_BASE}/news/vote`, { params: { title } })
     .then(res => res.data.count);
 }
 
 export function createCheckoutSession() {
-  return fetch("/create-checkout-session", {
+  return fetch(`${API_BASE}/create-checkout-session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" }
   })
