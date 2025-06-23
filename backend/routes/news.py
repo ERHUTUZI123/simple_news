@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.orm import Session
 from app.news.fetch_news import get_tech_news
 from app.news.db import SessionLocal
-from app.models import Vote
+from backend.models import Vote
 from urllib.parse import urlparse
 import os
 from openai import OpenAI
