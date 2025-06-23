@@ -1,8 +1,8 @@
 # backend/app/routes/news.py
 
 from fastapi import APIRouter
-from app.news.fetch_news import get_tech_news
-from app.news.summarize import summarize_news, score_news
+from backend.news.fetch_news import get_tech_news
+from backend.news.summarize import summarize_news, score_news
 from urllib.parse import urlparse
 
 router = APIRouter()
