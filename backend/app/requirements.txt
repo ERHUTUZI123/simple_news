@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+sqlalchemy
+python-dotenv
+feedparser
+python-dateutil
+stripe
+openai

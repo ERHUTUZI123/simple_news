@@ -1,9 +1,7 @@
-import axios from "axios";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
-export function fetchTodayNews(offset = 0, limit = 20) {
-  return axios
-    .get("/news/today", { params: { offset, limit } })
-    .then(res => res.data);
+export function fetchTodayNews() {
+  return fetch(`${API_BASE}/news/today`).then(res => res.json());
 }
 
 export function fetchSummary(content) {
