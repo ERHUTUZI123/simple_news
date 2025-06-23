@@ -1,10 +1,10 @@
 # backend/app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes.news import router as news_router   # ← 这里
-from app.routes.pay import router as pay_router
-from app.news.db import init_db
-from app.models import Vote
+from routes.news import router as news_router   # ← 这里
+from routes.pay import router as pay_router
+from news.db import init_db
+from backend.models import Vote
 init_db()
 
 app = FastAPI()
