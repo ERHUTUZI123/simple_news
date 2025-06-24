@@ -25,8 +25,8 @@ def create_checkout_session():
             }],
             mode="subscription",
             automatic_tax={"enabled": True},  # 启用自动税务
-            success_url="http://localhost:5173/success",
-            cancel_url="http://localhost:5173/cancel",
+            success_url="https://www.simplenews.online/success",
+            cancel_url="https://www.simplenews.online/cancel",
         )
         return JSONResponse({"url": session.url})
     except Exception as e:
