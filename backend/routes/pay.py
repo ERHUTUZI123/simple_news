@@ -13,14 +13,6 @@ def create_checkout_session():
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=[{
-                "price_data": {
-                    "currency": "usd",
-                    "product_data": {
-                        "name": "TechPulse Subscription",
-                    },
-                    "unit_amount": 50,  # 单位是分，这里是 $0.5
-                    "recurring": {"interval": "month"},
-                },
                 "price": "price_1RdNrDHmcVCE8q0jZJzszoap",
                 "quantity": 1,
             }],
