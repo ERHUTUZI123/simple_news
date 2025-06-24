@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "simplenews.online" }],
+      "destination": "https://simplenews.online/$1",
+      "permanent": true
+    }
+  ]
+}
