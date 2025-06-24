@@ -21,6 +21,7 @@ def create_checkout_session():
                     "unit_amount": 50,  # 单位是分，这里是 $0.5
                     "recurring": {"interval": "month"},
                 },
+                "price": "price_1RdNrDHmcVCE8q0jZJzszoap",
                 "quantity": 1,
             }],
             mode="subscription",
