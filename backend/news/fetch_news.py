@@ -7,9 +7,9 @@ from dateutil import parser as dateparser
 
 # 支持多个 RSS 源
 RSS_FEEDS = {
-    "BBC": "http://feeds.bbci.co.uk/news/rss.xml",
-    "CNN": "http://rss.cnn.com/rss/edition.rss",
-    "Reuters": "http://feeds.reuters.com/reuters/topNews",
+    "BBC": "https://feeds.bbci.co.uk/news/rss.xml",
+    "CNN": "https://rss.cnn.com/rss/edition.rss",
+    "Reuters": "https://feeds.reuters.com/reuters/topNews",
     "NYTimes": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
     "The Guardian": "https://www.theguardian.com/world/rss",
     "Al Jazeera": "https://www.aljazeera.com/xml/rss/all.xml",
@@ -17,7 +17,7 @@ RSS_FEEDS = {
     "AP News": "https://apnews.com/rss/apf-topnews",
     "NPR": "https://feeds.npr.org/1001/rss.xml",
     "Financial Times": "https://www.ft.com/?format=rss",
-    "Fox News": "http://feeds.foxnews.com/foxnews/latest",
+    "Fox News": "https://feeds.foxnews.com/foxnews/latest",
     "Sky News": "https://feeds.skynews.com/feeds/rss/world.xml",
 }
 
