@@ -9,3 +9,4 @@ openai
 google-auth
 pymongo>=4.6.1
 certifi
+psycopg2-binary
