@@ -1,4 +1,4 @@
-from backend.db import get_mongo_collection
+from app.db import get_mongo_collection
 from models import NewsDocument, VoteDocument, UserDocument
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional

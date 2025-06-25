@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, Query, Body, HTTPException, Header
 from sqlalchemy.orm import Session
 from news.fetch_news import get_tech_news
-from backend.db import SessionLocal
-from models import Vote, User
+from app.db import SessionLocal
+from app.models import Vote
 from urllib.parse import urlparse
 import os
 from openai import OpenAI
