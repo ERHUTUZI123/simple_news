@@ -11,22 +11,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # MongoDB 配置
-MONGODB_URL = os.getenv('MONGODB_URL', 'mongodb+srv://cedric:gh336699@cluster0.onzmatc.mongodb.net/?retryWrites=true&w=majority&tls=true&appName=Cluster0')
-MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'oneminews')
+MONGODB_URL = os.getenv('MONGODB_URL')
+MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME')
 
 def get_mongo_client():
-    """获取 MongoDB 客户端连接"""
-    # 简化的连接选项
-    client_options = {
-        'serverSelectionTimeoutMS': 30000,
-        'connectTimeoutMS': 30000,
-        'socketTimeoutMS': 30000,
-        'maxPoolSize': 10,
-        'minPoolSize': 1,
-        'retryWrites': True,
-        'retryReads': True,
-        'tls': True,
-    }
+    return MongoClient(MONGODB_URL)
+
     
     return MongoClient(MONGODB_URL, **client_options)
 
