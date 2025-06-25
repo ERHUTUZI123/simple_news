@@ -7,4 +7,5 @@ python-dateutil
 stripe
 openai
 google-auth
-pymongo
+pymongo>=4.6.1
+certifi

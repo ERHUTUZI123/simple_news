@@ -7,21 +7,18 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 # 从环境变量读取 MongoDB 连接字符串，兼容 Render 部署
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://cedric:gh336699@cluster0.onzmatc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://cedric:gh336699@cluster0.onzmatc.mongodb.net/?retryWrites=true&w=majority&tls=true&appName=Cluster0")
 
-# MongoDB 连接配置，添加 SSL 选项以解决连接问题
+# MongoDB 连接配置，简化 SSL 选项
 client_options = {
     'serverSelectionTimeoutMS': 30000,
     'connectTimeoutMS': 30000,
     'socketTimeoutMS': 30000,
     'maxPoolSize': 10,
     'minPoolSize': 1,
-    'maxIdleTimeMS': 30000,
     'retryWrites': True,
     'retryReads': True,
     'tls': True,
-    'tlsAllowInvalidCertificates': True,  # 允许无效证书
-    'tlsAllowInvalidHostnames': True,     # 允许无效主机名
 }
 
 client = MongoClient(MONGO_URI, **client_options)
