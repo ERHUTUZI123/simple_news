@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -5,9 +6,10 @@ from typing import Optional, Dict, Any
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
-MONGO_URI = "mongodb+srv://cedric:gh336699@cluster0.onzmatc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+# 从环境变量读取 MongoDB 连接字符串，兼容 Render 部署
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://cedric:gh336699@cluster0.onzmatc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 client = MongoClient(MONGO_URI)
-db = client['oneminews']  # 推荐用你的项目名作为数据库名
+db = client['oneminews']
 
 # ------------------ MongoDB 新闻操作 ------------------
 
