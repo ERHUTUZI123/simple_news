@@ -4,7 +4,6 @@ import feedparser
 from typing import List, Dict
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
-from .mongo_service import MongoService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,27 +26,10 @@ RSS_FEEDS = {
 
 def get_tech_news(force_refresh: bool = False) -> List[Dict]:
     """
-    获取新闻，优先使用 MongoDB 缓存，如果缓存为空或强制刷新则从RSS获取
+    获取新闻，直接从RSS获取
     """
-    mongo_service = MongoService()
-    
-    # 尝试使用缓存
-    if not force_refresh:
-        cached_news = mongo_service.get_cached_news(hours=24)
-        
-        if cached_news:
-            logger.info(f"Using cached news: {len(cached_news)} articles")
-            return cached_news
-    
-    # 从RSS获取新闻
     logger.info("Fetching fresh news from RSS feeds...")
-    items = fetch_from_rss()
-    
-    # 缓存新闻到 MongoDB
-    if items:
-        mongo_service.save_news(items)
-    
-    return items
+    return fetch_from_rss()
 
 def fetch_from_rss() -> List[Dict]:
     """从RSS源获取新闻"""
