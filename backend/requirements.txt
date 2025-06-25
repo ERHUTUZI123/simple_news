@@ -7,3 +7,4 @@ python-dateutil
 stripe
 openai
 google-auth
+pymongo

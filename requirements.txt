@@ -6,3 +6,9 @@ httpx
 beautifulsoup4
 pydantic
 python-dotenv
+pymongo
+sqlalchemy
+schedule
+requests
+google-auth
+stripe

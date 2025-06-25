@@ -4,6 +4,10 @@ import feedparser
 from typing import List, Dict
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
+from .mongo_service import MongoService
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 支持多个 RSS 源
 RSS_FEEDS = {
@@ -21,7 +25,32 @@ RSS_FEEDS = {
     "Sky News": "https://feeds.skynews.com/feeds/rss/world.xml",
 }
 
-def get_tech_news() -> List[Dict]:
+def get_tech_news(force_refresh: bool = False) -> List[Dict]:
+    """
+    获取新闻，优先使用 MongoDB 缓存，如果缓存为空或强制刷新则从RSS获取
+    """
+    mongo_service = MongoService()
+    
+    # 尝试使用缓存
+    if not force_refresh:
+        cached_news = mongo_service.get_cached_news(hours=24)
+        
+        if cached_news:
+            logger.info(f"Using cached news: {len(cached_news)} articles")
+            return cached_news
+    
+    # 从RSS获取新闻
+    logger.info("Fetching fresh news from RSS feeds...")
+    items = fetch_from_rss()
+    
+    # 缓存新闻到 MongoDB
+    if items:
+        mongo_service.save_news(items)
+    
+    return items
+
+def fetch_from_rss() -> List[Dict]:
+    """从RSS源获取新闻"""
     items = []
     now = datetime.utcnow()
     one_day_ago = now - timedelta(days=1)
@@ -50,19 +79,19 @@ def get_tech_news() -> List[Dict]:
                 # 1. 优先获取完整内容
                 if hasattr(entry, "content") and entry.content:
                     content = entry.content[0].value
-                    print(f"📰 [DEBUG] {source_name} - Using content field, length: {len(content)}")
+                    logger.debug(f"{source_name} - Using content field, length: {len(content)}")
                 # 2. 如果没有content，尝试获取summary
                 elif hasattr(entry, "summary") and entry.summary:
                     content = entry.summary
-                    print(f"📰 [DEBUG] {source_name} - Using summary as content, length: {len(content)}")
+                    logger.debug(f"{source_name} - Using summary as content, length: {len(content)}")
                 # 3. 如果都没有，跳过这条新闻
                 else:
-                    print(f"⚠️ [WARNING] {source_name} - No content or summary found for: {entry.title}")
+                    logger.warning(f"{source_name} - No content or summary found for: {entry.title}")
                     continue
                 
                 # 确保内容不为空
                 if not content or not str(content).strip():
-                    print(f"⚠️ [WARNING] {source_name} - Empty content for: {entry.title}")
+                    logger.warning(f"{source_name} - Empty content for: {entry.title}")
                     continue
                 
                 # 创建摘要（用于显示）
@@ -77,12 +106,12 @@ def get_tech_news() -> List[Dict]:
                     "source": source_name
                 })
                 
-                print(f"✅ [DEBUG] {source_name} - Added article: {entry.title[:50]}... (content: {len(content)} chars)")
+                logger.debug(f"{source_name} - Added article: {entry.title[:50]}... (content: {len(content)} chars)")
                 
         except Exception as e:
-            print(f"[error] Failed to fetch {source_name}: {e}")
+            logger.error(f"Failed to fetch {source_name}: {e}")
     
-    print(f"📊 [DEBUG] Total articles fetched: {len(items)}")
+    logger.info(f"Total articles fetched from RSS: {len(items)}")
     # 最后加上全局排序
     items.sort(key=lambda x: dateparser.parse(x["date"]), reverse=True)
     return items

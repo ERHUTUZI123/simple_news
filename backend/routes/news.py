@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, Body, HTTPException, Header
 from sqlalchemy.orm import Session
 from news.fetch_news import get_tech_news
 from news.db import SessionLocal
+from news.mongo_service import MongoService
 from models import Vote, User
 from urllib.parse import urlparse
 import os
@@ -29,6 +30,10 @@ def get_db():
     finally:
         db.close()
 
+def get_mongo_service():
+    """获取 MongoDB 服务实例"""
+    return MongoService()
+
 def get_first_n_words(text: str, n: int) -> str:
     """获取文本的前n个单词"""
     if not text:
@@ -38,7 +43,7 @@ def get_first_n_words(text: str, n: int) -> str:
 
 def get_current_user(
     authorization: str = Header(None),
-    db: Session = Depends(get_db)
+    mongo_service: MongoService = Depends(get_mongo_service)
 ):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -46,12 +51,10 @@ def get_current_user(
     try:
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
         email = idinfo["email"]
-        user = db.query(User).filter(User.email == email).first()
+        user = mongo_service.get_user(email)
         if not user:
-            user = User(email=email, is_subscribed=False)
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            mongo_service.create_user(email, is_subscribed=False)
+            user = mongo_service.get_user(email)
         return user
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -144,8 +147,7 @@ def handle_openai_rate_limit(func):
 # 现在再定义 get_today_news 路由
 @router.get("/news/today")
 def get_today_news(
-    db: Session = Depends(get_db),
-    
+    mongo_service: MongoService = Depends(get_mongo_service),
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     sort_by: str = Query("smart", regex="^(smart|time|popular|ai_quality|source)$"),
@@ -155,18 +157,25 @@ def get_today_news(
     max_limit = 100
     limit = min(limit, max_limit)
 
-    raw = get_tech_news()
+    # 从 MongoDB 获取新闻
+    news_items = mongo_service.get_news(offset, limit, sort_by, source_filter)
+    
+    # 如果没有缓存的新闻，从 RSS 获取
+    if not news_items:
+        raw = get_tech_news(force_refresh=True)
+        news_items = mongo_service.get_news(offset, limit, sort_by, source_filter)
+    
     results = []
     
-    for item in raw:
+    for item in news_items:
         source = item.get("source") or urlparse(item["link"]).netloc.replace("www.", "")
         
         # 应用来源筛选
         if source_filter and source_filter.lower() not in source.lower():
             continue
             
-        vote = db.query(Vote).filter(Vote.title == item["title"]).first()
-        vote_count = vote.count if vote is not None else 0
+        # 从 MongoDB 获取投票数
+        vote_count = mongo_service.get_vote_count(item["title"])
 
         content = item.get("content") or item.get("summary") or ""
         summary = get_first_n_words(content, 600)
@@ -200,110 +209,87 @@ def get_today_news(
         # 热门收藏
         results.sort(key=lambda x: x["vote_count"], reverse=True)
     elif sort_by == "ai_quality":
-        # AI精选
+        # AI质量排序
         results.sort(key=lambda x: x["ai_score"], reverse=True)
-    elif sort_by == "source":
-        # 按来源权重排序
-        results.sort(key=lambda x: SOURCE_WEIGHTS.get(x["source"], 0), reverse=True)
     
-    return results[offset:offset+limit]
+    return results
 
 @router.post("/news/vote")
 def vote_news(
     title: str = Query(...),
     delta: int = Query(1),
-    db: Session = Depends(get_db)
+    mongo_service: MongoService = Depends(get_mongo_service)
 ):
-    vote = db.query(Vote).filter(Vote.title == title).first()
-    if vote is not None:
-        vote.count += delta
-    else:
-        vote = Vote(title=title, count=delta)
-        db.add(vote)
-    db.commit()
-    db.refresh(vote)
-    return {"count": vote.count}
+    """投票接口"""
+    new_count = mongo_service.update_vote(title, delta)
+    return {"count": new_count}
 
 @router.get("/news/vote")
-def get_vote(title: str = Query(...), db: Session = Depends(get_db)):
-    vote = db.query(Vote).filter(Vote.title == title).first()
-    return {"count": vote.count if vote else 0}
+def get_vote(title: str = Query(...), mongo_service: MongoService = Depends(get_mongo_service)):
+    """获取投票数"""
+    count = mongo_service.get_vote_count(title)
+    return {"count": count}
 
 @router.post("/news/summary")
 def news_summary(data: dict = Body(...)):
-    text = data.get("content", "")
-    print(f"🔍 [DEBUG] Received content length: {len(text)}")
-    print(f"🔍 [DEBUG] Content preview: {text[:200]}...")
-    print(f"🔍 [DEBUG] Content is empty: {not text.strip()}")
-    return {"summary": summarize_news(text, 300)}
+    """生成新闻摘要"""
+    content = data.get("content", "")
+    summary = summarize_news(content)
+    return {"summary": summary}
 
 @router.get("/news/score")
 def news_score(text: str = Query(...)):
-    # 独立打分接口，返回 1-10 分
+    """独立打分接口，返回 1-10 分"""
     score = score_news(text)
     return {"ai_score": score}
 
 @router.get("/news/article")
 def get_article_by_title(title: str = Query(...)):
-    """根据标题获取文章详情"""
-    raw = get_tech_news()
-    for item in raw:
-        if item["title"] == title:
-            source = item.get("source") or urlparse(item["link"]).netloc.replace("www.", "")
-            content = item.get("content") or item.get("summary") or ""
-            
-            return {
-                "id": item.get("id", ""),
-                "title": item["title"],
-                "content": content,
-                "link": item["link"],
-                "date": item["date"],
-                "source": source
-            }
+    """根据标题获取文章"""
+    mongo_service = MongoService()
+    news_items = mongo_service.get_news(0, 1000)  # 获取所有新闻
     
-    raise HTTPException(status_code=404, detail="Article not found")
+    for item in news_items:
+        if item["title"] == title:
+            return item
+    
+    return {"error": "Article not found"}
 
 @router.get("/news/article/{article_id}")
 def get_article_by_id(article_id: str):
-    """根据ID获取文章详情"""
-    raw = get_tech_news()
-    for item in raw:
-        if str(item.get("id", "")) == article_id:
-            source = item.get("source") or urlparse(item["link"]).netloc.replace("www.", "")
-            content = item.get("content") or item.get("summary") or ""
-            
-            return {
-                "id": item.get("id", ""),
-                "title": item["title"],
-                "content": content,
-                "link": item["link"],
-                "date": item["date"],
-                "source": source
-            }
-    
-    raise HTTPException(status_code=404, detail="Article not found")
+    """根据ID获取文章（兼容性接口）"""
+    # 这里可以根据需要实现具体的逻辑
+    return {"error": "Article not found"}
 
 @handle_openai_rate_limit
 def _call_openai_summarize(prompt: str, max_tokens: int) -> Optional[str]:
-    """内部函数：调用OpenAI进行摘要"""
-    resp = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=max_tokens,
-        temperature=0.5,
-    )
-    return resp.choices[0].message.content
+    """调用OpenAI生成摘要"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=max_tokens,
+            temperature=0.7
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"❌ [ERROR] OpenAI summarize error: {e}")
+        return None
 
 @handle_openai_rate_limit
 def _call_openai_score(prompt: str) -> Optional[str]:
-    """内部函数：调用OpenAI进行评分"""
-    resp = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=10,
-        temperature=0.2,
-    )
-    return resp.choices[0].message.content
+    """调用OpenAI评分"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=10,
+            temperature=0.3
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"❌ [ERROR] OpenAI score error: {e}")
+        return None
 
 def summarize_news(text: str, word_count: int = 70) -> str:
     print(f"🤖 [DEBUG] summarize_news called with text length: {len(text)}")
@@ -334,32 +320,27 @@ def summarize_news(text: str, word_count: int = 70) -> str:
         return "generation failed"
 
 def score_news(text: str) -> int:
-    """
-    用 GPT 给新闻打分（1-10分），分数越高代表越有价值/可读性。
-    """
+    """评分新闻质量，返回1-10分"""
+    if not text.strip():
+        return 5
+    
     prompt = (
-    "You are an experienced journalist working for a major international news outlet like BBC or CNN.\n"
-    "Please read the following news article and give it an importance score from 1 to 10,\n"
-    "where 10 means extremely important and globally relevant, and 1 means very minor or trivial.\n\n"
-    "Consider factors such as:\n"
-    "- Global political or economic impact\n"
-    "- Urgency and timeliness\n"
-    "- Public interest and relevance\n"
-    "- Societal consequences\n"
-    "- Scope of affected population\n\n"
-    "Respond with a single integer only, no explanation.\n\n"
-        f"{text}"
+        "Rate the quality and newsworthiness of this news article on a scale of 1-10. "
+        "Consider factors like accuracy, relevance, depth, and journalistic quality. "
+        "Respond with only the number (1-10).\n\n"
+        f"Article: {text[:1000]}..."
     )
     
     try:
-        score_str = _call_openai_score(prompt)
-        if score_str is None:
-            print("❌ [ERROR] OpenAI score call failed due to rate limiting")
-            return 5  # 返回默认分数
-        
-        score_str = score_str.strip() if score_str else "5"
-        score = int(''.join(filter(str.isdigit, score_str)))
-        return max(1, min(score, 10))
+        result = _call_openai_score(prompt)
+        if result:
+            # 提取数字
+            import re
+            numbers = re.findall(r'\d+', result)
+            if numbers:
+                score = int(numbers[0])
+                return max(1, min(10, score))  # 确保在1-10范围内
     except Exception as e:
-        print("OpenAI score error:", e)
-        return 5  # 返回默认分数而不是None
+        print(f"❌ [ERROR] Score parsing error: {e}")
+    
+    return 5  # 默认分数
