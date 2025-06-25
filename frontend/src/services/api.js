@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "https://simple-news-7g1m.onrender.com";
+const API_BASE = "http://localhost:8000";
 
 export function fetchTodayNews(offset = 0, limit = 10) {
   return fetch(`${API_BASE}/news/today?offset=${offset}&limit=${limit}`)
@@ -38,11 +38,41 @@ export function fetchVote(title) {
     .then(res => res.data.count);
 }
 
-export function createCheckoutSession() {
-  return fetch(`${API_BASE}/create-checkout-session`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" }
-  })
-    .then(res => res.json())
-    .then(data => data.url);
+// 获取文章详情
+export function fetchArticle(id) {
+  return axios
+    .get(`${API_BASE}/news/article/${id}`)
+    .then(res => res.data);
 }
+
+// 根据标题获取文章
+export function fetchArticleByTitle(title) {
+  return axios
+    .get(`${API_BASE}/news/article`, { params: { title } })
+    .then(res => res.data);
+}
+
+export const fetchNewsWithSort = async (offset = 0, limit = 20, sortBy = 'smart', sourceFilter = null) => {
+  try {
+    const params = new URLSearchParams({
+      offset: offset.toString(),
+      limit: limit.toString(),
+      sort_by: sortBy
+    });
+    
+    if (sourceFilter) {
+      params.append('source_filter', sourceFilter);
+    }
+    
+    const response = await fetch(`${API_BASE}/news/today?${params}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch news');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    throw error;
+  }
+};

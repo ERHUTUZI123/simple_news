@@ -10,6 +10,17 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* 浅色模式 */
+.light-mode {
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --secondary-color: #666666;
+  --border-color: #e0e0e0;
+  --link-color: #1976d2;
+  --highlight-color: #f57c00;
+  --trash-color: #d32f2f;
+}
+
 /* 全局重置 */
 * {
   margin: 0;
@@ -23,6 +34,7 @@ body {
   color: var(--text-color);
   font-family: var(--font-mono);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* 根容器 */
@@ -32,50 +44,70 @@ body {
 
 /* 新闻列表容器 */
 .news-container {
-  max-width: 700px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
 
-/* 单条新闻卡片 基础样式 */
+/* 新闻卡片基础样式 */
 .news-card {
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 0;
-  border-left: 4px solid transparent;           /* 左侧高亮条宽度统一 */
-  transition: border-color 0.2s ease, opacity 0.2s ease;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-color);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* 头条状态：左侧金色高亮条 */
+.news-card:hover {
+  border-color: var(--text-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 卡片状态样式 */
 .news-card.headline {
-  border-left-color: var(--highlight-color);
+  border-left: 4px solid var(--highlight-color);
 }
 
-/* 垃圾状态：左侧便便色高亮条 + 半透明 */
 .news-card.trash {
-  border-left-color: var(--trash-color);
-  opacity: 0.5;
+  border-left: 4px solid var(--trash-color);
+  opacity: 0.6;
 }
-/* 划线颜色恢复为次要灰 */
+
 .news-card.trash .title {
   text-decoration: line-through;
   color: var(--secondary-color);
 }
 
-/* GPT 评分 */
-.news-card .score {
-  color: var(--link-color);
-  font-size: 0.9rem;
-  margin-bottom: 0.2rem;
+/* 来源和时间 */
+.news-card .meta {
+  font-size: 0.8rem;
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* 新闻标题 */
+/* 标题 */
 .news-card .title {
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.news-card .title a {
   color: var(--text-color);
   text-decoration: none;
-  display: block;
-  margin: 0.2rem 0;
+  font-family: var(--font-mono);
+}
+
+.news-card .title a:hover {
+  color: var(--link-color);
 }
 
 /* 标题徽章 */
@@ -88,115 +120,261 @@ body {
   background: var(--highlight-color);
   color: var(--bg-color);
   border-radius: 0.2rem;
+  font-weight: 600;
 }
 
-/* 新闻元信息（来源 · 时间） */
-.news-card .meta {
-  font-size: 0.8rem;
-  color: var(--secondary-color);
-  margin-bottom: 0.5rem;
+/* AI 摘要区域 */
+.summary-section {
+  margin-bottom: 1.5rem;
+}
+
+.expanded-summary {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--link-color);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+/* 操作按钮容器 */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+/* 操作按钮基础样式 */
+.action-button,
+.tldr-button {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 按钮悬停效果 */
+.action-button:hover,
+.tldr-button:hover {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  text-decoration: none;
+}
+
+.action-headline:hover {
+  border-color: var(--highlight-color);
+}
+
+.action-trash:hover {
+  border-color: var(--trash-color);
 }
 
 /* 链接样式 */
 a {
   color: var(--text-color);
   text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
-
-/* 操作按钮（包括 TLDR, Headline, Trash） */
-.action-button,
-.tldr-button {
-  background: none;
-  border: none;
-  color: var(--secondary-color);
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 0;
-  margin-right: 0.75rem;
   transition: color 0.2s ease;
-  text-decoration: none;
 }
 
-/* 统一悬停去除下划线 */
-.action-button:hover,
-.tldr-button:hover {
-  text-decoration: none;
+a:hover {
+  color: var(--link-color);
 }
 
-/* Show TLDR 保持白色 */
-.tldr-button:hover {
-  color: #ffffff;
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Headline 悬停金色 */
-.action-headline:hover {
-  color: var(--highlight-color);
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .news-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .news-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .news-card .title {
+    font-size: 1rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-button,
+  .tldr-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
 }
 
-/* Trash 悬停便便色 */
-.action-trash:hover {
-  color: var(--trash-color);
+@media (max-width: 480px) {
+  .news-card {
+    padding: 0.75rem;
+  }
+
+  .news-card .title {
+    font-size: 0.9rem;
+  }
+
+  .action-button,
+  .tldr-button {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
 }
 
-/* 进度条 */
-.progress-bar {
-  font-family: var(--font-mono);
-  color: var(--secondary-color);
-  margin: 0.25rem 0;
-}
-
-/* 摘要容器过渡：高度 + 不透明度 */
-.summary-container {
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition: max-height 0.4s ease, opacity 0.3s ease 0.1s;
-}
-.summary-container.expanded {
-  max-height: 500px;  /* 足够展示摘要 */
-  opacity: 1;
-}
-
-.subscribe-popup {
-  background: #0f1115;           /* 更协调的暗色背景 */
-  color: #ffffff;
-  padding: 3rem 2rem;
-  margin: 2rem auto;
-  border: 1px solid #444;
-  border-radius: 16px;
-  max-width: 500px;
+/* 收藏页面样式 */
+.saved-empty-state {
   text-align: center;
-  font-size: 1.2rem;             /* 加大字体 */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  animation: fadeIn 0.4s ease-in-out;
+  padding: 3rem 1rem;
+  color: var(--secondary-color);
 }
 
-.subscribe-popup h3 {
-  font-size: 1.6rem;
+.saved-empty-state .icon {
+  font-size: 3rem;
   margin-bottom: 1rem;
 }
 
-.subscribe-popup p {
+.saved-empty-state h3 {
   font-size: 1.1rem;
+  font-family: var(--font-mono);
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.saved-empty-state p {
+  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  color: var(--secondary-color);
+}
+
+/* 导出按钮样式 */
+.export-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
-.subscribe-popup button {
-  font-size: 1.8rem;
-  padding: 0.9rem 2rem;
-  background-color: #ffffff;     /* 金色按钮，与你的主题一致 */
-  color: #000;
+.export-button {
+  background: var(--highlight-color);
   border: none;
-  border-radius: 8px;
+  color: var(--bg-color);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
   cursor: pointer;
-  font-family: inherit;
-  transition: background-color 0.2s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.subscribe-popup button:hover {
-  background-color: #ffffff;
+.export-button:hover {
+  opacity: 0.8;
+}
+
+.export-button.secondary {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.export-button.secondary:hover {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+}
+
+/* Toast 通知样式 */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: slideUp 0.3s ease-out;
+}
+
+.toast .undo-button {
+  background: var(--highlight-color);
+  border: none;
+  color: var(--bg-color);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.toast .undo-button:hover {
+  opacity: 0.8;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* 响应式设计 - 收藏页面 */
+@media (max-width: 768px) {
+  .export-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .export-button {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+  
+  .toast {
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+    bottom: 1rem;
+  }
 }

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   fetchSummary,
-  fetchScore,
   voteNews,
   downvoteNews,
-  fetchVote
 } from "../services/api";
 
 // 简单去除 HTML 标签
@@ -31,51 +30,24 @@ function formatRelativeTime(dateString) {
   return `${diffD}d`;
 }
 
-const BAR_LENGTH = 20;
-
-export default function NewsCard({ title, link, date, source, content }) {
+export default function NewsCard({ title, link, date, source, content, ai_score, comprehensive_score, vote_count }) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [tldr, setTldr] = useState("");
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
-  const [voteCount, setVoteCount] = useState(null);
-  const [aiScore, setAiScore] = useState(null);
 
-  // 初始：加载投票数
+  // 检查文章是否已收藏
   useEffect(() => {
-    let mounted = true;
-    fetchVote(title)
-      .then(count => mounted && setVoteCount(count))
-      .catch(() => mounted && setVoteCount(null));
-    return () => { mounted = false; };
-  }, [title]);
-
-  // 初始：加载 AI 打分
-  useEffect(() => {
-    let mounted = true;
-    fetchScore(content)
-      .then(score => mounted && setAiScore(score))
-      .catch(() => mounted && setAiScore(null));
-    return () => { mounted = false; };
-  }, [content]);
-
-  // 进度条
-  useEffect(() => {
-    let timer;
-    if (loading) {
-      setProgress(0);
-      timer = setInterval(() => {
-        setProgress(p => Math.min(p + Math.floor(Math.random() * 10) + 1, 98));
-      }, 100);
+    const saved = localStorage.getItem('savedArticles');
+    if (saved) {
+      const savedArticles = JSON.parse(saved);
+      const isArticleSaved = savedArticles.some(article => article.title === title);
+      setIsSaved(isArticleSaved);
     }
-    return () => clearInterval(timer);
-  }, [loading]);
-
-  useEffect(() => {
-    if (!loading && expanded) setProgress(100);
-  }, [loading, expanded]);
+  }, [title]);
 
   // 点击生成或隐藏摘要
   const handleTldr = async () => {
@@ -109,13 +81,11 @@ export default function NewsCard({ title, link, date, source, content }) {
   const toggleHeadline = async () => {
     if (isHeadline) {
       setIsHeadline(false);
-      const count = await downvoteNews(title);
-      setVoteCount(count);
+      await downvoteNews(title);
     } else {
       setIsHeadline(true);
       setIsTrash(false);
-      const count = await voteNews(title);
-      setVoteCount(count);
+      await voteNews(title);
     }
   };
 
@@ -123,67 +93,295 @@ export default function NewsCard({ title, link, date, source, content }) {
   const toggleTrash = async () => {
     if (isTrash) {
       setIsTrash(false);
-      const count = await voteNews(title);
-      setVoteCount(count);
+      await voteNews(title);
     } else {
       setIsTrash(true);
       setIsHeadline(false);
       setExpanded(false);
-      const count = await downvoteNews(title);
-      setVoteCount(count);
+      await downvoteNews(title);
     }
   };
 
-  // 进度展示组件
-  const renderBar = () => {
-    const pct = Math.round(progress);
-    const done = Math.round((pct / 100) * BAR_LENGTH);
-    const todo = BAR_LENGTH - done;
-    return (
-      <div className="progress-bar">
-        {["#".repeat(done), "-".repeat(todo)]} {pct}%
-      </div>
-    );
+  // 收藏功能
+  const toggleSaved = () => {
+    const saved = localStorage.getItem('savedArticles') || '[]';
+    const savedArticles = JSON.parse(saved);
+    
+    if (isSaved) {
+      // 移除收藏
+      const updatedArticles = savedArticles.filter(article => article.title !== title);
+      localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
+      setIsSaved(false);
+    } else {
+      // 添加收藏
+      const articleToSave = {
+        title,
+        link,
+        date,
+        source,
+        content,
+        summary: tldr || ""
+      };
+      const updatedArticles = [...savedArticles, articleToSave];
+      localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
+      setIsSaved(true);
+    }
+  };
+
+  // 跳转到Article页面
+  const goToArticle = () => {
+    // 使用title作为slug，实际项目中应该使用唯一的ID
+    const slug = encodeURIComponent(title);
+    navigate(`/article/${slug}`);
   };
 
   return (
     <div className={`news-card${isHeadline ? " headline" : ""}${isTrash ? " trash" : ""}`}>
-      {/* 标题与链接 */}
-      <a href={link} target="_blank" rel="noopener noreferrer" className="title">
-        {title}
-        {isHeadline && <span className="badge">HEADLINE</span>}
-      </a>
-      {/* 来源和相对时间 */}
+      {/* 来源和时间 */}
       <div className="meta">
-        {source} · {formatRelativeTime(date)}
-      </div>
-      {/* AI 评分 */}
-      {aiScore !== null && (
-        <div className="ai-score">[{aiScore}]</div>
-      )}
-      {/* 加载进度 */}
-      {expanded && loading && renderBar()}
-      {/* 摘要区域 */}
-      <div className={`summary-container${expanded && !loading ? " expanded" : ""}`}>
-        {expanded && !loading && <p className="expanded-summary">{tldr}</p>}
-      </div>
-      {/* 操作按钮 */}
-      <div className="actions" style={{ justifyContent: isTrash ? "flex-start" : "space-between" }}>
-        {!isTrash && (
-          <>
-            <button className="action-button" onClick={handleTldr}>
-              {expanded ? "Hide TLDR" : "Show TLDR"}
-            </button>
-            <button className="action-button action-headline" onClick={toggleHeadline}>
-              {isHeadline ? "Undo Headline" : "👍 Headline"}
-            </button>
-          </>
+        <span style={{ color: "var(--highlight-color)" }}>✅</span> {source} 
+        <span style={{ margin: "0 0.5rem" }}>🕒</span> {formatRelativeTime(date)}
+        
+        {/* 评分信息 */}
+        {ai_score && (
+          <span style={{ margin: "0 0.5rem", color: "var(--secondary-color)" }}>
+            🤖 AI: {ai_score}/10
+          </span>
         )}
-        {!isHeadline && (
-          <button className="action-button action-trash" onClick={toggleTrash}>
-            {isTrash ? "Undo Trash" : "💩 Trash"}
+        {vote_count > 0 && (
+          <span style={{ margin: "0 0.5rem", color: "var(--highlight-color)" }}>
+            👍 {vote_count}
+          </span>
+        )}
+        {comprehensive_score && (
+          <span style={{ margin: "0 0.5rem", color: "var(--text-color)", fontSize: "0.8rem" }}>
+            📊 {Math.round(comprehensive_score * 100)}%
+          </span>
+        )}
+      </div>
+
+      {/* 标题 */}
+      <h3 className="title">
+        <a href={link} target="_blank" rel="noopener noreferrer">
+          # {title}
+        </a>
+        {isHeadline && <span className="badge">HEADLINE</span>}
+      </h3>
+
+      {/* AI 摘要 */}
+      <div className="summary-section">
+        {!expanded && !loading && (
+          <button 
+            className="tldr-button" 
+            onClick={handleTldr}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--text-color)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+              padding: "0.5rem 0",
+              textDecoration: "none",
+            }}
+          >
+            - Show AI Summary
           </button>
         )}
+        
+        {loading && (
+          <div style={{ 
+            color: "var(--secondary-color)", 
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            padding: "0.5rem 0"
+          }}>
+            Generating AI summary...
+          </div>
+        )}
+        
+        {expanded && !loading && tldr && (
+          <div className="expanded-summary">
+            <p style={{
+              margin: "0.5rem 0",
+              lineHeight: "1.6",
+              color: "var(--text-color)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.9rem",
+              maxHeight: "6rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: "vertical",
+            }}>
+              - {tldr}
+            </p>
+            <button 
+              className="tldr-button" 
+              onClick={() => setExpanded(false)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--secondary-color)",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.8rem",
+                cursor: "pointer",
+                padding: "0.25rem 0",
+                textDecoration: "none",
+              }}
+            >
+              Hide Summary
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 操作按钮 */}
+      <div className="actions">
+        <button
+          onClick={goToArticle}
+          style={{
+            background: "var(--highlight-color)",
+            border: "none",
+            color: "var(--bg-color)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            padding: "0.5rem 1rem",
+            borderRadius: "0.25rem",
+            transition: "all 0.2s ease",
+            display: "inline-block",
+            marginRight: "1rem",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.opacity = "0.8";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.opacity = "1";
+          }}
+        >
+          📖 Read Summary
+        </button>
+
+        <a 
+          href={link} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{
+            color: "var(--text-color)",
+            textDecoration: "none",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            padding: "0.5rem 1rem",
+            border: "1px solid var(--border-color)",
+            borderRadius: "0.25rem",
+            transition: "all 0.2s ease",
+            display: "inline-block",
+            marginRight: "1rem",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = "var(--text-color)";
+            e.target.style.color = "var(--bg-color)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = "transparent";
+            e.target.style.color = "var(--text-color)";
+          }}
+        >
+          View Original
+        </a>
+
+        <button
+          onClick={toggleSaved}
+          style={{
+            background: "none",
+            border: "1px solid var(--border-color)",
+            color: isSaved ? "var(--highlight-color)" : "var(--text-color)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            padding: "0.5rem 1rem",
+            borderRadius: "0.25rem",
+            transition: "all 0.2s ease",
+            marginRight: "1rem",
+          }}
+          onMouseEnter={(e) => {
+            if (!isSaved) {
+              e.target.style.backgroundColor = "var(--text-color)";
+              e.target.style.color = "var(--bg-color)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSaved) {
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--text-color)";
+            }
+          }}
+        >
+          {isSaved ? "⭐ Saved" : "⭐ Save"}
+        </button>
+
+        <button 
+          className="action-button action-headline" 
+          onClick={toggleHeadline}
+          style={{
+            background: "none",
+            border: "1px solid var(--border-color)",
+            color: isHeadline ? "var(--highlight-color)" : "var(--text-color)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            padding: "0.5rem 1rem",
+            borderRadius: "0.25rem",
+            transition: "all 0.2s ease",
+            marginRight: "1rem",
+          }}
+          onMouseEnter={(e) => {
+            if (!isHeadline) {
+              e.target.style.backgroundColor = "var(--text-color)";
+              e.target.style.color = "var(--bg-color)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isHeadline) {
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--text-color)";
+            }
+          }}
+        >
+          {isHeadline ? "Undo Headline" : "👍 Headline"}
+        </button>
+
+        <button 
+          className="action-button action-trash" 
+          onClick={toggleTrash}
+          style={{
+            background: "none",
+            border: "1px solid var(--border-color)",
+            color: isTrash ? "var(--trash-color)" : "var(--text-color)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            padding: "0.5rem 1rem",
+            borderRadius: "0.25rem",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!isTrash) {
+              e.target.style.backgroundColor = "var(--text-color)";
+              e.target.style.color = "var(--bg-color)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isTrash) {
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--text-color)";
+            }
+          }}
+        >
+          {isTrash ? "Undo Trash" : "💩 Trash"}
+        </button>
       </div>
     </div>
   );

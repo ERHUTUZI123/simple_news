@@ -43,21 +43,46 @@ def get_tech_news() -> List[Dict]:
                 if published_dt < one_day_ago:
                     continue
 
+                # 优化内容获取逻辑
                 content = ""
+                summary = ""
+                
+                # 1. 优先获取完整内容
                 if hasattr(entry, "content") and entry.content:
                     content = entry.content[0].value
+                    print(f"📰 [DEBUG] {source_name} - Using content field, length: {len(content)}")
+                # 2. 如果没有content，尝试获取summary
+                elif hasattr(entry, "summary") and entry.summary:
+                    content = entry.summary
+                    print(f"📰 [DEBUG] {source_name} - Using summary as content, length: {len(content)}")
+                # 3. 如果都没有，跳过这条新闻
                 else:
-                    content = getattr(entry, "summary", "")
+                    print(f"⚠️ [WARNING] {source_name} - No content or summary found for: {entry.title}")
+                    continue
+                
+                # 确保内容不为空
+                if not content or not str(content).strip():
+                    print(f"⚠️ [WARNING] {source_name} - Empty content for: {entry.title}")
+                    continue
+                
+                # 创建摘要（用于显示）
+                summary = content[:600] if len(content) > 600 else content
 
                 items.append({
                     "title": entry.title,
-                    "summary": content[:2000],
+                    "content": content,  # 完整内容用于AI摘要
+                    "summary": summary,  # 简短摘要用于显示
                     "link": entry.link,
                     "date": raw_date,
                     "source": source_name
                 })
+                
+                print(f"✅ [DEBUG] {source_name} - Added article: {entry.title[:50]}... (content: {len(content)} chars)")
+                
         except Exception as e:
             print(f"[error] Failed to fetch {source_name}: {e}")
+    
+    print(f"📊 [DEBUG] Total articles fetched: {len(items)}")
     # 最后加上全局排序
     items.sort(key=lambda x: dateparser.parse(x["date"]), reverse=True)
     return items

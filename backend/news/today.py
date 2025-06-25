@@ -7,38 +7,68 @@ from urllib.parse import urlparse
 
 router = APIRouter()
 
+# 现在再定义 get_today_news 路由
 @router.get("/news/today")
-def get_today_news():
+def get_today_news(
+    db: Session = Depends(get_db),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    sort_by: str = Query("smart", regex="^(smart|time|popular|ai_quality|source)$"),
+    source_filter: str = Query(None)
+):
+    # 简化处理：使用默认限制
+    max_limit = 100
+    limit = min(limit, max_limit)
+
     raw = get_tech_news()
     results = []
+    
     for item in raw:
-        # 优先用 content，没有就用 summary
-        content = item.get("content", "") or item.get("summary", "")
-        ai_summary = summarize_news(content, 120)  # 你可以调整 word_count
-        # 直接返回更长的内容，不再二次 summarize，summary 字段直接给前端
-        score = score_news(content)
         source = item.get("source") or urlparse(item["link"]).netloc.replace("www.", "")
+        
+        # 应用来源筛选
+        if source_filter and source_filter.lower() not in source.lower():
+            continue
+            
+        vote = db.query(Vote).filter(Vote.title == item["title"]).first()
+        vote_count = vote.count if vote is not None else 0
+
+        content = item.get("content") or item.get("summary") or ""
+        summary = get_first_n_words(content, 600)
+        
+        # 获取AI评分
+        ai_score = score_news(content) if content else 5
+
+        # 计算综合评分
+        comprehensive_score = calculate_comprehensive_score(item, vote_count, ai_score)
+
         results.append({
             "title": item["title"],
-            "summary": ai_summary,
+            "content": content,
+            "summary": summary,
             "link": item["link"],
             "date": item["date"],
-            "score": score,
-            "source": source
+            "source": source,
+            "vote_count": vote_count,
+            "ai_score": ai_score,
+            "comprehensive_score": comprehensive_score
         })
-    return results
-
-# backend/app/news/fetch_news.py
-
-for entry in feed.entries[:10]:
-    content = ""
-    if hasattr(entry, "content") and entry.content:
-        content = entry.content[0].value
-    else:
-        content = getattr(entry, "summary", "")
-    # ...
-    items.append({
-        "title": entry.title,
-        "summary": content[:2000],  # 让 summary 字段更长
-        # ...
-    })
+    
+    # 根据排序方式排序
+    if sort_by == "smart":
+        # 智能综合排序（默认）
+        results.sort(key=lambda x: x["comprehensive_score"], reverse=True)
+    elif sort_by == "time":
+        # 最新发布
+        results.sort(key=lambda x: x["date"], reverse=True)
+    elif sort_by == "popular":
+        # 热门收藏
+        results.sort(key=lambda x: x["vote_count"], reverse=True)
+    elif sort_by == "ai_quality":
+        # AI精选
+        results.sort(key=lambda x: x["ai_score"], reverse=True)
+    elif sort_by == "source":
+        # 按来源权重排序
+        results.sort(key=lambda x: SOURCE_WEIGHTS.get(x["source"], 0), reverse=True)
+    
+    return results[offset:offset+limit]

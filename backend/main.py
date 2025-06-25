@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.news import router as news_router
 from routes.pay import router as pay_router
-from news.db import init_db
+from news.db import init_db, SessionLocal
 from models import Vote
+
 init_db()
 
 app = FastAPI()
@@ -25,5 +26,9 @@ def root():
 
 @app.get("/votes/")
 def get_votes():
-    votes = db.query(Vote).filter(Vote.title).all()
-    return {"votes": votes}
+    db = SessionLocal()
+    try:
+        votes = db.query(Vote).all()
+        return {"votes": [{"title": vote.title, "count": vote.count} for vote in votes]}
+    finally:
+        db.close()

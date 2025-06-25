@@ -1,48 +1,243 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchTodayNews, fetchVote, fetchScore, createCheckoutSession } from "../services/api";
+import { fetchVote, fetchScore, fetchNewsWithSort } from "../services/api";
 import NewsCard from "../components/NewsCard";
-import { motion, AnimatePresence } from "framer-motion";
+import { GoogleLogin } from '@react-oauth/google';
 
-const equivalents = [
-  "1/8 ice cream 🍦",
-  "1/3 coffee ☕️",
-  "1/10 movie ticket 🎬",
-  "1/5 subway ride 🚇",
-  "1/20 burger 🍔",
-  "1/4 croissant 🥐",
-  "1/6 bubble tea 🧋",
-  "1/15 museum ticket 🖼️",
-  "1/12 donut 🍩",
-];
+// 解析JWT token获取用户信息
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error parsing JWT:', error);
+    return null;
+  }
+}
+
+function LoginButton() {
+  const [showGoogleLogin, setShowGoogleLogin] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("id_token");
+    if (token) {
+      const parsed = parseJwt(token);
+      if (parsed) {
+        setUserInfo(parsed);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("id_token");
+    setUserInfo(null);
+    window.location.reload();
+  };
+
+  const handleLoginSuccess = (credentialResponse) => {
+    localStorage.setItem("id_token", credentialResponse.credential);
+    const parsed = parseJwt(credentialResponse.credential);
+    if (parsed) {
+      setUserInfo(parsed);
+    }
+    setShowGoogleLogin(false);
+    window.location.reload();
+  };
+
+  return (
+    <div style={{
+      position: "fixed",
+      top: "4.5rem",
+      right: 32,
+      zIndex: 1000,
+    }}>
+      {userInfo ? (
+        // 已登录状态：显示用户ID
+        <div style={{
+          background: "transparent",
+          border: "none",
+          padding: "0.5rem 1rem",
+          fontFamily: "monospace",
+          fontSize: "0.9rem",
+          color: "#fff",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+        }}>
+          <span>{userInfo.email || userInfo.name || 'User'}</span>
+          <button
+            onClick={handleLogout}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#fff",
+              fontFamily: "monospace",
+              fontSize: "0.8rem",
+              cursor: "pointer",
+              opacity: 0.7,
+              padding: "0.2rem 0.5rem",
+              borderRadius: "4px",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.opacity = "1";
+              e.target.style.background = "rgba(255,255,255,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.opacity = "0.7";
+              e.target.style.background = "none";
+            }}
+          >
+            logout
+          </button>
+        </div>
+      ) : !showGoogleLogin ? (
+        // 未登录状态：显示Sign in按钮
+        <button
+          onClick={() => setShowGoogleLogin(true)}
+          style={{
+            background: "#fff",
+            border: "1px solid #000",
+            borderRadius: "8px",
+            padding: "0.5rem 1rem",
+            fontFamily: "monospace",
+            fontSize: "0.9rem",
+            color: "#000",
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = "#f5f5f5";
+            e.target.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = "#fff";
+            e.target.style.transform = "translateY(0)";
+          }}
+        >
+          Sign in
+        </button>
+      ) : (
+        // 显示Google登录弹窗
+        <div style={{
+          background: "#fff",
+          border: "1px solid #000",
+          borderRadius: "8px",
+          padding: "1rem",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+          minWidth: "200px",
+        }}>
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "0.5rem",
+          }}>
+            <span style={{
+              fontFamily: "monospace",
+              fontSize: "0.9rem",
+              color: "#000",
+            }}>
+              Sign in with Google
+            </span>
+            <button
+              onClick={() => setShowGoogleLogin(false)}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "1.2rem",
+                cursor: "pointer",
+                color: "#666",
+                padding: "0",
+                width: "20px",
+                height: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <GoogleLogin
+            onSuccess={handleLoginSuccess}
+            onError={() => {
+              alert("Google login failed");
+            }}
+            theme="outline"
+            size="medium"
+            width="100%"
+            text="signin_with"
+            shape="rectangular"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Home() {
   const [newsList, setNewsList] = useState([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [showSubscribe, setShowSubscribe] = useState(false);
-  const [equivIdx, setEquivIdx] = useState(0);
-  const [sortType, setSortType] = useState("time"); // 新增排序类型
+  const [sortBy, setSortBy] = useState('smart');
+  const [sourceFilter, setSourceFilter] = useState('');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showSourceMenu, setShowSourceMenu] = useState(false);
   const observerRef = useRef(null);
   const LIMIT = 10;
 
+  // 排序选项
+  const sortOptions = [
+    { value: 'smart', label: 'Smart Sort' },
+    { value: 'time', label: 'Latest' },
+    { value: 'popular', label: 'Most Popular' },
+    { value: 'ai_quality', label: 'AI Picks' },
+    { value: 'source', label: 'By Source' }
+  ];
+
+  // 来源选项
+  const sourceOptions = [
+    { value: '', label: 'All Sources' },
+    { value: 'Financial Times', label: 'Financial Times' },
+    { value: 'Wall Street Journal', label: 'Wall Street Journal' },
+    { value: 'The Economist', label: 'The Economist' },
+    { value: 'Reuters', label: 'Reuters' },
+    { value: 'Bloomberg', label: 'Bloomberg' },
+    { value: 'BBC', label: 'BBC' },
+    { value: 'CNN', label: 'CNN' },
+    { value: 'The New York Times', label: 'The New York Times' },
+    { value: 'TechCrunch', label: 'TechCrunch' },
+    { value: 'Ars Technica', label: 'Ars Technica' },
+    { value: 'Wired', label: 'Wired' }
+  ];
+
   const loadMoreNews = async () => {
-    if (loading || showSubscribe) return;
+    if (loading) return;
     setLoading(true);
     try {
-      const data = await fetchTodayNews(offset, LIMIT);
+      const data = await fetchNewsWithSort(offset, LIMIT, sortBy, sourceFilter);
       const enriched = await Promise.all(
         data.map(async (item) => {
           const count = await fetchVote(item.title).catch(() => 0);
-          // 新增：获取AI分数
           const aiScore = await fetchScore(item.content).catch(() => null);
-          return { ...item, voteCount: count, aiScore };
+          return { 
+            ...item, 
+            voteCount: count, 
+            aiScore,
+            // 使用后端返回的数据
+            vote_count: item.vote_count || count,
+            ai_score: item.ai_score || aiScore,
+            comprehensive_score: item.comprehensive_score
+          };
         })
       );
-      setNewsList(prevList => {
-        const updatedList = [...prevList, ...enriched];
-        if (updatedList.length >= 20) setShowSubscribe(true);
-        return updatedList;
-      });
+      setNewsList(prevList => [...prevList, ...enriched]);
       setOffset(prev => prev + LIMIT);
     } catch (e) {
       console.error("❌ Failed to load news:", e);
@@ -51,17 +246,17 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    if (!showSubscribe) return;
-    const timer = setInterval(() => {
-      setEquivIdx((prev) => (prev + 1) % equivalents.length);
-    }, 2000);
-    return () => clearInterval(timer);
-  }, [showSubscribe]);
-
-  useEffect(() => {
+  // 重置新闻列表并重新加载
+  const resetAndLoadNews = () => {
+    setNewsList([]);
+    setOffset(0);
     loadMoreNews();
-  }, []);
+  };
+
+  // 当排序或筛选条件改变时，重置列表
+  useEffect(() => {
+    resetAndLoadNews();
+  }, [sortBy, sourceFilter]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -72,87 +267,178 @@ export default function Home() {
     );
     if (observerRef.current) observer.observe(observerRef.current);
     return () => observer.disconnect();
-  }, [newsList]);
-
-  // 排序逻辑
-  let sortedNews = [...newsList];
-  if (sortType === "time") {
-    sortedNews.sort((a, b) => new Date(b.date) - new Date(a.date));
-  } else if (sortType === "score") {
-    sortedNews.sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0)); // ✅ 注意这里是 aiScore
-  }
-
+  }, [newsList, sortBy, sourceFilter]);
 
   return (
-    <div className="news-container">
-      {/* 排序按钮 */}
-      <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginBottom: "1.5rem" }}>
-        {[
-          { label: "Sort by Time", value: "time" },
-          { label: "Sort by AI Score", value: "score" },
-        ].map(({ label, value }) => (
+    <>
+      <LoginButton />
+      
+      {/* 排序和筛选控制栏 */}
+      <div style={{
+        position: 'fixed',
+        top: '4.5rem',
+        left: '2rem',
+        zIndex: 1000,
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'center'
+      }}>
+        {/* 排序选择器 */}
+        <div style={{ position: 'relative' }}>
           <button
-            key={value}
-            onClick={() => setSortType(value)}
+            onClick={() => setShowSortMenu(!showSortMenu)}
             style={{
-              backgroundColor: sortType === value ? "#fff" : "transparent",
-              color: sortType === value ? "#000" : "#fff",
-              border: "1px solid #fff",
-              borderRadius: "999px",
-              padding: "0.5rem 1.2rem",
-              fontFamily: "monospace",
-              fontSize: "0.95rem",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
+              background: '#fff',
+              border: '1px solid #000',
+              borderRadius: '4px',
+              padding: '0.5rem 1rem',
+              fontFamily: 'monospace',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              minWidth: '120px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}
           >
-            {label}
+            {sortOptions.find(opt => opt.value === sortBy)?.label || 'Sort'}
+            <span>▼</span>
           </button>
-        ))}
+          
+          {showSortMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              background: '#fff',
+              border: '1px solid #000',
+              borderRadius: '4px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              zIndex: 1001,
+              minWidth: '120px'
+            }}>
+              {sortOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setSortBy(option.value);
+                    setShowSortMenu(false);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    fontFamily: 'monospace',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left',
+                    color: sortBy === option.value ? '#000' : '#666'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                  onMouseLeave={(e) => e.target.style.background = 'none'}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 来源筛选器 */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowSourceMenu(!showSourceMenu)}
+            style={{
+              background: '#fff',
+              border: '1px solid #000',
+              borderRadius: '4px',
+              padding: '0.5rem 1rem',
+              fontFamily: 'monospace',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              minWidth: '140px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            {sourceOptions.find(opt => opt.value === sourceFilter)?.label || 'Source'}
+            <span>▼</span>
+          </button>
+          
+          {showSourceMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              background: '#fff',
+              border: '1px solid #000',
+              borderRadius: '4px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              zIndex: 1001,
+              minWidth: '140px',
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}>
+              {sourceOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setSourceFilter(option.value);
+                    setShowSourceMenu(false);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    fontFamily: 'monospace',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left',
+                    color: sourceFilter === option.value ? '#000' : '#666'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                  onMouseLeave={(e) => e.target.style.background = 'none'}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-
-      {/* 新闻列表 */}
-      {sortedNews.map((n) => (
-        <NewsCard key={n.title} {...n} />
-      ))}
-
-      {/* 订阅弹窗或加载更多 */}
-      {showSubscribe ? (
-        <div className="subscribe-popup">
-          <h3 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>
-            Only $0.3/day =
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={equivIdx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
-                style={{ marginLeft: "0.5rem", color: "#fffff" }}
-              >
-                {equivalents[equivIdx]}
-              </motion.span>
-            </AnimatePresence>
-          </h3>
-          <p style={{ fontSize: "1rem", marginBottom: "1rem" }}>
-            Subscribe for more curated daily insights.
-          </p>
-          <button
-            onClick={async () => {
-              const url = await createCheckoutSession();
-              window.location.href = url;
-            }}
-            className="subscribe-popup"
-          >
-            Subscribe
-          </button>
-        </div>
-      ) : (
-        <div ref={observerRef} style={{ height: 40 }} />
+      {/* 点击外部关闭菜单 */}
+      {(showSortMenu || showSourceMenu) && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999
+          }}
+          onClick={() => {
+            setShowSortMenu(false);
+            setShowSourceMenu(false);
+          }}
+        />
       )}
 
-      {loading && <p style={{ textAlign: "center", marginTop: "1rem" }}>Loading...</p>}
-    </div>
+      <div className="news-container">
+        {/* 新闻列表 */}
+        {newsList.map((n, idx) => (
+          <NewsCard key={n.link + '-' + idx} {...n} />
+        ))}
+
+        {/* 加载更多触发器 */}
+        <div ref={observerRef} style={{ height: 40 }} />
+
+        {loading && <p style={{ textAlign: "center", marginTop: "1rem" }}>Loading...</p>}
+      </div>
+    </>
   );
 }
