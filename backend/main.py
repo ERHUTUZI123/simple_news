@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from routes.news import router as news_router
 from routes.pay import router as pay_router
-from news.db import init_db, SessionLocal
-from models import Vote
+from backend.db import SessionLocal
+from app.models import Vote
+from app.db import init_db
 
 init_db()
 

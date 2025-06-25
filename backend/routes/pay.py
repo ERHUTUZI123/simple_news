@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from models import User  # 替换成你的 User 模型路径
-from news.db import get_db  # 替换成你的数据库依赖
+from backend.db import get_db  # 替换成你的数据库依赖
 from routes.news import get_current_user  # 导入你的用户依赖
 
 router = APIRouter()
