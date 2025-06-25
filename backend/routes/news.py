@@ -160,9 +160,10 @@ def get_today_news(
     # 从 MongoDB 获取新闻
     news_items = mongo_service.get_news(offset, limit, sort_by, source_filter)
     
-    # 如果没有缓存的新闻，从 RSS 获取
+    # 如果没有缓存的新闻，从 RSS 获取并存入 MongoDB
     if not news_items:
         raw = get_tech_news(force_refresh=True)
+        mongo_service.save_news(raw)  # ✅ 保存抓取结果到 MongoDB
         news_items = mongo_service.get_news(offset, limit, sort_by, source_filter)
     
     results = []
