@@ -25,6 +25,9 @@ class PostgresService:
                 cached = redis_client.get(cache_key)
                 if cached:
                     return json.loads(cached)
+            
+            print(f"🔍 DEBUG: Querying news with offset={offset}, limit={limit}, sort_by={sort_by}")
+            
             query = self.db.query(News)
             
             # 应用来源过滤
@@ -48,122 +51,152 @@ class PostgresService:
             # 应用分页
             news_items = query.offset(offset).limit(limit).all()
             
+            print(f"🔍 DEBUG: Found {len(news_items)} news items in database")
+            
             # 转换为字典格式
             results = []
             for item in news_items:
-                # 确保日期格式正确
-                date_str = None
-                published_at = item.published_at
-                if published_at:
-                    try:
-                        # 确保是UTC时间并格式化为ISO字符串
-                        if published_at.tzinfo is None:
-                            # 如果没有时区信息，假设是UTC
-                            date_str = published_at.isoformat() + 'Z'
-                        else:
-                            # 如果有时区信息，转换为UTC
-                            from datetime import timezone
-                            utc_date = published_at.astimezone(timezone.utc)
-                            date_str = utc_date.isoformat()
-                    except Exception as e:
-                        print(f"Error formatting date: {e}")
+                try:
+                    # 确保日期格式正确
+                    date_str = None
+                    published_at = item.published_at
+                    if published_at:
+                        try:
+                            # 确保是UTC时间并格式化为ISO字符串
+                            if published_at.tzinfo is None:
+                                # 如果没有时区信息，假设是UTC
+                                date_str = published_at.isoformat() + 'Z'
+                            else:
+                                # 如果有时区信息，转换为UTC
+                                from datetime import timezone
+                                utc_date = published_at.astimezone(timezone.utc)
+                                date_str = utc_date.isoformat()
+                        except Exception as e:
+                            print(f"Error formatting date: {e}")
+                            date_str = datetime.utcnow().isoformat() + 'Z'
+                    else:
                         date_str = datetime.utcnow().isoformat() + 'Z'
-                else:
-                    date_str = datetime.utcnow().isoformat() + 'Z'
-                
-                results.append({
-                    "id": str(item.id),
-                    "title": item.title,
-                    "content": item.content,
-                    "link": item.link,
-                    "date": date_str,
-                    "source": item.source,
-                    "vote_count": self.get_vote_count(item.title),
-                    "score": float(item.score) if item.score is not None else 0.0,
-                    "keywords": item.keywords or []
-                })
+                    
+                    result_item = {
+                        "id": str(item.id),  # Convert UUID to string
+                        "title": item.title,
+                        "content": item.content,
+                        "link": item.link,
+                        "date": date_str,
+                        "source": item.source,
+                        "vote_count": self.get_vote_count(item.title),
+                        "score": float(item.score) if item.score is not None else 0.0,  # Ensure float
+                        "keywords": item.keywords or []
+                    }
+                    results.append(result_item)
+                    print(f"🔍 DEBUG: Added item: {item.title[:50]}...")
+                except Exception as e:
+                    print(f"❌ Error processing news item: {e}")
+                    continue
+            
+            print(f"🔍 DEBUG: Returning {len(results)} processed items")
             
             if use_cache:
-                redis_client.setex(cache_key, 600, json.dumps(results, ensure_ascii=False))
+                try:
+                    redis_client.setex(cache_key, 600, json.dumps(results, ensure_ascii=False))
+                except Exception as e:
+                    print(f"⚠️ Cache save failed: {e}")
+            
             return results
         except Exception as e:
-            print(f"Error getting news: {e}")
+            print(f"❌ Error getting news: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     # 保存新闻
     def save_news(self, news_items: List[Dict]) -> bool:
         """保存新闻到数据库，包含智能评分"""
         try:
+            print(f"🔍 DEBUG: Saving {len(news_items)} news items to database")
+            
             # 获取现有新闻的关键词映射
             existing_news = self.get_news(0, 1000, "time")
             existing_keyword_map = build_existing_keyword_map(existing_news)
             
+            saved_count = 0
             for item in news_items:
-                # 检查是否已存在
-                existing = self.db.query(News).filter(News.title == item["title"]).first()
-                if existing:
-                    continue
-                
-                # 提取关键词
-                keywords = extract_keywords_from_text(item["title"] + " " + item["content"])
-                
-                # 标准化日期处理
-                raw_date = item.get("date", "")
                 try:
-                    if isinstance(raw_date, str):
-                        # 解析RSS日期字符串并转换为UTC时间
-                        parsed_date = dateparser.parse(raw_date)
-                        if parsed_date.tzinfo:
-                            # 如果有时区信息，转换为UTC
-                            utc_date = parsed_date.astimezone(tz.tzutc())
-                            normalized_date = utc_date.replace(tzinfo=None)
+                    # 检查是否已存在
+                    existing = self.db.query(News).filter(News.title == item["title"]).first()
+                    if existing:
+                        print(f"🔍 DEBUG: Skipping existing article: {item['title'][:50]}...")
+                        continue
+                    
+                    # 提取关键词
+                    keywords = extract_keywords_from_text(item["title"] + " " + item["content"])
+                    
+                    # 标准化日期处理
+                    raw_date = item.get("date", "")
+                    try:
+                        if isinstance(raw_date, str):
+                            # 解析RSS日期字符串并转换为UTC时间
+                            parsed_date = dateparser.parse(raw_date)
+                            if parsed_date.tzinfo:
+                                # 如果有时区信息，转换为UTC
+                                utc_date = parsed_date.astimezone(tz.tzutc())
+                                normalized_date = utc_date.replace(tzinfo=None)
+                            else:
+                                # 如果没有时区信息，假设是UTC
+                                normalized_date = parsed_date
                         else:
-                            # 如果没有时区信息，假设是UTC
-                            normalized_date = parsed_date
-                    else:
-                        normalized_date = raw_date
+                            normalized_date = raw_date
+                    except Exception as e:
+                        print(f"Error parsing date '{raw_date}': {e}")
+                        normalized_date = datetime.utcnow()
+                    
+                    # 创建AI摘要结构
+                    summary_ai = {
+                        "brief": "",
+                        "detailed": "",
+                        "structure_score": 3.0  # 默认评分
+                    }
+                    
+                    # 计算综合评分
+                    score = calculate_news_score(
+                        published_at=normalized_date,
+                        summary_ai=summary_ai,
+                        source=item.get("source", ""),
+                        keywords=keywords,
+                        headline_count=0,  # 新新闻初始点赞数为0
+                        existing_keyword_map=existing_keyword_map
+                    )
+                    
+                    # 创建新闻对象
+                    news = News(
+                        title=item["title"],
+                        content=item["content"],
+                        summary=item.get("summary", ""),
+                        link=item["link"],
+                        date=normalized_date,
+                        source=item.get("source", ""),
+                        published_at=normalized_date,
+                        summary_ai=summary_ai,
+                        headline_count=0,
+                        keywords=keywords,
+                        score=score
+                    )
+                    
+                    self.db.add(news)
+                    saved_count += 1
+                    print(f"🔍 DEBUG: Added article: {item['title'][:50]}...")
+                    
                 except Exception as e:
-                    print(f"Error parsing date '{raw_date}': {e}")
-                    normalized_date = datetime.utcnow()
-                
-                # 创建AI摘要结构
-                summary_ai = {
-                    "brief": "",
-                    "detailed": "",
-                    "structure_score": 3.0  # 默认评分
-                }
-                
-                # 计算综合评分
-                score = calculate_news_score(
-                    published_at=normalized_date,
-                    summary_ai=summary_ai,
-                    source=item.get("source", ""),
-                    keywords=keywords,
-                    headline_count=0,  # 新新闻初始点赞数为0
-                    existing_keyword_map=existing_keyword_map
-                )
-                
-                # 创建新闻对象
-                news = News(
-                    title=item["title"],
-                    content=item["content"],
-                    summary=item.get("summary", ""),
-                    link=item["link"],
-                    date=normalized_date,
-                    source=item.get("source", ""),
-                    published_at=normalized_date,
-                    summary_ai=summary_ai,
-                    headline_count=0,
-                    keywords=keywords,
-                    score=score
-                )
-                
-                self.db.add(news)
+                    print(f"❌ Error saving individual article: {e}")
+                    continue
             
             self.db.commit()
+            print(f"🔍 DEBUG: Successfully saved {saved_count} new articles to database")
             return True
         except Exception as e:
-            print(f"Error saving news: {e}")
+            print(f"❌ Error saving news: {e}")
+            import traceback
+            traceback.print_exc()
             self.db.rollback()
             return False
 
