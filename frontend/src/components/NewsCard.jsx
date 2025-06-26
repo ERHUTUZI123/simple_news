@@ -71,7 +71,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     }
 
     try {
-      const s = await fetchSummary(content);
+      const s = await fetchSummary(content, "brief");
       localStorage.setItem(key, s);
       setTldr(stripHtml(s));
     } catch {

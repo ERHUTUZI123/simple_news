@@ -10,9 +10,9 @@ export function fetchTodayNews(offset = 0, limit = 10) {
     });
 }
 
-export function fetchSummary(content) {
+export function fetchSummary(content, type = "detailed") {
   return axios
-    .post(`${API_BASE}/news/summary`, { content })
+    .post(`${API_BASE}/news/summary`, { content, type })
     .then(res => res.data.summary);
 }
 

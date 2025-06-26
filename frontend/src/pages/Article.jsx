@@ -95,7 +95,7 @@ export default function Article() {
       if (cached) {
         setSummary(stripHtml(cached));
       } else {
-        const result = await fetchSummary(article.content);
+        const result = await fetchSummary(article.content, summaryType);
         localStorage.setItem(key, result);
         setSummary(stripHtml(result));
       }

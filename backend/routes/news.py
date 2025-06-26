@@ -133,7 +133,8 @@ def get_vote(
 def news_summary(data: dict = Body(...)):
     """生成新闻摘要"""
     content = data.get("content", "")
-    summary = summarize_news(content)
+    summary_type = data.get("type", "detailed")  # 默认为detailed
+    summary = summarize_news(content, summary_type)
     return {"summary": summary}
 
 @router.get("/news/article")
@@ -184,29 +185,43 @@ def _call_openai_summarize(prompt: str, max_tokens: int) -> Optional[str]:
         print(f"❌ [ERROR] OpenAI summarize error: {e}")
         return None
 
-def summarize_news(text: str, word_count: int = 70) -> str:
-    print(f"🤖 [DEBUG] summarize_news called with text length: {len(text)}")
+def summarize_news(text: str, summary_type: str = "detailed") -> str:
+    print(f"🤖 [DEBUG] summarize_news called with text length: {len(text)}, type: {summary_type}")
     print(f"🤖 [DEBUG] Text preview: {text[:300]}...")
     
     if not text.strip():
         print("❌ [ERROR] Empty text passed to summarize_news!")
         return "No content available for summarization"
     
-    prompt = (
-        "Read the whole article and summarize this news in at least 420 characters "
-        "and more than 65 words. Be as detailed as possible. Do not just copy and paste content."
-        "Do not mention the source, outlet, or 'the article'. Just summarize the core content.\n\n"
-        f"{text}"
-    )
+    # 根据摘要类型选择不同的prompt
+    if summary_type == "brief":
+        prompt = (
+            "Read the whole article and provide a BRIEF summary in 2-3 sentences (around 150-200 characters). "
+            "Be concise and focus only on the most essential points. "
+            "Do not mention the source, outlet, or 'the article'. "
+            "Just summarize the core content in a very brief manner.\n\n"
+            f"{text}"
+        )
+        max_tokens = 100
+    else:  # detailed
+        prompt = (
+            "Read the whole article and provide a DETAILED summary in at least 420 characters "
+            "and more than 65 words. Be comprehensive and include key details, context, and implications. "
+            "Do not just copy and paste content. "
+            "Do not mention the source, outlet, or 'the article'. "
+            "Just summarize the core content with depth and detail.\n\n"
+            f"{text}"
+        )
+        max_tokens = 200
     
     try:
-        content = _call_openai_summarize(prompt, word_count * 2)
+        content = _call_openai_summarize(prompt, max_tokens)
         if content is None:
             print("❌ [ERROR] OpenAI call failed due to rate limiting")
             return "Summary generation temporarily unavailable due to high demand"
         
         result = content.strip() if content else "generation failed"
-        print(f"✅ [DEBUG] Generated summary: {result[:100]}...")
+        print(f"✅ [DEBUG] Generated {summary_type} summary: {result[:100]}...")
         return result
     except Exception as e:
         print(f"❌ [ERROR] OpenAI summarize error: {e}")
