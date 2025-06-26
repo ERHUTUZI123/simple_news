@@ -313,16 +313,16 @@ def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
     """清理重复的新闻条目"""
     try:
         # 获取所有新闻
-        all_news = pg_service.db.query(News).all()
+        all_news = pg_service.get_news(0, 10000, "time")  # 获取所有新闻
         print(f"🔍 Found {len(all_news)} total news articles")
         
         # 按标准化标题分组
         title_groups = {}
-        for news in all_news:
-            normalized_title = pg_service._normalize_title(news.title)
+        for news_item in all_news:
+            normalized_title = pg_service._normalize_title(news_item["title"])
             if normalized_title not in title_groups:
                 title_groups[normalized_title] = []
-            title_groups[normalized_title].append(news)
+            title_groups[normalized_title].append(news_item)
         
         # 找出重复的组
         duplicates_removed = 0
@@ -331,11 +331,14 @@ def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
                 print(f"🔍 Found {len(news_list)} duplicates for: {normalized_title[:50]}...")
                 
                 # 保留最新的一个，删除其他的
-                sorted_news = sorted(news_list, key=lambda x: x.created_at, reverse=True)
+                sorted_news = sorted(news_list, key=lambda x: x.get("date", ""), reverse=True)
                 for news_to_delete in sorted_news[1:]:
-                    pg_service.db.delete(news_to_delete)
-                    duplicates_removed += 1
-                    print(f"🗑️ Deleted duplicate: {news_to_delete.title[:50]}...")
+                    # 通过标题删除重复的新闻
+                    existing = pg_service.db.query(News).filter(News.title == news_to_delete["title"]).first()
+                    if existing:
+                        pg_service.db.delete(existing)
+                        duplicates_removed += 1
+                        print(f"🗑️ Deleted duplicate: {news_to_delete['title'][:50]}...")
         
         pg_service.db.commit()
         print(f"✅ Cleaned up {duplicates_removed} duplicate articles")
