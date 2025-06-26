@@ -1,91 +1,56 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { fetchVote, fetchNewsWithSort } from "../services/api";
 import NewsCard, { NewsCardSkeleton } from "../components/NewsCard";
 import { GoogleLogin } from '@react-oauth/google';
-
-// 解析JWT token获取用户信息
-function parseJwt(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error('Error parsing JWT:', error);
-    return null;
-  }
-}
+import { useContext } from "react";
+import { UserContext } from "../contexts/UserContext";
 
 function LoginButton() {
-  const [showGoogleLogin, setShowGoogleLogin] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("id_token");
-    if (token) {
-      const parsed = parseJwt(token);
-      if (parsed) {
-        setUserInfo(parsed);
-      }
-    }
-  }, []);
+  const { userSession, logout } = useContext(UserContext);
 
   const handleLogout = () => {
-    localStorage.removeItem("id_token");
-    setUserInfo(null);
-    window.location.reload();
-  };
-
-  const handleLoginSuccess = (credentialResponse) => {
-    localStorage.setItem("id_token", credentialResponse.credential);
-    const parsed = parseJwt(credentialResponse.credential);
-    if (parsed) {
-      setUserInfo(parsed);
-    }
-    setShowGoogleLogin(false);
-    window.location.reload();
+    logout();
   };
 
   return (
     <div style={{
       position: "fixed",
-      top: "4.5rem",
-      right: 32,
-      zIndex: 1000,
+      top: "1rem",
+      right: "1rem",
+      zIndex: 1001,
+      display: "flex",
+      alignItems: "center",
+      gap: "1rem",
     }}>
-      {userInfo ? (
-        // 已登录状态：显示用户ID
+      {userSession ? (
         <div style={{
-          background: "transparent",
-          border: "none",
-          padding: "0.5rem 1rem",
-          fontFamily: "monospace",
-          fontSize: "0.9rem",
-          color: "#fff",
-          cursor: "pointer",
           display: "flex",
           alignItems: "center",
-          gap: "0.5rem",
+          gap: "1rem",
         }}>
-          <span>{userInfo.email || userInfo.name || 'User'}</span>
+          <span style={{
+            color: "var(--text-color)",
+            fontFamily: "monospace",
+            fontSize: "0.9rem",
+          }}>
+            {userSession.user.name}
+          </span>
           <button
             onClick={handleLogout}
             style={{
               background: "none",
-              border: "none",
-              color: "#fff",
+              border: "1px solid var(--border-color)",
+              borderRadius: "8px",
+              padding: "0.5rem 1rem",
               fontFamily: "monospace",
-              fontSize: "0.8rem",
+              fontSize: "0.9rem",
+              color: "var(--text-color)",
               cursor: "pointer",
-              opacity: 0.7,
-              padding: "0.2rem 0.5rem",
-              borderRadius: "4px",
+              transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.target.style.opacity = "1";
-              e.target.style.background = "rgba(255,255,255,0.1)";
+              e.target.style.opacity = "0.8";
+              e.target.style.background = "var(--button-hover-bg)";
             }}
             onMouseLeave={(e) => {
               e.target.style.opacity = "0.7";
@@ -95,88 +60,7 @@ function LoginButton() {
             logout
           </button>
         </div>
-      ) : !showGoogleLogin ? (
-        // 未登录状态：显示Sign in按钮
-        <button
-          onClick={() => setShowGoogleLogin(true)}
-          style={{
-            background: "#fff",
-            border: "1px solid #000",
-            borderRadius: "8px",
-            padding: "0.5rem 1rem",
-            fontFamily: "monospace",
-            fontSize: "0.9rem",
-            color: "#000",
-            cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = "#f5f5f5";
-            e.target.style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = "#fff";
-            e.target.style.transform = "translateY(0)";
-          }}
-        >
-          Sign in
-        </button>
-      ) : (
-        // 显示Google登录弹窗
-        <div style={{
-          background: "#fff",
-          border: "1px solid #000",
-          borderRadius: "8px",
-          padding: "1rem",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-          minWidth: "200px",
-        }}>
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "0.5rem",
-          }}>
-            <span style={{
-              fontFamily: "monospace",
-              fontSize: "0.9rem",
-              color: "#000",
-            }}>
-              Sign in with Google
-            </span>
-            <button
-              onClick={() => setShowGoogleLogin(false)}
-              style={{
-                background: "none",
-                border: "none",
-                fontSize: "1.2rem",
-                cursor: "pointer",
-                color: "#666",
-                padding: "0",
-                width: "20px",
-                height: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              ×
-            </button>
-          </div>
-          <GoogleLogin
-            onSuccess={handleLoginSuccess}
-            onError={() => {
-              alert("Google login failed");
-            }}
-            theme="outline"
-            size="medium"
-            width="100%"
-            text="signin_with"
-            shape="rectangular"
-          />
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
