@@ -8,6 +8,8 @@ from datetime import datetime
 from typing import List, Dict, Any
 from dateutil import parser as dateparser
 from dateutil import tz
+from app import redis_client
+import json
 
 class PostgresService:
     def __init__(self, db: Session):
@@ -15,8 +17,13 @@ class PostgresService:
 
     # 获取新闻
     def get_news(self, offset=0, limit=20, sort_by="smart", source_filter=None) -> List[Dict]:
-        """获取新闻，支持智能排序"""
+        """获取新闻，支持智能排序，带缓存"""
         try:
+            # 构造缓存key
+            cache_key = f"news:{sort_by}:{offset}:{limit}:{source_filter or 'all'}"
+            cached = redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
             query = self.db.query(News)
             
             # 应用来源过滤
@@ -79,6 +86,8 @@ class PostgresService:
                     "vote_count": self.get_vote_count(item.title)
                 })
             
+            # 设置缓存，120秒
+            redis_client.setex(cache_key, 120, json.dumps(results, ensure_ascii=False))
             return results
         except Exception as e:
             print(f"Error getting news: {e}")

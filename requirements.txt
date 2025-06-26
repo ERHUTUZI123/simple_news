@@ -13,3 +13,4 @@ requests
 google-auth
 stripe
 psycopg2-binary
+redis
