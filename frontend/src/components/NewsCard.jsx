@@ -19,8 +19,15 @@ function formatRelativeTime(dateString) {
   const now = new Date();
   const diffMs = now - date;
   const diffMin = Math.floor(diffMs / 1000 / 60);
+  
+  // 调试信息
+  console.log(`[DEBUG] Date: ${dateString}, Parsed: ${date}, Now: ${now}, DiffMs: ${diffMs}, DiffMin: ${diffMin}`);
+  
+  if (diffMin < 1) {
+    return "now";
+  }
   if (diffMin < 60) {
-    return `${diffMin <= 0 ? 1 : diffMin}m`;
+    return `${diffMin}m`;
   }
   const diffH = Math.floor(diffMin / 60);
   if (diffH < 24) {
