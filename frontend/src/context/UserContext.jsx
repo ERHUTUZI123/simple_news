@@ -4,6 +4,7 @@ export const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [userSession, setUserSession] = useState(null);
+  const [showGoogleLogin, setShowGoogleLogin] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in from localStorage
@@ -35,8 +36,23 @@ export const UserProvider = ({ children }) => {
     localStorage.removeItem("id_token");
   };
 
+  const triggerGoogleLogin = () => {
+    setShowGoogleLogin(true);
+  };
+
+  const closeGoogleLogin = () => {
+    setShowGoogleLogin(false);
+  };
+
   return (
-    <UserContext.Provider value={{ userSession, login, logout }}>
+    <UserContext.Provider value={{ 
+      userSession, 
+      login, 
+      logout, 
+      showGoogleLogin, 
+      triggerGoogleLogin, 
+      closeGoogleLogin 
+    }}>
       {children}
     </UserContext.Provider>
   );

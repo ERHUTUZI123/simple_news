@@ -81,18 +81,18 @@ export default function Saved() {
   const [removedArticle, setRemovedArticle] = useState(null);
   const [showUndo, setShowUndo] = useState(false);
   const navigate = useNavigate();
-  const { user } = useContext(UserContext);
+  const { userSession, triggerGoogleLogin } = useContext(UserContext);
 
   // Load bookmarked articles
   useEffect(() => {
     const loadSavedArticles = async () => {
-      if (!user) {
+      if (!userSession) {
         setSavedArticles([]);
         return;
       }
       
       try {
-        const response = await fetch(`/api/saved?user_id=${user.id}`);
+        const response = await fetch(`/api/saved?user_id=${userSession.user.id}`);
         if (response.ok) {
           const data = await response.json();
           setSavedArticles(data.articles || []);
@@ -109,7 +109,7 @@ export default function Saved() {
     };
     
     loadSavedArticles();
-  }, [user]);
+  }, [userSession]);
 
   // Save bookmarks to localStorage
   const saveToStorage = (articles) => {
@@ -119,7 +119,7 @@ export default function Saved() {
 
   // Remove bookmark
   const removeFromSaved = async (articleToRemove) => {
-    if (!user) {
+    if (!userSession) {
       toast("Please login to manage saved articles");
       return;
     }
@@ -129,7 +129,7 @@ export default function Saved() {
         method: "DELETE",
         body: JSON.stringify({ 
           newsId: articleToRemove.title, 
-          userId: user.id 
+          userId: userSession.user.id 
         }),
         headers: { "Content-Type": "application/json" }
       });
@@ -158,7 +158,7 @@ export default function Saved() {
 
   // Undo remove
   const undoRemove = async () => {
-    if (!removedArticle || !user) {
+    if (!removedArticle || !userSession) {
       return;
     }
     
@@ -167,7 +167,7 @@ export default function Saved() {
         method: "POST",
         body: JSON.stringify({ 
           newsId: removedArticle.title, 
-          userId: user.id 
+          userId: userSession.user.id 
         }),
         headers: { "Content-Type": "application/json" }
       });
@@ -248,7 +248,7 @@ export default function Saved() {
       </div>
 
       {/* Login prompt */}
-      {!user && (
+      {!userSession && (
         <div style={{
           textAlign: "center",
           padding: "2rem",
@@ -273,7 +273,7 @@ export default function Saved() {
           </p>
           <button
             onClick={() => {
-              if (window.triggerGoogleLogin) window.triggerGoogleLogin();
+              if (triggerGoogleLogin) triggerGoogleLogin();
             }}
             style={{
               background: "var(--highlight-color)",

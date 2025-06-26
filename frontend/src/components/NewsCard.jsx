@@ -89,7 +89,7 @@ function formatKeywords(keywords) {
 
 export default function NewsCard({ news, onVote, showScore = false }) {
   const navigate = useNavigate();
-  const userSession = useContext(UserContext);
+  const { userSession, triggerGoogleLogin } = useContext(UserContext);
   const [isSaved, setIsSaved] = useState(false);
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
@@ -154,7 +154,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
   const onSaveClick = async () => {
     if (!userSession) {
       toast("Please login with Google to save articles.");
-      if (window.triggerGoogleLogin) window.triggerGoogleLogin();
+      if (triggerGoogleLogin) triggerGoogleLogin();
       return;
     }
     
