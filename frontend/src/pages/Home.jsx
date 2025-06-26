@@ -185,20 +185,10 @@ export default function Home() {
   const [newsList, setNewsList] = useState([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [sortBy, setSortBy] = useState('smart');
   const [sourceFilter, setSourceFilter] = useState('');
-  const [showSortMenu, setShowSortMenu] = useState(false);
   const [showSourceMenu, setShowSourceMenu] = useState(false);
   const observerRef = useRef(null);
   const LIMIT = 10;
-
-  // 排序选项
-  const sortOptions = [
-    { value: 'smart', label: 'Smart Sort' },
-    { value: 'time', label: 'Latest' },
-    { value: 'popular', label: 'Most Popular' },
-    { value: 'source', label: 'By Source' }
-  ];
 
   // 来源选项
   const sourceOptions = [
@@ -220,14 +210,13 @@ export default function Home() {
     if (loading) return;
     setLoading(true);
     try {
-      const data = await fetchNewsWithSort(offset, LIMIT, sortBy, sourceFilter);
+      const data = await fetchNewsWithSort(offset, LIMIT, undefined, sourceFilter);
       const enriched = await Promise.all(
         data.map(async (item) => {
           const count = await fetchVote(item.title);
           return {
             ...item, 
             voteCount: count, 
-            // 使用后端返回的数据
             vote_count: item.vote_count || count,
             comprehensive_score: item.comprehensive_score
           };
@@ -249,10 +238,10 @@ export default function Home() {
     loadMoreNews();
   };
 
-  // 当排序或筛选条件改变时，重置列表
+  // 当筛选条件改变时，重置列表
   useEffect(() => {
     resetAndLoadNews();
-  }, [sortBy, sourceFilter]);
+  }, [sourceFilter]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -263,13 +252,12 @@ export default function Home() {
     );
     if (observerRef.current) observer.observe(observerRef.current);
     return () => observer.disconnect();
-  }, [newsList, sortBy, sourceFilter]);
+  }, [newsList, sourceFilter]);
 
   return (
     <>
       <LoginButton />
-      
-      {/* 排序和筛选控制栏 */}
+      {/* 只保留来源筛选器 */}
       <div style={{
         position: 'fixed',
         top: '4.5rem',
@@ -279,69 +267,6 @@ export default function Home() {
         gap: '1rem',
         alignItems: 'center'
       }}>
-        {/* 排序选择器 */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowSortMenu(!showSortMenu)}
-            style={{
-              background: '#fff',
-              border: '1px solid #000',
-              borderRadius: '4px',
-              padding: '0.5rem 1rem',
-              fontFamily: 'monospace',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              minWidth: '120px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            {sortOptions.find(opt => opt.value === sortBy)?.label || 'Sort'}
-            <span>▼</span>
-          </button>
-          
-          {showSortMenu && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              background: '#fff',
-              border: '1px solid #000',
-              borderRadius: '4px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              zIndex: 1001,
-              minWidth: '120px'
-            }}>
-              {sortOptions.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    setSortBy(option.value);
-                    setShowSortMenu(false);
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    fontFamily: 'monospace',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'left',
-                    color: sortBy === option.value ? '#000' : '#666'
-                  }}
-                  onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
-                  onMouseLeave={(e) => e.target.style.background = 'none'}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 来源筛选器 */}
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowSourceMenu(!showSourceMenu)}
@@ -362,7 +287,6 @@ export default function Home() {
             {sourceOptions.find(opt => opt.value === sourceFilter)?.label || 'Source'}
             <span>▼</span>
           </button>
-          
           {showSourceMenu && (
             <div style={{
               position: 'absolute',
@@ -405,9 +329,8 @@ export default function Home() {
           )}
         </div>
       </div>
-
       {/* 点击外部关闭菜单 */}
-      {(showSortMenu || showSourceMenu) && (
+      {showSourceMenu && (
         <div
           style={{
             position: 'fixed',
@@ -418,21 +341,17 @@ export default function Home() {
             zIndex: 999
           }}
           onClick={() => {
-            setShowSortMenu(false);
             setShowSourceMenu(false);
           }}
         />
       )}
-
       <div className="news-container">
         {/* 新闻列表 */}
         {newsList.map((n, idx) => (
           <NewsCard key={n.link + '-' + idx} {...n} />
         ))}
-
         {/* 加载更多触发器 */}
         <div ref={observerRef} style={{ height: 40 }} />
-
         {loading && <p style={{ textAlign: "center", marginTop: "1rem" }}>Loading...</p>}
       </div>
     </>
