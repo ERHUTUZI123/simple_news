@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from app.models import SavedArticle, User, News
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import UUID
+from sqlalchemy import func
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -349,6 +350,50 @@ def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
             "success": True, 
             "message": f"Cleaned up {duplicates_removed} duplicate articles",
             "duplicates_removed": duplicates_removed
+        }
+        
+    except Exception as e:
+        print(f"❌ Error cleaning duplicates: {e}")
+        pg_service.db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to clean duplicates: {str(e)}")
+
+@router.post("/news/clean-duplicates-direct")
+def clean_duplicate_news_direct(pg_service: PostgresService = Depends(get_pg_service)):
+    """直接清理重复的新闻条目"""
+    try:
+        from app.models import News
+        
+        # 查找重复的标题
+        duplicate_titles = pg_service.db.query(
+            News.title, 
+            func.count(News.id).label('count')
+        ).group_by(News.title).having(func.count(News.id) > 1).all()
+        
+        print(f"🔍 Found {len(duplicate_titles)} duplicate titles")
+        
+        total_removed = 0
+        for title, count in duplicate_titles:
+            print(f"🔍 Processing duplicates for: {title[:50]}... (count: {count})")
+            
+            # 获取所有具有相同标题的新闻，按创建时间排序
+            duplicates = pg_service.db.query(News).filter(
+                News.title == title
+            ).order_by(News.created_at.desc()).all()
+            
+            # 保留最新的一个，删除其他的
+            for duplicate in duplicates[1:]:
+                pg_service.db.delete(duplicate)
+                total_removed += 1
+                print(f"🗑️ Deleted duplicate with ID: {duplicate.id}")
+        
+        pg_service.db.commit()
+        print(f"✅ Cleaned up {total_removed} duplicate articles")
+        
+        return {
+            "success": True, 
+            "message": f"Cleaned up {total_removed} duplicate articles",
+            "duplicates_removed": total_removed,
+            "duplicate_titles_found": len(duplicate_titles)
         }
         
     except Exception as e:
