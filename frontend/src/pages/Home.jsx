@@ -341,11 +341,11 @@ export default function Home() {
           <button
             onClick={() => setShowSortMenu(!showSortMenu)}
             style={{
-              background: "var(--sort-selected-bg)",
+              background: "none",
               border: "1px solid var(--border-color)",
               borderRadius: "8px",
               padding: "0.75rem 1rem",
-              color: "var(--sort-selected-text)",
+              color: "var(--text-color)",
               fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
               cursor: "pointer",
@@ -361,8 +361,8 @@ export default function Home() {
               e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "var(--sort-selected-bg)";
-              e.target.style.color = "var(--sort-selected-text)";
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--text-color)";
               e.target.style.borderColor = "var(--border-color)";
             }}
           >

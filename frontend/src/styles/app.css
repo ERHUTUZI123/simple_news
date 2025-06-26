@@ -27,6 +27,7 @@
   --button-hover-text: #ffffff;
   --button-hover-border: #64b5f6;
   --like-hover-bg: #FFD700;
+  --like-hover-text: #ffffff;
   --like-hover-border: #FFD700;
   --trash-hover-bg: #f44336;
   --trash-hover-text: #ffffff;
@@ -54,13 +55,14 @@
   --save-text: #111111;
   --save-hover-bg: #cccccc;
   --like-text: #888888;
-  --like-hover-text: #111111;
+  --like-hover-text: #ffffff;
   
   /* 浅色模式按钮悬停颜色 */
   --button-hover-bg: #1976d2;
   --button-hover-text: #ffffff;
   --button-hover-border: #1976d2;
   --like-hover-bg: #f57c00;
+  --like-hover-text: #ffffff;
   --like-hover-border: #f57c00;
   --trash-hover-bg: #d32f2f;
   --trash-hover-text: #ffffff;

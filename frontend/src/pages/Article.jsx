@@ -39,6 +39,7 @@ export default function Article() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [summaryType, setSummaryType] = useState('detailed'); // 'brief' or 'detailed'
+  const [isHeadline, setIsHeadline] = useState(false);
 
   // Check if article is bookmarked
   useEffect(() => {
@@ -155,6 +156,11 @@ export default function Article() {
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
     }
+  };
+
+  // Toggle headline
+  const toggleHeadline = () => {
+    setIsHeadline(!isHeadline);
   };
 
   if (loading) {
@@ -393,23 +399,21 @@ export default function Article() {
           border: '1px solid var(--border-color)',
           borderRadius: '0.5rem',
         }}>
-          <a
-            href={article.link}
-            target="_blank"
+          <a 
+            href={article.link} 
+            target="_blank" 
             rel="noopener noreferrer"
             style={{
-              color: "var(--view-original-text)",
+              color: "var(--text-color)",
               textDecoration: "none",
               fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
-              padding: "0.5rem 1rem",
-              border: "1px solid var(--view-original-border)",
-              borderRadius: "0.25rem",
+              padding: "0.75rem 1.5rem",
+              border: "1px solid var(--border-color)",
+              borderRadius: "0.5rem",
               transition: "all 0.2s ease",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              backgroundColor: "transparent",
+              display: "inline-block",
+              marginRight: "1rem",
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = "var(--button-hover-bg)";
@@ -418,45 +422,75 @@ export default function Article() {
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = "transparent";
-              e.target.style.color = "var(--view-original-text)";
-              e.target.style.borderColor = "var(--view-original-border)";
+              e.target.style.color = "var(--text-color)";
+              e.target.style.borderColor = "var(--border-color)";
             }}
           >
-            🔗 Original Article
+            View Original
           </a>
 
           <button
             onClick={toggleSaved}
             style={{
-              background: isSaved ? "var(--highlight-color)" : "var(--save-bg)",
+              background: isSaved ? "var(--highlight-color)" : "none",
               border: "1px solid var(--border-color)",
-              color: isSaved ? "white" : "var(--save-text)",
+              color: isSaved ? "white" : "var(--text-color)",
               fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
               cursor: "pointer",
-              padding: "0.5rem 1rem",
-              borderRadius: "0.25rem",
+              padding: "0.75rem 1.5rem",
+              borderRadius: "0.5rem",
               transition: "all 0.2s ease",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.5rem",
+              marginRight: "1rem",
             }}
             onMouseEnter={(e) => {
               if (!isSaved) {
-                e.target.style.backgroundColor = "var(--save-hover-bg)";
-                e.target.style.color = "var(--save-text)";
-                e.target.style.borderColor = "var(--border-color)";
+                e.target.style.backgroundColor = "var(--button-hover-bg)";
+                e.target.style.color = "var(--button-hover-text)";
+                e.target.style.borderColor = "var(--button-hover-border)";
               }
             }}
             onMouseLeave={(e) => {
               if (!isSaved) {
-                e.target.style.backgroundColor = "var(--save-bg)";
-                e.target.style.color = "var(--save-text)";
+                e.target.style.backgroundColor = "transparent";
+                e.target.style.color = "var(--text-color)";
                 e.target.style.borderColor = "var(--border-color)";
               }
             }}
           >
-            {isSaved ? "⭐ Saved" : "⭐ Save"}
+            {isSaved ? "📖 Saved" : "📖 Save"}
+          </button>
+
+          <button
+            onClick={toggleHeadline}
+            style={{
+              background: isHeadline ? "var(--highlight-color)" : "none",
+              border: "1px solid var(--border-color)",
+              color: isHeadline ? "white" : "var(--text-color)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+              padding: "0.75rem 1.5rem",
+              borderRadius: "0.5rem",
+              transition: "all 0.2s ease",
+              marginRight: "1rem",
+            }}
+            onMouseEnter={(e) => {
+              if (!isHeadline) {
+                e.target.style.backgroundColor = "var(--like-hover-bg)";
+                e.target.style.color = "var(--like-hover-text)";
+                e.target.style.borderColor = "var(--like-hover-border)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isHeadline) {
+                e.target.style.backgroundColor = "transparent";
+                e.target.style.color = "var(--text-color)";
+                e.target.style.borderColor = "var(--border-color)";
+              }
+            }}
+          >
+            {isHeadline ? "👍 Liked" : "👍 Like"}
           </button>
 
           <button

@@ -364,17 +364,14 @@ export default function Saved() {
                   onClick={() => removeFromSaved(article)}
                   style={{
                     background: "none",
-                    border: "1px solid var(--trash-color)",
-                    color: "var(--trash-color)",
+                    border: "1px solid var(--border-color)",
+                    color: "var(--text-color)",
                     fontFamily: "var(--font-mono)",
                     fontSize: "0.9rem",
                     cursor: "pointer",
                     padding: "0.5rem 1rem",
                     borderRadius: "0.25rem",
                     transition: "all 0.2s ease",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.backgroundColor = "var(--trash-hover-bg)";
@@ -383,8 +380,8 @@ export default function Saved() {
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.backgroundColor = "transparent";
-                    e.target.style.color = "var(--trash-color)";
-                    e.target.style.borderColor = "var(--trash-color)";
+                    e.target.style.color = "var(--text-color)";
+                    e.target.style.borderColor = "var(--border-color)";
                   }}
                 >
                   🗑️ Remove
