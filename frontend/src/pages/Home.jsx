@@ -3,7 +3,7 @@ import { fetchVote, fetchNewsWithSort } from "../services/api";
 import NewsCard, { NewsCardSkeleton } from "../components/NewsCard";
 import { GoogleLogin } from '@react-oauth/google';
 import { useContext } from "react";
-import { UserContext } from "../contexts/UserContext";
+import { UserContext } from "../context/UserContext";
 
 function LoginButton() {
   const { userSession, logout } = useContext(UserContext);

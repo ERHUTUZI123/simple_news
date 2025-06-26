@@ -12,6 +12,7 @@ from app import redis_client
 import json
 from uuid import UUID
 from sqlalchemy.sql import text
+import re
 
 class PostgresService:
     def __init__(self, db: Session):
@@ -124,7 +125,12 @@ class PostgresService:
             saved_count = 0
             for item in news_items:
                 try:
-                    # 检查是否已存在
+                    # 使用智能去重检查
+                    if self._is_duplicate_title(item["title"]):
+                        print(f"🔍 DEBUG: Skipping duplicate article: {item['title'][:50]}...")
+                        continue
+                    
+                    # 检查是否已存在（传统检查作为备用）
                     existing = self.db.query(News).filter(News.title == item["title"]).first()
                     if existing:
                         print(f"🔍 DEBUG: Skipping existing article: {item['title'][:50]}...")
@@ -492,4 +498,44 @@ class PostgresService:
         except Exception as e:
             print(f"❌ Error saving user: {e}")
             self.db.rollback()
+            return False
+
+    def _normalize_title(self, title: str) -> str:
+        """标准化标题用于去重比较"""
+        # 转换为小写
+        normalized = title.lower()
+        # 移除多余的空白字符
+        normalized = re.sub(r'\s+', ' ', normalized)
+        # 移除常见的标点符号
+        normalized = re.sub(r'[^\w\s]', '', normalized)
+        # 移除首尾空白
+        normalized = normalized.strip()
+        return normalized
+
+    def _is_duplicate_title(self, new_title: str) -> bool:
+        """检查标题是否重复（使用智能比较）"""
+        try:
+            normalized_new = self._normalize_title(new_title)
+            
+            # 获取所有现有新闻标题
+            existing_news = self.db.query(News.title).all()
+            
+            for existing_title, in existing_news:
+                normalized_existing = self._normalize_title(existing_title)
+                
+                # 完全匹配
+                if normalized_new == normalized_existing:
+                    return True
+                
+                # 相似度检查（如果标准化后相似度很高）
+                if len(normalized_new) > 10 and len(normalized_existing) > 10:
+                    # 计算相似度（简单的字符重叠率）
+                    common_chars = sum(1 for c in normalized_new if c in normalized_existing)
+                    similarity = common_chars / max(len(normalized_new), len(normalized_existing))
+                    if similarity > 0.9:  # 90%相似度认为是重复
+                        return True
+            
+            return False
+        except Exception as e:
+            print(f"Error checking duplicate title: {e}")
             return False 

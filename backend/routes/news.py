@@ -307,3 +307,46 @@ async def save_user(request: Request, pg_service: PostgresService = Depends(get_
     except Exception as e:
         print(f"Error saving user: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/news/clean-duplicates")
+def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
+    """清理重复的新闻条目"""
+    try:
+        # 获取所有新闻
+        all_news = pg_service.db.query(News).all()
+        print(f"🔍 Found {len(all_news)} total news articles")
+        
+        # 按标准化标题分组
+        title_groups = {}
+        for news in all_news:
+            normalized_title = pg_service._normalize_title(news.title)
+            if normalized_title not in title_groups:
+                title_groups[normalized_title] = []
+            title_groups[normalized_title].append(news)
+        
+        # 找出重复的组
+        duplicates_removed = 0
+        for normalized_title, news_list in title_groups.items():
+            if len(news_list) > 1:
+                print(f"🔍 Found {len(news_list)} duplicates for: {normalized_title[:50]}...")
+                
+                # 保留最新的一个，删除其他的
+                sorted_news = sorted(news_list, key=lambda x: x.created_at, reverse=True)
+                for news_to_delete in sorted_news[1:]:
+                    pg_service.db.delete(news_to_delete)
+                    duplicates_removed += 1
+                    print(f"🗑️ Deleted duplicate: {news_to_delete.title[:50]}...")
+        
+        pg_service.db.commit()
+        print(f"✅ Cleaned up {duplicates_removed} duplicate articles")
+        
+        return {
+            "success": True, 
+            "message": f"Cleaned up {duplicates_removed} duplicate articles",
+            "duplicates_removed": duplicates_removed
+        }
+        
+    except Exception as e:
+        print(f"❌ Error cleaning duplicates: {e}")
+        pg_service.db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to clean duplicates: {str(e)}")
