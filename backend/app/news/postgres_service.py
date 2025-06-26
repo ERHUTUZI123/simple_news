@@ -346,12 +346,19 @@ class PostgresService:
                 # 如果是字符串，尝试解析为JSON
                 try:
                     import json
-                    parsed = json.loads(keywords)
+                    # 处理可能的转义字符
+                    cleaned_keywords = keywords.strip()
+                    if cleaned_keywords.startswith('"') and cleaned_keywords.endswith('"'):
+                        # 如果是双引号包围的字符串，先去掉引号
+                        cleaned_keywords = cleaned_keywords[1:-1]
+                    
+                    parsed = json.loads(cleaned_keywords)
                     if isinstance(parsed, list):
-                        return parsed
+                        return [str(kw) for kw in parsed if kw is not None]
                     else:
-                        return [keywords]  # 如果解析失败，返回原字符串作为单个元素
-                except (json.JSONDecodeError, TypeError):
+                        return [cleaned_keywords]  # 如果解析失败，返回原字符串作为单个元素
+                except (json.JSONDecodeError, TypeError) as e:
+                    print(f"Failed to parse keywords JSON: {e}, keywords: {keywords}")
                     return [keywords]  # 如果解析失败，返回原字符串作为单个元素
             elif isinstance(keywords, list):
                 # 确保列表中的元素都是字符串
@@ -360,5 +367,5 @@ class PostgresService:
                 # 其他类型，转换为字符串
                 return [str(keywords)]
         except Exception as e:
-            print(f"Error processing keywords: {e}")
+            print(f"Error processing keywords: {e}, keywords: {keywords}")
             return [] 
