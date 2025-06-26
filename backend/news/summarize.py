@@ -30,7 +30,7 @@ def summarize_news(text: str, summary_type: str = "brief") -> Dict[str, Any]:
         3. Use objective and accurate language
         4. Avoid subjective commentary
         5. Write in clear, professional English
-        
+        6. Do not include any other information, such as the source of the news, the date of the news, etc.
         News content:
         {text}
         
