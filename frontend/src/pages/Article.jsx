@@ -88,7 +88,8 @@ export default function Article() {
     
     setSummaryLoading(true);
     try {
-      const key = `summary-${article.id}-${summaryType}`;
+      // 使用文章标题作为缓存键的一部分，确保唯一性
+      const key = `summary-${encodeURIComponent(article.title)}-${summaryType}`;
       const cached = localStorage.getItem(key);
       
       if (cached) {
@@ -148,7 +149,7 @@ export default function Article() {
         text: `Check out this article: ${article?.title}`,
         url: window.location.href,
       });
-    } catch (_error) {
+    } catch (Error) {
       console.log('Native sharing not supported, copying to clipboard');
       // 如果不支持原生分享，复制链接
       navigator.clipboard.writeText(window.location.href);
