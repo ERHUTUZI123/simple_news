@@ -312,6 +312,8 @@ async def save_user(request: Request, pg_service: PostgresService = Depends(get_
 def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
     """清理重复的新闻条目"""
     try:
+        from app.models import News
+        
         # 获取所有新闻
         all_news = pg_service.get_news(0, 10000, "time")  # 获取所有新闻
         print(f"🔍 Found {len(all_news)} total news articles")
