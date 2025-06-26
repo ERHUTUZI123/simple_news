@@ -181,6 +181,15 @@ export default function App() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        toastStyle={{
+          fontFamily: '"Roboto Mono", monospace',
+          fontSize: '0.875rem',
+          fontWeight: '500',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        }}
+        toastClassName="custom-toast"
       />
     </Router>
   );

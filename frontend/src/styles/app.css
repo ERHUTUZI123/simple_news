@@ -426,3 +426,48 @@ a:hover {
     bottom: 1rem;
   }
 }
+
+/* 自定义Toast样式 - 深色/浅色模式适配 */
+.custom-toast {
+  font-family: "Roboto Mono", monospace !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  background: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  padding: 12px 16px !important;
+  min-width: 280px !important;
+  max-width: 400px !important;
+}
+
+/* 深色模式toast */
+.custom-toast {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #333333 !important;
+}
+
+/* 浅色模式toast */
+.light-mode .custom-toast {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+  border-color: #e0e0e0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Toast关闭按钮样式 */
+.custom-toast .Toastify__close-button {
+  color: var(--text-color) !important;
+  opacity: 0.7 !important;
+}
+
+.custom-toast .Toastify__close-button:hover {
+  opacity: 1 !important;
+}
+
+/* Toast进度条样式 */
+.custom-toast .Toastify__progress-bar {
+  background: var(--highlight-color) !important;
+}
