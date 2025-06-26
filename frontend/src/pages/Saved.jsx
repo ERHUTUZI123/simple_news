@@ -1,8 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { fetchArticleByTitle } from "../services/api";
-import { UserContext } from "../context/UserContext";
-import { toast } from "react-toastify";
+import React, { useState, useEffect } from "react";
 
 // 格式化相对时间
 function formatRelativeTime(dateString) {
@@ -76,111 +72,44 @@ function downloadFile(content, filename, type) {
   URL.revokeObjectURL(url);
 }
 
+// 新增：本地存储操作函数
+function getSavedIds() {
+  try {
+    return JSON.parse(localStorage.getItem('saved_article_ids') || '[]');
+  } catch {
+    return [];
+  }
+}
+
 export default function Saved() {
   const [savedArticles, setSavedArticles] = useState([]);
-  const [removedArticle, setRemovedArticle] = useState(null);
-  const [showUndo, setShowUndo] = useState(false);
-  const navigate = useNavigate();
-  const { userSession, triggerGoogleLogin } = useContext(UserContext);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Load bookmarked articles
+  // 加载本地保存的文章ID并批量获取详情
   useEffect(() => {
     const fetchSavedArticles = async () => {
-      if (!userSession?.user?.id) return;
-      
+      const savedIds = getSavedIds();
+      if (savedIds.length === 0) {
+        setSavedArticles([]);
+        return;
+      }
       try {
-        setLoading(true);
-        const response = await fetch(`https://simplenews-production.up.railway.app/api/saved?user_id=${userSession.user.id}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          setSavedArticles(data.articles || []);
-        } else {
-          console.error('Failed to fetch saved articles');
-          setError('Failed to load saved articles');
-        }
-      } catch (error) {
-        console.error('Error fetching saved articles:', error);
-        setError('Error loading saved articles');
-      } finally {
-        setLoading(false);
+        // 批量获取新闻详情（这里用/news/today拉取全部后筛选，或逐个请求/news/article/{id}）
+        const response = await fetch('https://simplenews-production.up.railway.app/news/today?offset=0&limit=100');
+        const allNews = await response.json();
+        const filtered = allNews.filter(article => savedIds.includes(article.id));
+        setSavedArticles(filtered);
+      } catch (err) {
+        console.error('Failed to load saved articles', err);
       }
     };
-    
     fetchSavedArticles();
-  }, [userSession]);
+  }, []);
 
-  // Save bookmarks to localStorage
-  const saveToStorage = (articles) => {
-    localStorage.setItem('savedArticles', JSON.stringify(articles));
-    setSavedArticles(articles);
-  };
-
-  // Remove bookmark
-  const removeFromSaved = async (articleToRemove) => {
-    if (!userSession) {
-      toast("Please login to manage saved articles");
-      return;
-    }
-    
-    try {
-      const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
-        method: "DELETE",
-        body: JSON.stringify({ newsId: articleToRemove.id, userId: userSession.user.id }),
-        headers: { "Content-Type": "application/json" }
-      });
-      
-      if (response.ok) {
-        const updatedArticles = savedArticles.filter(article => article.id !== articleToRemove.id);
-        setSavedArticles(updatedArticles);
-        setRemovedArticle(articleToRemove);
-        setShowUndo(true);
-        toast("Article removed from saved");
-        
-        // Auto-hide undo button after 5 seconds
-        setTimeout(() => {
-          setShowUndo(false);
-          setRemovedArticle(null);
-        }, 5000);
-      } else {
-        const error = await response.json();
-        toast(`Failed to remove article: ${error.detail}`);
-      }
-    } catch (error) {
-      console.error("Error removing article:", error);
-      toast("Failed to remove article");
-    }
-  };
-
-  // Undo remove
-  const undoRemove = async () => {
-    if (!removedArticle || !userSession) {
-      return;
-    }
-    
-    try {
-      const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
-        method: "POST",
-        body: JSON.stringify({ newsId: removedArticle.id, userId: userSession.user.id }),
-        headers: { "Content-Type": "application/json" }
-      });
-      
-      if (response.ok) {
-        const updatedArticles = [...savedArticles, removedArticle];
-        setSavedArticles(updatedArticles);
-        setRemovedArticle(null);
-        setShowUndo(false);
-        toast("Article restored to saved");
-      } else {
-        const error = await response.json();
-        toast(`Failed to restore article: ${error.detail}`);
-      }
-    } catch (error) {
-      console.error("Error restoring article:", error);
-      toast("Failed to restore article");
-    }
+  // 移除已保存
+  const removeFromSaved = (articleId) => {
+    const savedIds = getSavedIds().filter(id => id !== articleId);
+    localStorage.setItem('saved_article_ids', JSON.stringify(savedIds));
+    setSavedArticles(articles => articles.filter(a => a.id !== articleId));
   };
 
   // Export bookmarks
@@ -214,7 +143,7 @@ export default function Saved() {
   // 跳转到文章详情页
   const goToArticle = (title) => {
     const slug = encodeURIComponent(title);
-    navigate(`/article/${slug}`);
+    window.location.href = `/article/${slug}`;
   };
 
   return (
@@ -241,57 +170,6 @@ export default function Saved() {
           Total: {savedArticles.length} articles
         </p>
       </div>
-
-      {/* Login prompt */}
-      {!userSession && (
-        <div style={{
-          textAlign: "center",
-          padding: "2rem",
-          background: "var(--card-bg)",
-          border: "1px solid var(--border-color)",
-          borderRadius: "0.5rem",
-          marginBottom: "2rem",
-        }}>
-          <h3 style={{
-            color: "var(--text-color)",
-            marginBottom: "1rem",
-            fontFamily: "var(--font-mono)",
-          }}>
-            Login Required
-          </h3>
-          <p style={{
-            color: "var(--secondary-color)",
-            marginBottom: "1.5rem",
-            fontFamily: "var(--font-mono)",
-          }}>
-            Please login with Google to view and manage your saved articles.
-          </p>
-          <button
-            onClick={() => {
-              if (triggerGoogleLogin) triggerGoogleLogin();
-            }}
-            style={{
-              background: "var(--highlight-color)",
-              border: "none",
-              color: "white",
-              fontFamily: "var(--font-mono)",
-              fontSize: "1rem",
-              cursor: "pointer",
-              padding: "0.75rem 1.5rem",
-              borderRadius: "0.25rem",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.opacity = "0.8";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.opacity = "1";
-            }}
-          >
-            🔐 Login with Google
-          </button>
-        </div>
-      )}
 
       {/* Export buttons */}
       {savedArticles.length > 0 && (
@@ -492,7 +370,7 @@ export default function Saved() {
                 </a>
 
                 <button
-                  onClick={() => removeFromSaved(article)}
+                  onClick={() => removeFromSaved(article.id)}
                   style={{
                     background: "none",
                     border: "1px solid var(--border-color)",
@@ -520,54 +398,6 @@ export default function Saved() {
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Toast 通知 */}
-      {showUndo && (
-        <div style={{
-          position: "fixed",
-          bottom: "2rem",
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "var(--bg-color)",
-          color: "var(--text-color)",
-          border: "1px solid var(--border-color)",
-          borderRadius: "0.5rem",
-          padding: "1rem 1.5rem",
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.9rem",
-          zIndex: 1000,
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
-          display: "flex",
-          alignItems: "center",
-          gap: "1rem",
-        }}>
-          <span>Removed from saved</span>
-          <button
-            onClick={undoRemove}
-            style={{
-              background: "var(--show-summary-bg)",
-              border: "1px solid var(--border-color)",
-              color: "var(--show-summary-text)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              padding: "0.25rem 0.5rem",
-              borderRadius: "0.25rem",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.opacity = "0.8";
-              e.target.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.opacity = "1";
-              e.target.style.transform = "translateY(0)";
-            }}
-          >
-            Undo
-          </button>
         </div>
       )}
     </div>

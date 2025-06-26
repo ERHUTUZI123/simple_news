@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   voteNews,
   downvoteNews,
 } from "../services/api";
-import { UserContext } from "../context/UserContext";
 import { toast } from "react-toastify";
 
 // 格式化相对时间（展示分钟 m、小时 h、天 d）
@@ -87,40 +86,26 @@ function formatKeywords(keywords) {
   }
 }
 
+// 新增：本地存储操作函数
+function getSavedIds() {
+  try {
+    return JSON.parse(localStorage.getItem('saved_article_ids') || '[]');
+  } catch {
+    return [];
+  }
+}
+function setSavedIds(ids) {
+  localStorage.setItem('saved_article_ids', JSON.stringify(ids));
+}
+
 export default function NewsCard({ news, onVote, showScore = false }) {
   const navigate = useNavigate();
-  const { userSession, triggerGoogleLogin } = useContext(UserContext);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(() => getSavedIds().includes(news.id));
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
 
   // 从news对象中提取数据
-  const { id, title, link, date, source, content, score, vote_count, keywords } = news;
-
-  // Check if article is bookmarked
-  useEffect(() => {
-    const checkSavedStatus = async () => {
-      if (!userSession) {
-        setIsSaved(false);
-        return;
-      }
-      
-      try {
-        const response = await fetch(`https://simplenews-production.up.railway.app/api/saved/check?user_id=${userSession.user.id}&news_id=${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setIsSaved(data.saved);
-        } else {
-          setIsSaved(false);
-        }
-      } catch (error) {
-        console.error("Error checking saved status:", error);
-        setIsSaved(false);
-      }
-    };
-    
-    checkSavedStatus();
-  }, [id, userSession]);
+  const { id, title, link, date, source, score, vote_count, keywords } = news;
 
   // Like or undo
   const toggleHeadline = async () => {
@@ -150,55 +135,19 @@ export default function NewsCard({ news, onVote, showScore = false }) {
     }
   };
 
-  // Bookmark function
-  const onSaveClick = async () => {
-    if (!userSession) {
-      toast("Please login with Google to save articles.");
-      if (triggerGoogleLogin) triggerGoogleLogin();
-      return;
-    }
-    
-    try {
-      if (isSaved) {
-        // 取消保存
-        const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
-          method: "DELETE",
-          body: JSON.stringify({ 
-            newsId: id, 
-            userId: userSession.user.id 
-          }),
-          headers: { "Content-Type": "application/json" }
-        });
-        
-        if (response.ok) {
-          setIsSaved(false);
-          toast("Article removed from saved");
-        } else {
-          const error = await response.json();
-          toast(`Failed to remove article: ${error.detail}`);
-        }
-      } else {
-        // 保存文章
-        const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
-          method: "POST",
-          body: JSON.stringify({ 
-            newsId: id, 
-            userId: userSession.user.id 
-          }),
-          headers: { "Content-Type": "application/json" }
-        });
-        
-        if (response.ok) {
-          setIsSaved(true);
-          toast("Article saved successfully!");
-        } else {
-          const error = await response.json();
-          toast(`Failed to save article: ${error.detail}`);
-        }
-      }
-    } catch (error) {
-      console.error("Save operation failed:", error);
-      toast("Failed to save article. Please try again.");
+  // 保存/取消保存
+  const onSaveClick = () => {
+    let savedIds = getSavedIds();
+    if (isSaved) {
+      savedIds = savedIds.filter(savedId => savedId !== id);
+      setSavedIds(savedIds);
+      setIsSaved(false);
+      toast('Article removed from saved');
+    } else {
+      savedIds.push(id);
+      setSavedIds(savedIds);
+      setIsSaved(true);
+      toast('Article saved successfully!');
     }
   };
 
