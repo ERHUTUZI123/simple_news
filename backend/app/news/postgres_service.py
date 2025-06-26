@@ -72,15 +72,15 @@ class PostgresService:
                     date_str = datetime.utcnow().isoformat() + 'Z'
                 
                 results.append({
-                    "id": item.id,
+                    "id": str(item.id),
                     "title": item.title,
-                    "summary": item.summary,
+                    "content": item.content,
                     "link": item.link,
-                    "published_at": date_str,
+                    "date": date_str,
                     "source": item.source,
                     "vote_count": self.get_vote_count(item.title),
-                    "score": item.score,
-                    "headline_count": item.headline_count
+                    "score": float(item.score) if item.score is not None else 0.0,
+                    "keywords": item.keywords or []
                 })
             
             if use_cache:
@@ -256,13 +256,45 @@ class PostgresService:
             if cached:
                 return json.loads(cached)
             
-            # 查询数据库
-            news_items = self.get_news(0, 1000)
-            for item in news_items:
-                if item.get('title') == title:
-                    # 设置缓存，600秒
-                    redis_client.setex(cache_key, 600, json.dumps(item, ensure_ascii=False))
-                    return item
+            # 直接查询数据库
+            news = self.db.query(News).filter(News.title == title).first()
+            
+            if news:
+                # 确保日期格式正确
+                date_str = None
+                published_at = news.published_at
+                if published_at:
+                    try:
+                        # 确保是UTC时间并格式化为ISO字符串
+                        if published_at.tzinfo is None:
+                            # 如果没有时区信息，假设是UTC
+                            date_str = published_at.isoformat() + 'Z'
+                        else:
+                            # 如果有时区信息，转换为UTC
+                            from datetime import timezone
+                            utc_date = published_at.astimezone(timezone.utc)
+                            date_str = utc_date.isoformat()
+                    except Exception as e:
+                        print(f"Error formatting date: {e}")
+                        date_str = datetime.utcnow().isoformat() + 'Z'
+                else:
+                    date_str = datetime.utcnow().isoformat() + 'Z'
+                
+                result = {
+                    "id": str(news.id),  # Convert UUID to string
+                    "title": news.title,
+                    "content": news.content,  # Frontend expects 'content'
+                    "link": news.link,
+                    "date": date_str,  # Frontend expects 'date'
+                    "source": news.source,
+                    "vote_count": self.get_vote_count(news.title),
+                    "score": float(news.score) if news.score is not None else 0.0,
+                    "keywords": news.keywords or []
+                }
+                
+                # 设置缓存，600秒
+                redis_client.setex(cache_key, 600, json.dumps(result, ensure_ascii=False))
+                return result
             
             # 没找到文章
             result = {"error": "Article not found"}
