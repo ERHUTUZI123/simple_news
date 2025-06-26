@@ -63,7 +63,7 @@ def get_today_news(
     pg_service: PostgresService = Depends(get_pg_service),
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("time"),  # 可以支持 smart/time/ai_quality
+    sort_by: str = Query("time"),  # 可以支持 smart/time
     source_filter: str = Query(None)
 ):
     # 获取 Postgres 的新闻
@@ -86,7 +86,6 @@ def get_today_news(
             "date": date_str,
             "source": item.source,
             "vote_count": vote_count,
-            "ai_score": item.ai_score,
         })
     return results
 
@@ -116,12 +115,6 @@ def news_summary(data: dict = Body(...)):
     summary = summarize_news(content)
     return {"summary": summary}
 
-@router.get("/news/score")
-def news_score(text: str = Query(...)):
-    """独立打分接口，返回 1-10 分"""
-    score = score_news(text)
-    return {"ai_score": score}
-
 @router.get("/news/article")
 def get_article_by_title(
     title: str = Query(...),
@@ -140,7 +133,6 @@ def get_article_by_title(
                 "date": str(getattr(item, 'date', '')),
                 "source": item.source,
                 "vote_count": pg_service.get_vote_count(title_str),
-                "ai_score": item.ai_score,
             }
     return {"error": "Article not found"}
 
@@ -163,21 +155,6 @@ def _call_openai_summarize(prompt: str, max_tokens: int) -> Optional[str]:
         return response.choices[0].message.content
     except Exception as e:
         print(f"❌ [ERROR] OpenAI summarize error: {e}")
-        return None
-
-@handle_openai_rate_limit
-def _call_openai_score(prompt: str) -> Optional[str]:
-    """调用OpenAI评分"""
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=10,
-            temperature=0.3
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"❌ [ERROR] OpenAI score error: {e}")
         return None
 
 def summarize_news(text: str, word_count: int = 70) -> str:
@@ -207,34 +184,3 @@ def summarize_news(text: str, word_count: int = 70) -> str:
     except Exception as e:
         print(f"❌ [ERROR] OpenAI summarize error: {e}")
         return "generation failed"
-
-def score_news(text: str) -> int:
-    """评分新闻重要性，返回1-10分"""
-    if not text.strip():
-        print("❌ [ERROR] Empty text passed to score_news!")
-        return 5
-    
-    prompt = (
-        "Please rate the significance of this news article (1–10):\n\n"
-        "Consider the scale and extent of impact.\n\n"
-        "Prioritize international politics, economics, and technological changes.\n"
-        "(1 = minor significance; 10 = extremely significant)\n\n"
-        f"{text[:1000]}..."
-    )
-    try:
-        result = _call_openai_score(prompt)
-        print(f"[DEBUG] OpenAI score raw result: {result}")
-        if result:
-            import re
-            numbers = re.findall(r'\d+', result)
-            if numbers:
-                score = int(numbers[0])
-                print(f"[DEBUG] Parsed score: {score}")
-                return max(1, min(10, score))
-            else:
-                print("[ERROR] No number found in OpenAI response!")
-        else:
-            print("[ERROR] OpenAI returned empty result!")
-    except Exception as e:
-        print(f"❌ [ERROR] Score parsing error: {e}")
-    return 5  # 默认分数

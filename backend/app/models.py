@@ -13,7 +13,6 @@ class News(Base):
     link = Column(String)
     date = Column(DateTime, default=datetime.utcnow)
     source = Column(String)
-    ai_score = Column(Float, default=5.0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Vote(Base):

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchVote, fetchScore, fetchNewsWithSort } from "../services/api";
+import { fetchVote, fetchNewsWithSort } from "../services/api";
 import NewsCard from "../components/NewsCard";
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -197,7 +197,6 @@ export default function Home() {
     { value: 'smart', label: 'Smart Sort' },
     { value: 'time', label: 'Latest' },
     { value: 'popular', label: 'Most Popular' },
-    { value: 'ai_quality', label: 'AI Picks' },
     { value: 'source', label: 'By Source' }
   ];
 
@@ -224,15 +223,12 @@ export default function Home() {
       const data = await fetchNewsWithSort(offset, LIMIT, sortBy, sourceFilter);
       const enriched = await Promise.all(
         data.map(async (item) => {
-          const count = await fetchVote(item.title).catch(() => 0);
-          const aiScore = await fetchScore(item.content).catch(() => null);
-          return { 
+          const count = await fetchVote(item.title);
+          return {
             ...item, 
             voteCount: count, 
-            aiScore,
             // 使用后端返回的数据
             vote_count: item.vote_count || count,
-            ai_score: item.ai_score || aiScore,
             comprehensive_score: item.comprehensive_score
           };
         })

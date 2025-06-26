@@ -19,8 +19,6 @@ class PostgresService:
         # 排序
         if sort_by == "time":
             query = query.order_by(News.date.desc())
-        elif sort_by == "ai_quality":
-            query = query.order_by(News.ai_score.desc())
         else:  # 默认使用时间排序
             query = query.order_by(News.date.desc())
 
@@ -38,8 +36,7 @@ class PostgresService:
                     summary=item.get("summary", ""),
                     link=item["link"],
                     date=item.get("date", datetime.utcnow()),
-                    source=item.get("source", ""),
-                    ai_score=item.get("ai_score", 5.0)
+                    source=item.get("source", "")
                 )
                 self.db.add(news)
             self.db.commit()

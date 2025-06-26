@@ -30,7 +30,7 @@ function formatRelativeTime(dateString) {
   return `${diffD}d`;
 }
 
-export default function NewsCard({ title, link, date, source, content, ai_score, comprehensive_score, vote_count }) {
+export default function NewsCard({ title, link, date, source, content, comprehensive_score, vote_count }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [tldr, setTldr] = useState("");
@@ -143,11 +143,6 @@ export default function NewsCard({ title, link, date, source, content, ai_score,
         <span style={{ margin: "0 0.5rem" }}>🕒</span> {formatRelativeTime(date)}
         
         {/* 评分信息 */}
-        {ai_score && (
-          <span style={{ margin: "0 0.5rem", color: "var(--secondary-color)" }}>
-            🤖 AI: {ai_score}/10
-          </span>
-        )}
         {vote_count > 0 && (
           <span style={{ margin: "0 0.5rem", color: "var(--highlight-color)" }}>
             👍 {vote_count}

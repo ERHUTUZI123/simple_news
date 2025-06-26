@@ -16,12 +16,6 @@ export function fetchSummary(content) {
     .then(res => res.data.summary);
 }
 
-export function fetchScore(content) {
-  return axios
-    .get(`${API_BASE}/news/score`, { params: { text: content } })
-    .then(res => res.data.ai_score);
-}
-
 export function voteNews(title, delta = 1) {
   return axios
     .post(`${API_BASE}/news/vote`, null, { params: { title, delta } })
