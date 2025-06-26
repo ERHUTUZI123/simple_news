@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { fetchVote, fetchNewsWithSort } from "../services/api";
 import NewsCard from "../components/NewsCard";
 import { GoogleLogin } from '@react-oauth/google';
-import { motion } from 'framer-motion';
 
 // 解析JWT token获取用户信息
 function parseJwt(token) {
@@ -288,30 +287,20 @@ export default function Home() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      padding: "2rem 1rem",
-      fontFamily: "monospace",
-    }}>
+    <div className="news-container">
       <LoginButton />
       
       {/* 标题和描述 */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+      <div
         style={{
           textAlign: "center",
           marginBottom: "3rem",
-          color: "#fff",
         }}
       >
         <h1 style={{
           fontSize: "3rem",
           fontWeight: "bold",
           marginBottom: "1rem",
-          textShadow: "0 2px 4px rgba(0,0,0,0.3)",
         }}>
           OneMinNews
         </h1>
@@ -324,7 +313,7 @@ export default function Home() {
         }}>
           AI-powered news aggregation with intelligent sorting
         </p>
-      </motion.div>
+      </div>
 
       {/* 过滤器和排序控件 */}
       <div style={{
@@ -339,19 +328,26 @@ export default function Home() {
           <button
             onClick={() => setShowSortMenu(!showSortMenu)}
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              background: "none",
+              border: "1px solid var(--border-color)",
               borderRadius: "8px",
               padding: "0.75rem 1rem",
-              color: "#fff",
-              fontFamily: "monospace",
+              color: "var(--text-color)",
+              fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
               cursor: "pointer",
-              backdropFilter: "blur(10px)",
               minWidth: "200px",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "var(--text-color)";
+              e.target.style.color = "var(--bg-color)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--text-color)";
             }}
           >
             <span>📊 {getSortLabel(sortBy)}</span>
@@ -364,12 +360,11 @@ export default function Home() {
               top: "100%",
               left: 0,
               right: 0,
-              background: "rgba(255,255,255,0.95)",
-              border: "1px solid rgba(0,0,0,0.1)",
+              background: "var(--bg-color)",
+              border: "1px solid var(--border-color)",
               borderRadius: "8px",
               padding: "0.5rem 0",
               marginTop: "0.5rem",
-              backdropFilter: "blur(10px)",
               zIndex: 1000,
             }}>
               {sortOptions.map(option => (
@@ -385,17 +380,17 @@ export default function Home() {
                     background: "none",
                     border: "none",
                     textAlign: "left",
-                    fontFamily: "monospace",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "0.9rem",
-                    color: sortBy === option.value ? "#667eea" : "#333",
+                    color: sortBy === option.value ? "var(--highlight-color)" : "var(--text-color)",
                     cursor: "pointer",
                     fontWeight: sortBy === option.value ? "bold" : "normal",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.background = "rgba(102, 126, 234, 0.1)";
+                    e.target.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.background = "none";
+                    e.target.style.backgroundColor = "none";
                   }}
                 >
                   {option.label}
@@ -410,19 +405,26 @@ export default function Home() {
           <button
             onClick={() => setShowSourceMenu(!showSourceMenu)}
             style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              background: "none",
+              border: "1px solid var(--border-color)",
               borderRadius: "8px",
               padding: "0.75rem 1rem",
-              color: "#fff",
-              fontFamily: "monospace",
+              color: "var(--text-color)",
+              fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
               cursor: "pointer",
-              backdropFilter: "blur(10px)",
               minWidth: "200px",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "var(--text-color)";
+              e.target.style.color = "var(--bg-color)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--text-color)";
             }}
           >
             <span>📰 {getSourceLabel(sourceFilter)}</span>
@@ -435,12 +437,11 @@ export default function Home() {
               top: "100%",
               left: 0,
               right: 0,
-              background: "rgba(255,255,255,0.95)",
-              border: "1px solid rgba(0,0,0,0.1)",
+              background: "var(--bg-color)",
+              border: "1px solid var(--border-color)",
               borderRadius: "8px",
               padding: "0.5rem 0",
               marginTop: "0.5rem",
-              backdropFilter: "blur(10px)",
               zIndex: 1000,
               maxHeight: "300px",
               overflowY: "auto",
@@ -458,17 +459,17 @@ export default function Home() {
                     background: "none",
                     border: "none",
                     textAlign: "left",
-                    fontFamily: "monospace",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "0.9rem",
-                    color: sourceFilter === option.value ? "#667eea" : "#333",
+                    color: sourceFilter === option.value ? "var(--highlight-color)" : "var(--text-color)",
                     cursor: "pointer",
                     fontWeight: sourceFilter === option.value ? "bold" : "normal",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.background = "rgba(102, 126, 234, 0.1)";
+                    e.target.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.background = "none";
+                    e.target.style.backgroundColor = "none";
                   }}
                 >
                   {option.label}
@@ -480,34 +481,25 @@ export default function Home() {
       </div>
 
       {/* 新闻列表 */}
-      <div style={{
-        maxWidth: "800px",
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}>
+      <div className="news-list">
         {newsList.map((news, index) => (
-          <motion.div
+          <div
             key={`${news.title}-${index}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
           >
             <NewsCard
               news={news}
               onVote={handleVote}
               showScore={sortBy === 'smart'} // 智能排序时显示评分
             />
-          </motion.div>
+          </div>
         ))}
         
         {loading && (
           <div style={{
             textAlign: "center",
             padding: "2rem",
-            color: "#fff",
-            fontFamily: "monospace",
+            color: "var(--secondary-color)",
+            fontFamily: "var(--font-mono)",
           }}>
             Loading more news...
           </div>
