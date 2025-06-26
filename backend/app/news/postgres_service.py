@@ -513,27 +513,26 @@ class PostgresService:
         return normalized
 
     def _is_duplicate_title(self, new_title: str) -> bool:
-        """检查标题是否重复（使用智能比较）"""
+        """检查标题是否重复（简化版本）"""
         try:
-            normalized_new = self._normalize_title(new_title)
+            # 直接检查完全相同的标题
+            existing = self.db.query(News).filter(News.title == new_title).first()
+            if existing:
+                return True
+            
+            # 检查相似标题（简单的包含关系）
+            normalized_new = new_title.lower().strip()
             
             # 获取所有现有新闻标题
             existing_news = self.db.query(News.title).all()
             
             for existing_title, in existing_news:
-                normalized_existing = self._normalize_title(existing_title)
+                normalized_existing = existing_title.lower().strip()
                 
-                # 完全匹配
-                if normalized_new == normalized_existing:
+                # 如果新标题包含在现有标题中，或现有标题包含在新标题中
+                if (normalized_new in normalized_existing and len(normalized_existing) - len(normalized_new) < 10) or \
+                   (normalized_existing in normalized_new and len(normalized_new) - len(normalized_existing) < 10):
                     return True
-                
-                # 相似度检查（如果标准化后相似度很高）
-                if len(normalized_new) > 10 and len(normalized_existing) > 10:
-                    # 计算相似度（简单的字符重叠率）
-                    common_chars = sum(1 for c in normalized_new if c in normalized_existing)
-                    similarity = common_chars / max(len(normalized_new), len(normalized_existing))
-                    if similarity > 0.9:  # 90%相似度认为是重复
-                        return True
             
             return False
         except Exception as e:
