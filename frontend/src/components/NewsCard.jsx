@@ -186,9 +186,9 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         <button
           onClick={goToArticle}
           style={{
-            background: "var(--highlight-color)",
-            border: "1px solid var(--highlight-color)",
-            color: "white",
+            background: "var(--show-summary-bg)",
+            border: "1px solid var(--border-color)",
+            color: "var(--show-summary-text)",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -215,16 +215,17 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           target="_blank" 
           rel="noopener noreferrer"
           style={{
-            color: "var(--text-color)",
+            color: "var(--view-original-text)",
             textDecoration: "none",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             padding: "0.5rem 1rem",
-            border: "1px solid var(--border-color)",
+            border: "1px solid var(--view-original-border)",
             borderRadius: "0.25rem",
             transition: "all 0.2s ease",
             display: "inline-block",
             marginRight: "1rem",
+            backgroundColor: "transparent",
           }}
           onMouseEnter={(e) => {
             e.target.style.backgroundColor = "var(--button-hover-bg)";
@@ -233,8 +234,8 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = "transparent";
-            e.target.style.color = "var(--text-color)";
-            e.target.style.borderColor = "var(--border-color)";
+            e.target.style.color = "var(--view-original-text)";
+            e.target.style.borderColor = "var(--view-original-border)";
           }}
         >
           View Original
@@ -243,9 +244,9 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         <button
           onClick={toggleSaved}
           style={{
-            background: "none",
+            background: isSaved ? "var(--highlight-color)" : "var(--save-bg)",
             border: "1px solid var(--border-color)",
-            color: isSaved ? "var(--highlight-color)" : "var(--text-color)",
+            color: isSaved ? "white" : "var(--save-text)",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -256,15 +257,15 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           }}
           onMouseEnter={(e) => {
             if (!isSaved) {
-              e.target.style.backgroundColor = "var(--button-hover-bg)";
-              e.target.style.color = "var(--button-hover-text)";
-              e.target.style.borderColor = "var(--button-hover-border)";
+              e.target.style.backgroundColor = "var(--save-hover-bg)";
+              e.target.style.color = "var(--save-text)";
+              e.target.style.borderColor = "var(--border-color)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isSaved) {
-              e.target.style.backgroundColor = "transparent";
-              e.target.style.color = "var(--text-color)";
+              e.target.style.backgroundColor = "var(--save-bg)";
+              e.target.style.color = "var(--save-text)";
               e.target.style.borderColor = "var(--border-color)";
             }
           }}
@@ -275,9 +276,9 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         <button
           onClick={toggleHeadline}
           style={{
-            background: isHeadline ? "var(--highlight-color)" : "none",
+            background: isHeadline ? "var(--highlight-color)" : "transparent",
             border: "1px solid var(--border-color)",
-            color: isHeadline ? "white" : "var(--text-color)",
+            color: isHeadline ? "white" : "var(--like-text)",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -296,7 +297,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           onMouseLeave={(e) => {
             if (!isHeadline) {
               e.target.style.backgroundColor = "transparent";
-              e.target.style.color = "var(--text-color)";
+              e.target.style.color = "var(--like-text)";
               e.target.style.borderColor = "var(--border-color)";
             }
           }}

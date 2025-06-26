@@ -226,25 +226,25 @@ export default function Article() {
         <button
           onClick={() => navigate('/')}
           style={{
-            background: 'none',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-color)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            padding: '0.5rem 1rem',
-            borderRadius: '0.25rem',
-            transition: 'all 0.2s ease',
+            background: "var(--show-summary-bg)",
+            border: "1px solid var(--border-color)",
+            color: "var(--show-summary-text)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            padding: "0.5rem 1rem",
+            borderRadius: "0.25rem",
+            transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'var(--button-hover-bg)';
-            e.target.style.color = 'var(--button-hover-text)';
-            e.target.style.borderColor = 'var(--button-hover-border)';
+            e.target.style.backgroundColor = "var(--button-hover-bg)";
+            e.target.style.color = "var(--button-hover-text)";
+            e.target.style.borderColor = "var(--button-hover-border)";
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-            e.target.style.color = 'var(--text-color)';
-            e.target.style.borderColor = 'var(--border-color)';
+            e.target.style.backgroundColor = "var(--show-summary-bg)";
+            e.target.style.color = "var(--show-summary-text)";
+            e.target.style.borderColor = "var(--border-color)";
           }}
         >
           ← Back to Home
@@ -295,25 +295,25 @@ export default function Article() {
           <button
             onClick={toggleSummaryType}
             style={{
-              background: 'none',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-color)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              transition: 'all 0.2s ease',
+              background: "var(--show-summary-bg)",
+              border: "1px solid var(--border-color)",
+              color: "var(--show-summary-text)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.25rem",
+              transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--button-hover-bg)';
-              e.target.style.color = 'var(--button-hover-text)';
-              e.target.style.borderColor = 'var(--button-hover-border)';
+              e.target.style.backgroundColor = "var(--button-hover-bg)";
+              e.target.style.color = "var(--button-hover-text)";
+              e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'transparent';
-              e.target.style.color = 'var(--text-color)';
-              e.target.style.borderColor = 'var(--border-color)';
+              e.target.style.backgroundColor = "var(--show-summary-bg)";
+              e.target.style.color = "var(--show-summary-text)";
+              e.target.style.borderColor = "var(--border-color)";
             }}
           >
             {summaryType === 'detailed' ? '📝 Detailed' : '📋 Brief'}
@@ -398,27 +398,28 @@ export default function Article() {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              color: 'var(--text-color)',
-              textDecoration: 'none',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.9rem',
-              padding: '0.5rem 1rem',
-              border: '1px solid var(--border-color)',
-              borderRadius: '0.25rem',
-              transition: 'all 0.2s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
+              color: "var(--view-original-text)",
+              textDecoration: "none",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.9rem",
+              padding: "0.5rem 1rem",
+              border: "1px solid var(--view-original-border)",
+              borderRadius: "0.25rem",
+              transition: "all 0.2s ease",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              backgroundColor: "transparent",
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--button-hover-bg)';
-              e.target.style.color = 'var(--button-hover-text)';
-              e.target.style.borderColor = 'var(--button-hover-border)';
+              e.target.style.backgroundColor = "var(--button-hover-bg)";
+              e.target.style.color = "var(--button-hover-text)";
+              e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'transparent';
-              e.target.style.color = 'var(--text-color)';
-              e.target.style.borderColor = 'var(--border-color)';
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--view-original-text)";
+              e.target.style.borderColor = "var(--view-original-border)";
             }}
           >
             🔗 Original Article
@@ -427,62 +428,62 @@ export default function Article() {
           <button
             onClick={toggleSaved}
             style={{
-              background: 'none',
-              border: '1px solid var(--border-color)',
-              color: isSaved ? 'var(--highlight-color)' : 'var(--text-color)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              transition: 'all 0.2s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
+              background: isSaved ? "var(--highlight-color)" : "var(--save-bg)",
+              border: "1px solid var(--border-color)",
+              color: isSaved ? "white" : "var(--save-text)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.25rem",
+              transition: "all 0.2s ease",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
             }}
             onMouseEnter={(e) => {
               if (!isSaved) {
-                e.target.style.backgroundColor = 'var(--button-hover-bg)';
-                e.target.style.color = 'var(--button-hover-text)';
-                e.target.style.borderColor = 'var(--button-hover-border)';
+                e.target.style.backgroundColor = "var(--save-hover-bg)";
+                e.target.style.color = "var(--save-text)";
+                e.target.style.borderColor = "var(--border-color)";
               }
             }}
             onMouseLeave={(e) => {
               if (!isSaved) {
-                e.target.style.backgroundColor = 'transparent';
-                e.target.style.color = 'var(--text-color)';
-                e.target.style.borderColor = 'var(--border-color)';
+                e.target.style.backgroundColor = "var(--save-bg)";
+                e.target.style.color = "var(--save-text)";
+                e.target.style.borderColor = "var(--border-color)";
               }
             }}
           >
-            {isSaved ? '⭐ Saved' : '⭐ Save'}
+            {isSaved ? "⭐ Saved" : "⭐ Save"}
           </button>
 
           <button
             onClick={shareArticle}
             style={{
-              background: 'none',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-color)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.25rem',
-              transition: 'all 0.2s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
+              background: "var(--show-summary-bg)",
+              border: "1px solid var(--border-color)",
+              color: "var(--show-summary-text)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.25rem",
+              transition: "all 0.2s ease",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--button-hover-bg)';
-              e.target.style.color = 'var(--button-hover-text)';
-              e.target.style.borderColor = 'var(--button-hover-border)';
+              e.target.style.backgroundColor = "var(--button-hover-bg)";
+              e.target.style.color = "var(--button-hover-text)";
+              e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'transparent';
-              e.target.style.color = 'var(--text-color)';
-              e.target.style.borderColor = 'var(--border-color)';
+              e.target.style.backgroundColor = "var(--show-summary-bg)";
+              e.target.style.color = "var(--show-summary-text)";
+              e.target.style.borderColor = "var(--border-color)";
             }}
           >
             📤 Share

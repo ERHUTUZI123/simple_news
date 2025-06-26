@@ -9,12 +9,24 @@
   --trash-color: #8B4513;      /* 便便棕，用于 Trash */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace;
   
+  /* 按钮颜色 - 深色模式 */
+  --sort-selected-bg: #f0f0f0;
+  --sort-selected-text: #111111;
+  --show-summary-bg: #222222;
+  --show-summary-text: #ffffff;
+  --view-original-border: #aaaaaa;
+  --view-original-text: #ffffff;
+  --save-bg: #333333;
+  --save-text: #ffffff;
+  --save-hover-bg: #444444;
+  --like-text: #888888;
+  --like-hover-text: #ffffff;
+  
   /* 按钮悬停颜色 */
   --button-hover-bg: #64b5f6;
   --button-hover-text: #ffffff;
   --button-hover-border: #64b5f6;
   --like-hover-bg: #FFD700;
-  --like-hover-text: #ffffff;
   --like-hover-border: #FFD700;
   --trash-hover-bg: #f44336;
   --trash-hover-text: #ffffff;
@@ -31,12 +43,24 @@
   --highlight-color: #f57c00;
   --trash-color: #d32f2f;
   
+  /* 按钮颜色 - 浅色模式 */
+  --sort-selected-bg: #111111;
+  --sort-selected-text: #ffffff;
+  --show-summary-bg: #f5f5f5;
+  --show-summary-text: #111111;
+  --view-original-border: #666666;
+  --view-original-text: #111111;
+  --save-bg: #ededed;
+  --save-text: #111111;
+  --save-hover-bg: #cccccc;
+  --like-text: #888888;
+  --like-hover-text: #111111;
+  
   /* 浅色模式按钮悬停颜色 */
   --button-hover-bg: #1976d2;
   --button-hover-text: #ffffff;
   --button-hover-border: #1976d2;
   --like-hover-bg: #f57c00;
-  --like-hover-text: #ffffff;
   --like-hover-border: #f57c00;
   --trash-hover-bg: #d32f2f;
   --trash-hover-text: #ffffff;

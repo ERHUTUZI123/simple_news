@@ -175,9 +175,9 @@ export default function Saved() {
           <button
             onClick={() => exportSaved('md')}
             style={{
-              background: "var(--highlight-color)",
-              border: "1px solid var(--highlight-color)",
-              color: "white",
+              background: "var(--show-summary-bg)",
+              border: "1px solid var(--border-color)",
+              color: "var(--show-summary-text)",
               fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
               cursor: "pointer",
@@ -203,9 +203,9 @@ export default function Saved() {
           <button
             onClick={() => exportSaved('txt')}
             style={{
-              background: "none",
+              background: "var(--show-summary-bg)",
               border: "1px solid var(--border-color)",
-              color: "var(--text-color)",
+              color: "var(--show-summary-text)",
               fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
               cursor: "pointer",
@@ -222,8 +222,8 @@ export default function Saved() {
               e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "transparent";
-              e.target.style.color = "var(--text-color)";
+              e.target.style.backgroundColor = "var(--show-summary-bg)";
+              e.target.style.color = "var(--show-summary-text)";
               e.target.style.borderColor = "var(--border-color)";
             }}
           >
@@ -303,9 +303,9 @@ export default function Saved() {
                 <button
                   onClick={() => goToArticle(article.title)}
                   style={{
-                    background: "var(--highlight-color)",
-                    border: "1px solid var(--highlight-color)",
-                    color: "white",
+                    background: "var(--show-summary-bg)",
+                    border: "1px solid var(--border-color)",
+                    color: "var(--show-summary-text)",
                     fontFamily: "var(--font-mono)",
                     fontSize: "0.9rem",
                     cursor: "pointer",
@@ -333,17 +333,18 @@ export default function Saved() {
                   target="_blank" 
                   rel="noopener noreferrer"
                   style={{
-                    color: "var(--text-color)",
+                    color: "var(--view-original-text)",
                     textDecoration: "none",
                     fontFamily: "var(--font-mono)",
                     fontSize: "0.9rem",
                     padding: "0.5rem 1rem",
-                    border: "1px solid var(--border-color)",
+                    border: "1px solid var(--view-original-border)",
                     borderRadius: "0.25rem",
                     transition: "all 0.2s ease",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "0.5rem",
+                    backgroundColor: "transparent",
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.backgroundColor = "var(--button-hover-bg)";
@@ -352,8 +353,8 @@ export default function Saved() {
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.backgroundColor = "transparent";
-                    e.target.style.color = "var(--text-color)";
-                    e.target.style.borderColor = "var(--border-color)";
+                    e.target.style.color = "var(--view-original-text)";
+                    e.target.style.borderColor = "var(--view-original-border)";
                   }}
                 >
                   🔗 View Original
@@ -418,9 +419,9 @@ export default function Saved() {
           <button
             onClick={undoRemove}
             style={{
-              background: "var(--highlight-color)",
-              border: "1px solid var(--highlight-color)",
-              color: "white",
+              background: "var(--show-summary-bg)",
+              border: "1px solid var(--border-color)",
+              color: "var(--show-summary-text)",
               fontFamily: "var(--font-mono)",
               fontSize: "0.8rem",
               cursor: "pointer",
