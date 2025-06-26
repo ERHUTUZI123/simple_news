@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import threading
+import time
 from routes.news import router as news_router
 from routes.pay import router as pay_router
 from app.db import SessionLocal
 from app.models import Vote
 from app.db import init_db
+from cache_worker import refresh_news_cache
 
 init_db()
 
@@ -23,9 +26,31 @@ app.add_middleware(
 app.include_router(news_router)
 app.include_router(pay_router)
 
+# 后台定时任务
+def background_news_refresh():
+    """后台新闻刷新任务"""
+    while True:
+        try:
+            print("🔄 后台任务：开始刷新新闻...")
+            refresh_news_cache()
+            print("✅ 后台任务：新闻刷新完成")
+        except Exception as e:
+            print(f"❌ 后台任务：新闻刷新失败 - {e}")
+        
+        # 等待15分钟
+        time.sleep(15 * 60)
+
+# 启动后台任务
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时启动后台任务"""
+    print("🚀 启动后台新闻刷新任务...")
+    thread = threading.Thread(target=background_news_refresh, daemon=True)
+    thread.start()
+
 @app.get("/")
 def root():
-    return {"message": "TechPulse backend is running"}
+    return {"message": "OneMinNews backend is running"}
 
 @app.get("/votes/")
 def get_votes():

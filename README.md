@@ -1,139 +1,139 @@
-# OneMinNews - AI摘要阅读页
+# OneMinNews - Tech News Aggregator
 
-## 功能概述
+## Overview
 
-OneMinNews 是一个新闻聚合应用，提供AI摘要阅读功能和收藏管理，让用户能够快速了解新闻要点并管理个人收藏。
+OneMinNews is a news aggregation application that provides AI-powered summaries and bookmark management, allowing users to quickly understand news highlights and manage their personal collections.
 
-## 新增功能：AI摘要阅读页
+## New Features: AI Summary Reading Page
 
-### 页面路径
-- `/article/:id` - 根据文章ID访问
-- `/summary/:slug` - 根据文章标题访问
+### Page Paths
+- `/article/:id` - Access by article ID
+- `/summary/:slug` - Access by article title
 
-### 功能特性
+### Features
 
-#### 1. 页面结构
-- **顶部导航**：Logo + 返回首页按钮
-- **文章信息**：来源、发布时间、标题
-- **AI摘要**：支持详细版/简洁版切换
-- **辅助功能**：原文链接、收藏、分享
+#### 1. Page Structure
+- **Top Navigation**: Logo + Back to Home button
+- **Article Information**: Source, publish time, title
+- **AI Summary**: Support for detailed/brief version toggle
+- **Auxiliary Functions**: Original link, bookmark, share
 
-#### 2. 核心功能
-- **AI摘要生成**：点击按钮生成AI摘要
-- **摘要类型切换**：在详细版和简洁版之间切换
-- **本地缓存**：摘要结果缓存在localStorage中
-- **收藏功能**：保存感兴趣的文章
-- **分享功能**：支持原生分享或复制链接
+#### 2. Core Features
+- **AI Summary Generation**: Click button to generate AI summary
+- **Summary Type Toggle**: Switch between detailed and brief versions
+- **Local Caching**: Summary results cached in localStorage
+- **Bookmark Function**: Save interesting articles
+- **Share Function**: Support native sharing or copy link
 
-#### 3. 视觉设计
-- **极简风格**：黑白配色，专注阅读体验
-- **代码字体**：使用等宽字体，提升可读性
-- **响应式设计**：适配各种屏幕尺寸
-- **微动画**：fadeIn动画增强用户体验
+#### 3. Visual Design
+- **Minimalist Style**: Black and white color scheme, focused on reading experience
+- **Code Font**: Use monospace font to improve readability
+- **Responsive Design**: Adapt to various screen sizes
+- **Micro-animations**: fadeIn animation enhances user experience
 
-## 新增功能：收藏页
+## New Features: Bookmarks Page
 
-### 页面路径
-- `/saved` - 收藏页面
+### Page Path
+- `/saved` - Bookmarks page
 
-### 功能特性
+### Features
 
-#### 1. 页面结构
-- **页面标题**：# My Saved Articles
-- **收藏计数**：显示当前收藏数量
-- **导出功能**：支持Markdown和TXT格式导出
-- **收藏列表**：与首页新闻卡片结构一致
+#### 1. Page Structure
+- **Page Title**: # My Saved Articles
+- **Bookmark Count**: Display current bookmark count
+- **Export Function**: Support Markdown and TXT format export
+- **Bookmark List**: Consistent structure with homepage news cards
 
-#### 2. 核心功能
-- **收藏管理**：查看、移除收藏的文章
-- **状态同步**：与首页和摘要页收藏状态同步
-- **导出功能**：支持.md和.txt格式导出
-- **撤销功能**：移除收藏后支持撤销操作
-- **快速访问**：一键跳转到文章摘要页
+#### 2. Core Features
+- **Bookmark Management**: View, remove bookmarked articles
+- **State Synchronization**: Real-time synchronization of bookmark status across all pages
+- **Export Function**: Support .md and .txt format export
+- **Undo Function**: Support undo operation after removing bookmarks
+- **Quick Access**: One-click jump to article summary page
 
-#### 3. 交互体验
-- **Toast通知**：操作反馈和撤销提示
-- **动画效果**：卡片淡入动画
-- **响应式设计**：移动端适配
-- **空状态提示**：引导用户收藏文章
+#### 3. Interactive Experience
+- **Toast Notifications**: Operation feedback and undo prompts
+- **Animation Effects**: Card fade-in animation
+- **Responsive Design**: Mobile adaptation
+- **Empty State Prompt**: Guide users to bookmark articles
 
-### 使用方法
+### Usage
 
-#### 收藏文章
-1. 在首页点击任意新闻卡片的 **"⭐ Save"** 按钮
-2. 在AI摘要阅读页点击 **"⭐ Save"** 按钮
-3. 收藏状态会自动同步到所有页面
+#### Bookmark Articles
+1. Click the **"⭐ Save"** button on any news card on the homepage
+2. Click the **"⭐ Save"** button on the AI summary reading page
+3. Bookmark status will automatically sync across all pages
 
-#### 管理收藏
-1. 点击导航栏的 **"Saved"** 进入收藏页
-2. 查看所有收藏的文章
-3. 点击 **"🗑️ Remove"** 删除不需要的文章
-4. 移除后可通过Toast中的 **"Undo"** 按钮恢复
+#### Manage Bookmarks
+1. Click **"Saved"** in the navigation bar to enter the bookmarks page
+2. View all bookmarked articles
+3. Click **"🗑️ Remove"** to delete unwanted articles
+4. After removal, you can restore via the **"Undo"** button in the Toast
 
-#### 导出收藏
-1. 在收藏页点击 **"📂 Export All (.md)"** 或 **"📄 Export as TXT"**
-2. 文件会自动下载到本地
-3. 包含文章标题、来源、时间、链接和摘要信息
+#### Export Bookmarks
+1. Click **"📂 Export All (.md)"** or **"📄 Export as TXT"** on the bookmarks page
+2. Files will be automatically downloaded to local
+3. Contains article title, source, time, link and summary information
 
-#### 快速访问
-- 点击 **"📖 Read Summary"** 跳转到AI摘要阅读页
-- 点击 **"🔗 View Original"** 在新标签页打开原文
+#### Quick Access
+- Click **"📖 Read Summary"** to jump to the AI summary reading page
+- Click **"🔗 View Original"** to open the original article in a new tab
 
-### 技术实现
+### Technical Implementation
 
-#### 前端技术栈
+#### Frontend Tech Stack
 - React 18 + React Router
-- CSS变量实现主题切换
-- localStorage实现本地存储
-- 响应式设计
+- CSS variables for theme switching
+- localStorage for local storage
+- Responsive design
 
-#### 后端API
+#### Backend API
 - FastAPI + SQLAlchemy
-- OpenAI GPT-4 生成摘要
-- 新闻数据抓取和存储
+- OpenAI GPT-4 for summary generation
+- News data scraping and storage
 
-#### 新增API端点
-- `GET /news/article?title={title}` - 根据标题获取文章
-- `GET /news/article/{id}` - 根据ID获取文章
+#### New API Endpoints
+- `GET /news/article?title={title}` - Get article by title
+- `GET /news/article/{id}` - Get article by ID
 
-#### 数据存储
-- **本地存储**：使用localStorage保存收藏数据
-- **数据同步**：所有页面的收藏状态实时同步
-- **导出格式**：支持Markdown和纯文本格式
+#### Data Storage
+- **Local Storage**: Use localStorage to save bookmark data
+- **Data Synchronization**: Real-time synchronization of bookmark status across all pages
+- **Export Format**: Support Markdown and plain text formats
 
-### 开发说明
+### Development
 
-#### 启动项目
+#### Start Project
 ```bash
-# 启动后端
+# Start backend
 cd backend
 python main.py
 
-# 启动前端
+# Start frontend
 cd frontend
 npm run dev
 ```
 
-#### 访问地址
-- 前端：http://localhost:5175
-- 后端API：http://localhost:8000
-- API文档：http://localhost:8000/docs
+#### Access Addresses
+- Frontend: http://localhost:5175
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
 
-### 注意事项
+### Notes
 
-1. **API依赖**：需要配置OpenAI API密钥
-2. **网络请求**：首次生成摘要需要网络连接
-3. **缓存机制**：摘要结果会缓存在浏览器本地
-4. **错误处理**：API失败时会显示模拟数据
-5. **数据持久化**：收藏数据保存在浏览器localStorage中
+1. **API Dependencies**: Need to configure OpenAI API key
+2. **Network Requests**: First summary generation requires network connection
+3. **Caching Mechanism**: Summary results will be cached in browser local storage
+4. **Error Handling**: Mock data will be displayed when API fails
+5. **Data Persistence**: Bookmark data is saved in browser localStorage
 
-### 未来改进
+### Future Improvements
 
-- [ ] 支持Markdown渲染
-- [ ] 添加更多摘要格式选项
-- [ ] 实现用户收藏同步到后端
-- [ ] 添加阅读历史记录
-- [ ] 支持离线阅读模式
-- [ ] 添加收藏分类功能
-- [ ] 支持收藏搜索和筛选
-- [ ] 实现收藏数据云端同步 
+- [ ] Support Markdown rendering
+- [ ] Add more summary format options
+- [ ] Implement user bookmark synchronization to backend
+- [ ] Add reading history record
+- [ ] Support offline reading mode
+- [ ] Add bookmark classification feature
+- [ ] Support bookmark search and filtering
+- [ ] Implement bookmark data cloud synchronization 

@@ -206,102 +206,112 @@ export default function Home() {
     { value: 'Wired', label: 'Wired' }
   ];
 
-  const loadMoreNews = async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      const data = await fetchNewsWithSort(offset, LIMIT, undefined, sourceFilter);
-      const enriched = await Promise.all(
-        data.map(async (item) => {
-          const count = await fetchVote(item.title);
-          return {
-            ...item, 
-            voteCount: count, 
-            vote_count: item.vote_count || count,
-            comprehensive_score: item.comprehensive_score
-          };
-        })
-      );
-      setNewsList(prevList => [...prevList, ...enriched]);
-      setOffset(prev => prev + LIMIT);
-    } catch (e) {
-      console.error("❌ Failed to load news:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 重置新闻列表并重新加载
+  // Reset news list and reload
   const resetAndLoadNews = () => {
     setNewsList([]);
     setOffset(0);
     loadMoreNews();
   };
 
-  // 当筛选条件改变时，重置列表
+  // Load more news
+  const loadMoreNews = async () => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      const news = await fetchNewsWithSort(offset, LIMIT, 'time', sourceFilter);
+      if (news && news.length > 0) {
+        setNewsList(prev => [...prev, ...news]);
+        setOffset(prev => prev + LIMIT);
+      }
+    } catch (error) {
+      console.error('Failed to load news:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
     resetAndLoadNews();
   }, [sourceFilter]);
 
+  // Infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) loadMoreNews();
+      (entries) => {
+        if (entries[0].isIntersecting && !loading) {
+          loadMoreNews();
+        }
       },
-      { threshold: 1 }
+      { threshold: 0.1 }
     );
-    if (observerRef.current) observer.observe(observerRef.current);
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
     return () => observer.disconnect();
-  }, [newsList, sourceFilter]);
+  }, [loading, offset]);
 
   return (
-    <>
+    <div className="news-container">
       <LoginButton />
-      {/* 只保留来源筛选器 */}
+      
+      {/* Source filter */}
       <div style={{
-        position: 'fixed',
-        top: '4.5rem',
-        left: '2rem',
-        zIndex: 1000,
         display: 'flex',
-        gap: '1rem',
-        alignItems: 'center'
+        justifyContent: 'center',
+        marginBottom: '2rem',
+        position: 'relative',
       }}>
-        <div style={{ position: 'relative' }}>
+        <div style={{
+          position: 'relative',
+          display: 'inline-block',
+        }}>
           <button
             onClick={() => setShowSourceMenu(!showSourceMenu)}
             style={{
-              background: '#fff',
-              border: '1px solid #000',
-              borderRadius: '4px',
-              padding: '0.5rem 1rem',
-              fontFamily: 'monospace',
-              fontSize: '0.8rem',
+              background: 'none',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-color)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.9rem',
               cursor: 'pointer',
-              minWidth: '140px',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.25rem',
+              transition: 'all 0.2s ease',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = 'var(--text-color)';
+              e.target.style.color = 'var(--bg-color)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.color = 'var(--text-color)';
             }}
           >
-            {sourceOptions.find(opt => opt.value === sourceFilter)?.label || 'Source'}
-            <span>▼</span>
+            📰 {sourceFilter || 'All Sources'} {showSourceMenu ? '▲' : '▼'}
           </button>
+
           {showSourceMenu && (
             <div style={{
               position: 'absolute',
               top: '100%',
               left: 0,
-              background: '#fff',
-              border: '1px solid #000',
-              borderRadius: '4px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              zIndex: 1001,
-              minWidth: '140px',
+              right: 0,
+              background: 'var(--bg-color)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '0.25rem',
+              marginTop: '0.25rem',
+              zIndex: 1000,
               maxHeight: '300px',
-              overflowY: 'auto'
+              overflowY: 'auto',
             }}>
-              {sourceOptions.map(option => (
+              {sourceOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => {
@@ -309,18 +319,23 @@ export default function Home() {
                     setShowSourceMenu(false);
                   }}
                   style={{
+                    width: '100%',
                     background: 'none',
                     border: 'none',
-                    padding: '0.5rem 1rem',
-                    fontFamily: 'monospace',
-                    fontSize: '0.8rem',
+                    color: 'var(--text-color)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.9rem',
                     cursor: 'pointer',
-                    width: '100%',
+                    padding: '0.75rem 1rem',
                     textAlign: 'left',
-                    color: sourceFilter === option.value ? '#000' : '#666'
+                    transition: 'all 0.2s ease',
                   }}
-                  onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
-                  onMouseLeave={(e) => e.target.style.background = 'none'}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
                 >
                   {option.label}
                 </button>
@@ -329,31 +344,37 @@ export default function Home() {
           )}
         </div>
       </div>
-      {/* 点击外部关闭菜单 */}
-      {showSourceMenu && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 999
-          }}
-          onClick={() => {
-            setShowSourceMenu(false);
-          }}
-        />
-      )}
-      <div className="news-container">
-        {/* 新闻列表 */}
-        {newsList.map((n, idx) => (
-          <NewsCard key={n.link + '-' + idx} {...n} />
+
+      {/* News list */}
+      <div className="news-list">
+        {newsList.map((news, index) => (
+          <NewsCard
+            key={`${news.title}-${index}`}
+            title={news.title}
+            link={news.link}
+            date={news.date}
+            source={news.source}
+            content={news.content}
+            comprehensive_score={news.comprehensive_score}
+            vote_count={news.vote_count}
+          />
         ))}
-        {/* 加载更多触发器 */}
-        <div ref={observerRef} style={{ height: 40 }} />
-        {loading && <p style={{ textAlign: "center", marginTop: "1rem" }}>Loading...</p>}
       </div>
-    </>
+
+      {/* Loading indicator */}
+      {loading && (
+        <div style={{
+          textAlign: 'center',
+          padding: '2rem',
+          color: 'var(--secondary-color)',
+          fontFamily: 'var(--font-mono)',
+        }}>
+          Loading more news...
+        </div>
+      )}
+
+      {/* Observer for infinite scroll */}
+      <div ref={observerRef} style={{ height: '1px' }} />
+    </div>
   );
 }

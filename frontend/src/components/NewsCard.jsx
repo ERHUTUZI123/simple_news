@@ -43,7 +43,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
 
-  // 检查文章是否已收藏
+  // Check if article is bookmarked
   useEffect(() => {
     const saved = localStorage.getItem('savedArticles');
     if (saved) {
@@ -53,7 +53,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     }
   }, [title]);
 
-  // 点击生成或隐藏摘要
+  // Click to generate or hide summary
   const handleTldr = async () => {
     if (tldr) {
       setExpanded(!expanded);
@@ -81,7 +81,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     }
   };
 
-  // 点赞或撤销
+  // Like or undo
   const toggleHeadline = async () => {
     if (isHeadline) {
       setIsHeadline(false);
@@ -93,7 +93,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     }
   };
 
-  // 垃圾或撤销
+  // Trash or undo
   const toggleTrash = async () => {
     if (isTrash) {
       setIsTrash(false);
@@ -106,18 +106,18 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     }
   };
 
-  // 收藏功能
+  // Bookmark function
   const toggleSaved = () => {
     const saved = localStorage.getItem('savedArticles') || '[]';
     const savedArticles = JSON.parse(saved);
     
     if (isSaved) {
-      // 移除收藏
+      // Remove bookmark
       const updatedArticles = savedArticles.filter(article => article.title !== title);
       localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
       setIsSaved(false);
     } else {
-      // 添加收藏
+      // Add bookmark
       const articleToSave = {
         title,
         link,
@@ -132,9 +132,9 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     }
   };
 
-  // 跳转到Article页面
+  // Jump to Article page
   const goToArticle = () => {
-    // 使用title作为slug，实际项目中应该使用唯一的ID
+    // Use title as slug, in actual projects should use unique ID
     const slug = encodeURIComponent(title);
     navigate(`/article/${slug}`);
   };
@@ -167,7 +167,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
         {isHeadline && <span className="badge">HEADLINE</span>}
       </h3>
 
-      {/* AI 摘要 */}
+      {/* AI Summary */}
       <div className="summary-section">
         {!expanded && !loading && (
           <button 

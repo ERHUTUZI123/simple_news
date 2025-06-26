@@ -22,7 +22,7 @@ function formatRelativeTime(dateString) {
   return `${diffD}d`;
 }
 
-// 导出收藏为Markdown格式
+// Export bookmarks as Markdown format
 function exportToMarkdown(savedArticles) {
   let content = "# My Saved Articles\n\n";
   content += `Total: ${savedArticles.length} articles\n\n`;
@@ -41,7 +41,7 @@ function exportToMarkdown(savedArticles) {
   return content;
 }
 
-// 导出收藏为TXT格式
+// Export bookmarks as TXT format
 function exportToTxt(savedArticles) {
   let content = "My Saved Articles\n\n";
   content += `Total: ${savedArticles.length} articles\n\n`;
@@ -60,7 +60,7 @@ function exportToTxt(savedArticles) {
   return content;
 }
 
-// 下载文件
+// Download file
 function downloadFile(content, filename, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
@@ -74,86 +74,62 @@ function downloadFile(content, filename, type) {
 }
 
 export default function Saved() {
-  const navigate = useNavigate();
   const [savedArticles, setSavedArticles] = useState([]);
-  const [removedArticles, setRemovedArticles] = useState([]);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [lastRemovedArticle, setLastRemovedArticle] = useState(null);
+  const [removedArticle, setRemovedArticle] = useState(null);
+  const [showUndo, setShowUndo] = useState(false);
+  const navigate = useNavigate();
 
-  // 加载收藏的文章
+  // Load bookmarked articles
   useEffect(() => {
-    const saved = localStorage.getItem('savedArticles');
-    if (saved) {
-      setSavedArticles(JSON.parse(saved));
-    }
+    const saved = localStorage.getItem('savedArticles') || '[]';
+    setSavedArticles(JSON.parse(saved));
   }, []);
 
-  // 保存收藏到localStorage
+  // Save bookmarks to localStorage
   const saveToStorage = (articles) => {
     localStorage.setItem('savedArticles', JSON.stringify(articles));
+    setSavedArticles(articles);
   };
 
-  // 移除收藏
+  // Remove bookmark
   const removeFromSaved = (articleToRemove) => {
-    const updatedArticles = savedArticles.filter(article => 
-      article.title !== articleToRemove.title
-    );
-    setSavedArticles(updatedArticles);
-    setRemovedArticles([...removedArticles, articleToRemove]);
-    setLastRemovedArticle(articleToRemove);
+    const updatedArticles = savedArticles.filter(article => article.title !== articleToRemove.title);
     saveToStorage(updatedArticles);
+    setRemovedArticle(articleToRemove);
+    setShowUndo(true);
     
-    // 显示Toast
-    setToastMessage("Removed from saved");
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    // Auto-hide undo button after 5 seconds
+    setTimeout(() => {
+      setShowUndo(false);
+      setRemovedArticle(null);
+    }, 5000);
   };
 
-  // 撤销移除
+  // Undo remove
   const undoRemove = () => {
-    if (lastRemovedArticle) {
-      const updatedArticles = [...savedArticles, lastRemovedArticle];
-      setSavedArticles(updatedArticles);
-      setRemovedArticles(removedArticles.filter(article => 
-        article.title !== lastRemovedArticle.title
-      ));
-      setLastRemovedArticle(null);
+    if (removedArticle) {
+      const updatedArticles = [...savedArticles, removedArticle];
       saveToStorage(updatedArticles);
-      
-      setToastMessage("Undo successful");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
+      setRemovedArticle(null);
+      setShowUndo(false);
     }
   };
 
-  // 导出收藏
+  // Export bookmarks
   const exportSaved = (format = 'md') => {
     if (savedArticles.length === 0) {
-      setToastMessage("No saved articles to export");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
+      alert('No articles to export');
       return;
     }
 
     const timestamp = new Date().toISOString().split('T')[0];
-    let content, filename, type;
-
     if (format === 'md') {
-      content = exportToMarkdown(savedArticles);
-      filename = `saved-articles-${timestamp}.md`;
-      type = 'text/markdown';
+      const content = exportToMarkdown(savedArticles);
+      downloadFile(content, `saved-articles-${timestamp}.md`, 'text/markdown');
     } else {
-      content = exportToTxt(savedArticles);
-      filename = `saved-articles-${timestamp}.txt`;
-      type = 'text/plain';
+      const content = exportToTxt(savedArticles);
+      downloadFile(content, `saved-articles-${timestamp}.txt`, 'text/plain');
     }
-
-    downloadFile(content, filename, type);
-    
-    setToastMessage(`Exported ${savedArticles.length} articles`);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
   };
 
   // 跳转到文章详情页
@@ -164,7 +140,7 @@ export default function Saved() {
 
   return (
     <div className="news-container">
-      {/* 页面标题 */}
+      {/* Page title */}
       <div style={{
         textAlign: "center",
         marginBottom: "2rem",
@@ -187,7 +163,7 @@ export default function Saved() {
         </p>
       </div>
 
-      {/* 导出按钮 */}
+      {/* Export buttons */}
       {savedArticles.length > 0 && (
         <div style={{
           display: "flex",
@@ -252,7 +228,7 @@ export default function Saved() {
         </div>
       )}
 
-      {/* 收藏列表 */}
+      {/* Bookmark list */}
       {savedArticles.length === 0 ? (
         <div style={{
           textAlign: "center",
@@ -290,20 +266,20 @@ export default function Saved() {
                 animationDelay: `${index * 0.1}s`,
               }}
             >
-              {/* 来源和时间 */}
+              {/* Source and time */}
               <div className="meta">
                 <span style={{ color: "var(--highlight-color)" }}>✅</span> {article.source} 
                 <span style={{ margin: "0 0.5rem" }}>🕒</span> {formatRelativeTime(article.date)}
               </div>
 
-              {/* 标题 */}
+              {/* Title */}
               <h3 className="title">
                 <a href={article.link} target="_blank" rel="noopener noreferrer">
                   # {article.title}
                 </a>
               </h3>
 
-              {/* AI 摘要 */}
+              {/* AI Summary */}
               {article.summary && (
                 <div className="expanded-summary">
                   <p style={{
@@ -318,7 +294,7 @@ export default function Saved() {
                 </div>
               )}
 
-              {/* 操作按钮 */}
+              {/* Action buttons */}
               <div className="actions">
                 <button
                   onClick={() => goToArticle(article.title)}
@@ -409,7 +385,7 @@ export default function Saved() {
       )}
 
       {/* Toast 通知 */}
-      {showToast && (
+      {showUndo && (
         <div style={{
           position: "fixed",
           bottom: "2rem",
@@ -428,31 +404,29 @@ export default function Saved() {
           alignItems: "center",
           gap: "1rem",
         }}>
-          <span>{toastMessage}</span>
-          {lastRemovedArticle && (
-            <button
-              onClick={undoRemove}
-              style={{
-                background: "var(--highlight-color)",
-                border: "none",
-                color: "var(--bg-color)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.8rem",
-                cursor: "pointer",
-                padding: "0.25rem 0.5rem",
-                borderRadius: "0.25rem",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.opacity = "0.8";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.opacity = "1";
-              }}
-            >
-              Undo
-            </button>
-          )}
+          <span>Removed from saved</span>
+          <button
+            onClick={undoRemove}
+            style={{
+              background: "var(--highlight-color)",
+              border: "none",
+              color: "var(--bg-color)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.8rem",
+              cursor: "pointer",
+              padding: "0.25rem 0.5rem",
+              borderRadius: "0.25rem",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.opacity = "0.8";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.opacity = "1";
+            }}
+          >
+            Undo
+          </button>
         </div>
       )}
     </div>

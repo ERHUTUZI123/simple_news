@@ -40,7 +40,7 @@ export default function Article() {
   const [isSaved, setIsSaved] = useState(false);
   const [summaryType, setSummaryType] = useState('detailed'); // 'brief' or 'detailed'
 
-  // 检查文章是否已收藏
+  // Check if article is bookmarked
   useEffect(() => {
     if (article) {
       const saved = localStorage.getItem('savedArticles') || '[]';
@@ -50,20 +50,20 @@ export default function Article() {
     }
   }, [article]);
 
-  // 从API获取文章数据
+  // Get article data from API
   useEffect(() => {
     const loadArticle = async () => {
       try {
         setLoading(true);
-        // 解码URL参数
+        // Decode URL parameter
         const decodedId = decodeURIComponent(id);
         
-        // 尝试从API获取文章数据
+        // Try to get article data from API
         const articleData = await fetchArticleByTitle(decodedId);
         setArticle(articleData);
       } catch (error) {
         console.error('Failed to load article:', error);
-        // 如果API失败，使用模拟数据
+        // If API fails, use mock data
         const decodedId = decodeURIComponent(id);
         const mockArticle = {
           id: id,
@@ -82,13 +82,13 @@ export default function Article() {
     loadArticle();
   }, [id]);
 
-  // 生成AI摘要
+  // Generate AI summary
   const generateSummary = async () => {
     if (!article) return;
     
     setSummaryLoading(true);
     try {
-      // 使用文章标题作为缓存键的一部分，确保唯一性
+      // Use article title as part of cache key to ensure uniqueness
       const key = `summary-${encodeURIComponent(article.title)}-${summaryType}`;
       const cached = localStorage.getItem(key);
       
@@ -107,13 +107,13 @@ export default function Article() {
     }
   };
 
-  // 切换摘要类型
+  // Toggle summary type
   const toggleSummaryType = () => {
     setSummaryType(summaryType === 'detailed' ? 'brief' : 'detailed');
-    setSummary(''); // 清空当前摘要，重新生成
+    setSummary(''); // Clear current summary, regenerate
   };
 
-  // 收藏功能
+  // Bookmark function
   const toggleSaved = () => {
     if (!article) return;
     
@@ -121,12 +121,12 @@ export default function Article() {
     const savedArticles = JSON.parse(saved);
     
     if (isSaved) {
-      // 移除收藏
+      // Remove bookmark
       const updatedArticles = savedArticles.filter(savedArticle => savedArticle.title !== article.title);
       localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
       setIsSaved(false);
     } else {
-      // 添加收藏
+      // Add bookmark
       const articleToSave = {
         title: article.title,
         link: article.link,
@@ -141,7 +141,7 @@ export default function Article() {
     }
   };
 
-  // 分享功能
+  // Share function
   const shareArticle = async () => {
     try {
       await navigator.share({
@@ -151,7 +151,7 @@ export default function Article() {
       });
     } catch (Error) {
       console.log('Native sharing not supported, copying to clipboard');
-      // 如果不支持原生分享，复制链接
+      // If native sharing is not supported, copy link
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
     }
@@ -284,7 +284,7 @@ export default function Article() {
           </h1>
         </div>
 
-        {/* 摘要类型切换 */}
+        {/* Summary type toggle */}
         <div style={{
           display: 'flex',
           gap: '1rem',
@@ -337,7 +337,7 @@ export default function Article() {
           )}
         </div>
 
-        {/* AI 摘要内容 */}
+        {/* AI Summary content */}
         {summary && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.05)',
@@ -463,7 +463,7 @@ export default function Article() {
               e.target.style.color = 'var(--text-color)';
             }}
           >
-            🔗 Share
+            📤 Share
           </button>
         </div>
       </div>
