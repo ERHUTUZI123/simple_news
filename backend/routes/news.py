@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import time
 import random
 from typing import Optional
+from datetime import datetime
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -76,7 +77,12 @@ def get_today_news(
     results = []
     for item in news_items:
         title_str = str(getattr(item, 'title', ''))
-        date_str = str(getattr(item, 'date', ''))
+        # 确保返回ISO格式的时间字符串
+        date_obj = getattr(item, 'date', None)
+        if date_obj:
+            date_str = date_obj.isoformat() + 'Z'  # 添加Z表示UTC
+        else:
+            date_str = datetime.utcnow().isoformat() + 'Z'
         vote_count = pg_service.get_vote_count(title_str)
         results.append({
             "title": title_str,
@@ -125,12 +131,18 @@ def get_article_by_title(
     for item in news_items:
         title_str = str(getattr(item, 'title', ''))
         if title_str == title:
+            # 确保返回ISO格式的时间字符串
+            date_obj = getattr(item, 'date', None)
+            if date_obj:
+                date_str = date_obj.isoformat() + 'Z'  # 添加Z表示UTC
+            else:
+                date_str = datetime.utcnow().isoformat() + 'Z'
             return {
                 "title": title_str,
                 "content": item.content,
                 "summary": item.summary,
                 "link": item.link,
-                "date": str(getattr(item, 'date', '')),
+                "date": date_str,
                 "source": item.source,
                 "vote_count": pg_service.get_vote_count(title_str),
             }
