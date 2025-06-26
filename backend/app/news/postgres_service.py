@@ -10,6 +10,7 @@ from dateutil import parser as dateparser
 from dateutil import tz
 from app import redis_client
 import json
+from uuid import UUID
 
 class PostgresService:
     def __init__(self, db: Session):
@@ -371,19 +372,15 @@ class PostgresService:
             return []
 
     # 用户保存文章相关方法
-    def save_article_for_user(self, user_id: str, news_id: str) -> bool:
+    def save_article_for_user(self, user_id: UUID, news_id: UUID) -> bool:
         """为用户保存文章"""
         try:
-            # 检查是否已经保存
             existing = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id,
                 SavedArticle.news_id == news_id
             ).first()
-            
             if existing:
-                return True  # 已经保存过了
-            
-            # 创建新的保存记录
+                return True
             saved_article = SavedArticle(user_id=user_id, news_id=news_id)
             self.db.add(saved_article)
             self.db.commit()
@@ -394,54 +391,64 @@ class PostgresService:
             self.db.rollback()
             return False
 
-    def remove_article_from_user(self, user_id: str, news_id: str) -> bool:
+    def remove_article_from_user(self, user_id: UUID, news_id: UUID) -> bool:
         """从用户收藏中移除文章"""
         try:
             saved_article = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id,
                 SavedArticle.news_id == news_id
             ).first()
-            
             if saved_article:
                 self.db.delete(saved_article)
                 self.db.commit()
                 print(f"✅ Removed article {news_id} from user {user_id}")
                 return True
             else:
-                return True  # 本来就没有保存，也算成功
+                return True
         except Exception as e:
             print(f"❌ Error removing article from user: {e}")
             self.db.rollback()
             return False
 
-    def get_saved_articles_for_user(self, user_id: str) -> List[Dict]:
+    def get_saved_articles_for_user(self, user_id: UUID) -> list:
         """获取用户保存的文章列表"""
         try:
             saved_articles = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id
             ).all()
-            
             articles = []
             for saved in saved_articles:
-                # 获取文章详情
-                article = self.get_article_by_title(saved.news_id)
-                if "error" not in article:
-                    articles.append(article)
-            
+                article = self.db.query(News).filter(News.id == saved.news_id).first()
+                if article:
+                    # 组装前端需要的字段
+                    articles.append({
+                        "id": str(article.id),
+                        "title": article.title,
+                        "content": article.content,
+                        "summary": article.summary,
+                        "link": article.link,
+                        "date": article.date.isoformat() if article.date else None,
+                        "source": article.source,
+                        "created_at": article.created_at.isoformat() if article.created_at else None,
+                        "published_at": article.published_at.isoformat() if article.published_at else None,
+                        "summary_ai": article.summary_ai,
+                        "headline_count": article.headline_count,
+                        "keywords": article.keywords,
+                        "score": article.score
+                    })
             print(f"✅ Retrieved {len(articles)} saved articles for user {user_id}")
             return articles
         except Exception as e:
             print(f"❌ Error getting saved articles for user: {e}")
             return []
 
-    def is_article_saved_by_user(self, user_id: str, news_id: str) -> bool:
+    def is_article_saved_by_user(self, user_id: UUID, news_id: UUID) -> bool:
         """检查文章是否已被用户保存"""
         try:
             saved_article = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id,
                 SavedArticle.news_id == news_id
             ).first()
-            
             return saved_article is not None
         except Exception as e:
             print(f"❌ Error checking if article is saved by user: {e}")

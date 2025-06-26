@@ -14,6 +14,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 from app.models import SavedArticle
 from sqlalchemy.dialects.postgresql import UUID
+from uuid import UUID
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -204,8 +205,8 @@ async def save_article(request: Request, pg_service: PostgresService = Depends(g
     """保存文章到用户收藏"""
     try:
         data = await request.json()
-        user_id = data.get("userId")
-        news_id = data.get("newsId")
+        user_id = UUID(data.get("userId"))
+        news_id = UUID(data.get("newsId"))
         
         if not user_id or not news_id:
             raise HTTPException(status_code=400, detail="Missing userId or newsId")
@@ -233,8 +234,8 @@ async def unsave_article(request: Request, pg_service: PostgresService = Depends
     """从用户收藏中移除文章"""
     try:
         data = await request.json()
-        user_id = data.get("userId")
-        news_id = data.get("newsId")
+        user_id = UUID(data.get("userId"))
+        news_id = UUID(data.get("newsId"))
         
         if not user_id or not news_id:
             raise HTTPException(status_code=400, detail="Missing userId or newsId")
@@ -259,6 +260,7 @@ async def get_saved_articles(
 ):
     """获取用户保存的文章列表"""
     try:
+        user_id = UUID(user_id)
         saved_articles = pg_service.get_saved_articles_for_user(user_id)
         return {"articles": saved_articles}
     except Exception as e:
@@ -273,6 +275,8 @@ async def check_article_saved(
 ):
     """检查文章是否已被用户保存"""
     try:
+        user_id = UUID(user_id)
+        news_id = UUID(news_id)
         is_saved = pg_service.is_article_saved_by_user(user_id, news_id)
         return {"saved": is_saved}
     except Exception as e:

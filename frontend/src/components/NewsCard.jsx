@@ -106,7 +106,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
       }
       
       try {
-        const response = await fetch(`/api/saved/check?user_id=${userSession.user.id}&news_id=${encodeURIComponent(title)}`);
+        const response = await fetch(`/api/saved/check?user_id=${userSession.user.id}&news_id=${id}`);
         if (response.ok) {
           const data = await response.json();
           setIsSaved(data.saved);
@@ -120,7 +120,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
     };
     
     checkSavedStatus();
-  }, [title, userSession]);
+  }, [id, userSession]);
 
   // Like or undo
   const toggleHeadline = async () => {
@@ -164,7 +164,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         const response = await fetch("/api/save", {
           method: "DELETE",
           body: JSON.stringify({ 
-            newsId: title, 
+            newsId: id, 
             userId: userSession.user.id 
           }),
           headers: { "Content-Type": "application/json" }
@@ -182,7 +182,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         const response = await fetch("/api/save", {
           method: "POST",
           body: JSON.stringify({ 
-            newsId: title, 
+            newsId: id, 
             userId: userSession.user.id 
           }),
           headers: { "Content-Type": "application/json" }

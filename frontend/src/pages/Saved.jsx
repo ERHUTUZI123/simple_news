@@ -127,15 +127,12 @@ export default function Saved() {
     try {
       const response = await fetch("/api/save", {
         method: "DELETE",
-        body: JSON.stringify({ 
-          newsId: articleToRemove.title, 
-          userId: userSession.user.id 
-        }),
+        body: JSON.stringify({ newsId: articleToRemove.id, userId: userSession.user.id }),
         headers: { "Content-Type": "application/json" }
       });
       
       if (response.ok) {
-        const updatedArticles = savedArticles.filter(article => article.title !== articleToRemove.title);
+        const updatedArticles = savedArticles.filter(article => article.id !== articleToRemove.id);
         setSavedArticles(updatedArticles);
         setRemovedArticle(articleToRemove);
         setShowUndo(true);
@@ -165,10 +162,7 @@ export default function Saved() {
     try {
       const response = await fetch("/api/save", {
         method: "POST",
-        body: JSON.stringify({ 
-          newsId: removedArticle.title, 
-          userId: userSession.user.id 
-        }),
+        body: JSON.stringify({ newsId: removedArticle.id, userId: userSession.user.id }),
         headers: { "Content-Type": "application/json" }
       });
       
