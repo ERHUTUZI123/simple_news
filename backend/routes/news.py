@@ -140,11 +140,7 @@ def get_article_by_title(
     pg_service: PostgresService = Depends(get_pg_service)
 ):
     """根据标题获取文章"""
-    news_items = pg_service.get_news(0, 1000)
-    for item in news_items:
-        if item.get('title') == title:
-            return item
-    return {"error": "Article not found"}
+    return pg_service.get_article_by_title(title)
 
 @router.get("/news/article/{article_id}")
 def get_article_by_id(article_id: str):

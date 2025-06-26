@@ -245,4 +245,29 @@ class PostgresService:
                 self.db.commit()
         except Exception as e:
             print(f"Error updating AI summary: {e}")
-            self.db.rollback() 
+            self.db.rollback()
+
+    def get_article_by_title(self, title: str) -> Dict:
+        """根据标题获取文章，带缓存"""
+        try:
+            # 构造缓存key
+            cache_key = f"article:{title}"
+            cached = redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
+            
+            # 查询数据库
+            news_items = self.get_news(0, 1000)
+            for item in news_items:
+                if item.get('title') == title:
+                    # 设置缓存，600秒
+                    redis_client.setex(cache_key, 600, json.dumps(item, ensure_ascii=False))
+                    return item
+            
+            # 没找到文章
+            result = {"error": "Article not found"}
+            redis_client.setex(cache_key, 600, json.dumps(result, ensure_ascii=False))
+            return result
+        except Exception as e:
+            print(f"Error getting article by title: {e}")
+            return {"error": "Article not found"} 
