@@ -6,5 +6,8 @@
       "destination": "https://simplenews.online/$1",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
