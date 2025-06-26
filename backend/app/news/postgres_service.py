@@ -74,21 +74,17 @@ class PostgresService:
                 results.append({
                     "id": item.id,
                     "title": item.title,
-                    "content": item.content,
                     "summary": item.summary,
                     "link": item.link,
-                    "date": date_str,
-                    "source": item.source,
                     "published_at": date_str,
-                    "summary_ai": item.summary_ai or {},
-                    "headline_count": item.headline_count,
-                    "keywords": item.keywords or [],
+                    "source": item.source,
+                    "vote_count": self.get_vote_count(item.title),
                     "score": item.score,
-                    "vote_count": self.get_vote_count(item.title)
+                    "headline_count": item.headline_count
                 })
             
             if use_cache:
-                redis_client.setex(cache_key, 120, json.dumps(results, ensure_ascii=False))
+                redis_client.setex(cache_key, 600, json.dumps(results, ensure_ascii=False))
             return results
         except Exception as e:
             print(f"Error getting news: {e}")
