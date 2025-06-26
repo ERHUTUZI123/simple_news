@@ -340,14 +340,17 @@ export default function Home() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "var(--text-color)";
-              e.target.style.color = "var(--bg-color)";
+              e.target.style.backgroundColor = "var(--button-hover-bg)";
+              e.target.style.color = "var(--button-hover-text)";
+              e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = "transparent";
               e.target.style.color = "var(--text-color)";
+              e.target.style.borderColor = "var(--border-color)";
             }}
           >
             <span>📊 {getSortLabel(sortBy)}</span>
@@ -385,12 +388,15 @@ export default function Home() {
                     color: sortBy === option.value ? "var(--highlight-color)" : "var(--text-color)",
                     cursor: "pointer",
                     fontWeight: sortBy === option.value ? "bold" : "normal",
+                    transition: "all 0.2s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                    e.target.style.backgroundColor = "var(--button-hover-bg)";
+                    e.target.style.color = "var(--button-hover-text)";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = "none";
+                    e.target.style.backgroundColor = "transparent";
+                    e.target.style.color = sortBy === option.value ? "var(--highlight-color)" : "var(--text-color)";
                   }}
                 >
                   {option.label}
@@ -417,14 +423,17 @@ export default function Home() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "var(--text-color)";
-              e.target.style.color = "var(--bg-color)";
+              e.target.style.backgroundColor = "var(--button-hover-bg)";
+              e.target.style.color = "var(--button-hover-text)";
+              e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = "transparent";
               e.target.style.color = "var(--text-color)";
+              e.target.style.borderColor = "var(--border-color)";
             }}
           >
             <span>📰 {getSourceLabel(sourceFilter)}</span>
@@ -464,12 +473,15 @@ export default function Home() {
                     color: sourceFilter === option.value ? "var(--highlight-color)" : "var(--text-color)",
                     cursor: "pointer",
                     fontWeight: sourceFilter === option.value ? "bold" : "normal",
+                    transition: "all 0.2s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                    e.target.style.backgroundColor = "var(--button-hover-bg)";
+                    e.target.style.color = "var(--button-hover-text)";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = "none";
+                    e.target.style.backgroundColor = "transparent";
+                    e.target.style.color = sourceFilter === option.value ? "var(--highlight-color)" : "var(--text-color)";
                   }}
                 >
                   {option.label}

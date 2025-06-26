@@ -187,8 +187,8 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           onClick={goToArticle}
           style={{
             background: "var(--highlight-color)",
-            border: "none",
-            color: "var(--bg-color)",
+            border: "1px solid var(--highlight-color)",
+            color: "white",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -200,9 +200,11 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           }}
           onMouseEnter={(e) => {
             e.target.style.opacity = "0.8";
+            e.target.style.transform = "translateY(-1px)";
           }}
           onMouseLeave={(e) => {
             e.target.style.opacity = "1";
+            e.target.style.transform = "translateY(0)";
           }}
         >
           📖 Read Summary
@@ -225,12 +227,14 @@ export default function NewsCard({ news, onVote, showScore = false }) {
             marginRight: "1rem",
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = "var(--text-color)";
-            e.target.style.color = "var(--bg-color)";
+            e.target.style.backgroundColor = "var(--button-hover-bg)";
+            e.target.style.color = "var(--button-hover-text)";
+            e.target.style.borderColor = "var(--button-hover-border)";
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = "transparent";
             e.target.style.color = "var(--text-color)";
+            e.target.style.borderColor = "var(--border-color)";
           }}
         >
           View Original
@@ -252,14 +256,16 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           }}
           onMouseEnter={(e) => {
             if (!isSaved) {
-              e.target.style.backgroundColor = "var(--text-color)";
-              e.target.style.color = "var(--bg-color)";
+              e.target.style.backgroundColor = "var(--button-hover-bg)";
+              e.target.style.color = "var(--button-hover-text)";
+              e.target.style.borderColor = "var(--button-hover-border)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isSaved) {
               e.target.style.backgroundColor = "transparent";
               e.target.style.color = "var(--text-color)";
+              e.target.style.borderColor = "var(--border-color)";
             }
           }}
         >
@@ -271,7 +277,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           style={{
             background: isHeadline ? "var(--highlight-color)" : "none",
             border: "1px solid var(--border-color)",
-            color: isHeadline ? "var(--bg-color)" : "var(--text-color)",
+            color: isHeadline ? "white" : "var(--text-color)",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -282,14 +288,16 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           }}
           onMouseEnter={(e) => {
             if (!isHeadline) {
-              e.target.style.backgroundColor = "var(--text-color)";
-              e.target.style.color = "var(--bg-color)";
+              e.target.style.backgroundColor = "var(--like-hover-bg)";
+              e.target.style.color = "var(--like-hover-text)";
+              e.target.style.borderColor = "var(--like-hover-border)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isHeadline) {
-              e.target.style.backgroundColor = isHeadline ? "var(--highlight-color)" : "transparent";
-              e.target.style.color = isHeadline ? "var(--bg-color)" : "var(--text-color)";
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "var(--text-color)";
+              e.target.style.borderColor = "var(--border-color)";
             }
           }}
         >
@@ -311,14 +319,16 @@ export default function NewsCard({ news, onVote, showScore = false }) {
           }}
           onMouseEnter={(e) => {
             if (!isTrash) {
-              e.target.style.backgroundColor = "#f44336";
-              e.target.style.color = "white";
+              e.target.style.backgroundColor = "var(--trash-hover-bg)";
+              e.target.style.color = "var(--trash-hover-text)";
+              e.target.style.borderColor = "var(--trash-hover-border)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isTrash) {
               e.target.style.backgroundColor = "transparent";
               e.target.style.color = "var(--text-color)";
+              e.target.style.borderColor = "var(--border-color)";
             }
           }}
         >

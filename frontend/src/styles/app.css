@@ -8,6 +8,17 @@
   --highlight-color: #FFD700;  /* 金色高亮，用于 Headline */
   --trash-color: #8B4513;      /* 便便棕，用于 Trash */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  
+  /* 按钮悬停颜色 */
+  --button-hover-bg: #64b5f6;
+  --button-hover-text: #ffffff;
+  --button-hover-border: #64b5f6;
+  --like-hover-bg: #FFD700;
+  --like-hover-text: #ffffff;
+  --like-hover-border: #FFD700;
+  --trash-hover-bg: #f44336;
+  --trash-hover-text: #ffffff;
+  --trash-hover-border: #f44336;
 }
 
 /* 浅色模式 */
@@ -19,6 +30,17 @@
   --link-color: #1976d2;
   --highlight-color: #f57c00;
   --trash-color: #d32f2f;
+  
+  /* 浅色模式按钮悬停颜色 */
+  --button-hover-bg: #1976d2;
+  --button-hover-text: #ffffff;
+  --button-hover-border: #1976d2;
+  --like-hover-bg: #f57c00;
+  --like-hover-text: #ffffff;
+  --like-hover-border: #f57c00;
+  --trash-hover-bg: #d32f2f;
+  --trash-hover-text: #ffffff;
+  --trash-hover-border: #d32f2f;
 }
 
 /* 全局重置 */

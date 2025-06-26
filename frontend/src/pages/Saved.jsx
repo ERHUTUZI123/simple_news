@@ -176,8 +176,8 @@ export default function Saved() {
             onClick={() => exportSaved('md')}
             style={{
               background: "var(--highlight-color)",
-              border: "none",
-              color: "var(--bg-color)",
+              border: "1px solid var(--highlight-color)",
+              color: "white",
               fontFamily: "var(--font-mono)",
               fontSize: "0.9rem",
               cursor: "pointer",
@@ -190,9 +190,11 @@ export default function Saved() {
             }}
             onMouseEnter={(e) => {
               e.target.style.opacity = "0.8";
+              e.target.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
               e.target.style.opacity = "1";
+              e.target.style.transform = "translateY(0)";
             }}
           >
             📂 Export All (.md)
@@ -215,12 +217,14 @@ export default function Saved() {
               gap: "0.5rem",
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "var(--text-color)";
-              e.target.style.color = "var(--bg-color)";
+              e.target.style.backgroundColor = "var(--button-hover-bg)";
+              e.target.style.color = "var(--button-hover-text)";
+              e.target.style.borderColor = "var(--button-hover-border)";
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = "transparent";
               e.target.style.color = "var(--text-color)";
+              e.target.style.borderColor = "var(--border-color)";
             }}
           >
             📄 Export as TXT
@@ -300,8 +304,8 @@ export default function Saved() {
                   onClick={() => goToArticle(article.title)}
                   style={{
                     background: "var(--highlight-color)",
-                    border: "none",
-                    color: "var(--bg-color)",
+                    border: "1px solid var(--highlight-color)",
+                    color: "white",
                     fontFamily: "var(--font-mono)",
                     fontSize: "0.9rem",
                     cursor: "pointer",
@@ -314,9 +318,11 @@ export default function Saved() {
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.opacity = "0.8";
+                    e.target.style.transform = "translateY(-1px)";
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.opacity = "1";
+                    e.target.style.transform = "translateY(0)";
                   }}
                 >
                   📖 Read Summary
@@ -340,12 +346,14 @@ export default function Saved() {
                     gap: "0.5rem",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "var(--text-color)";
-                    e.target.style.color = "var(--bg-color)";
+                    e.target.style.backgroundColor = "var(--button-hover-bg)";
+                    e.target.style.color = "var(--button-hover-text)";
+                    e.target.style.borderColor = "var(--button-hover-border)";
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.backgroundColor = "transparent";
                     e.target.style.color = "var(--text-color)";
+                    e.target.style.borderColor = "var(--border-color)";
                   }}
                 >
                   🔗 View Original
@@ -368,12 +376,14 @@ export default function Saved() {
                     gap: "0.5rem",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "var(--trash-color)";
-                    e.target.style.color = "var(--bg-color)";
+                    e.target.style.backgroundColor = "var(--trash-hover-bg)";
+                    e.target.style.color = "var(--trash-hover-text)";
+                    e.target.style.borderColor = "var(--trash-hover-border)";
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.backgroundColor = "transparent";
                     e.target.style.color = "var(--trash-color)";
+                    e.target.style.borderColor = "var(--trash-color)";
                   }}
                 >
                   🗑️ Remove
@@ -409,8 +419,8 @@ export default function Saved() {
             onClick={undoRemove}
             style={{
               background: "var(--highlight-color)",
-              border: "none",
-              color: "var(--bg-color)",
+              border: "1px solid var(--highlight-color)",
+              color: "white",
               fontFamily: "var(--font-mono)",
               fontSize: "0.8rem",
               cursor: "pointer",
@@ -420,9 +430,11 @@ export default function Saved() {
             }}
             onMouseEnter={(e) => {
               e.target.style.opacity = "0.8";
+              e.target.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
               e.target.style.opacity = "1";
+              e.target.style.transform = "translateY(0)";
             }}
           >
             Undo

@@ -149,7 +149,7 @@ export default function Article() {
         text: `Check out this article: ${article?.title}`,
         url: window.location.href,
       });
-    } catch (Error) {
+    } catch {
       console.log('Native sharing not supported, copying to clipboard');
       // If native sharing is not supported, copy link
       navigator.clipboard.writeText(window.location.href);
@@ -237,12 +237,14 @@ export default function Article() {
             transition: 'all 0.2s ease',
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'var(--text-color)';
-            e.target.style.color = 'var(--bg-color)';
+            e.target.style.backgroundColor = 'var(--button-hover-bg)';
+            e.target.style.color = 'var(--button-hover-text)';
+            e.target.style.borderColor = 'var(--button-hover-border)';
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = 'transparent';
             e.target.style.color = 'var(--text-color)';
+            e.target.style.borderColor = 'var(--border-color)';
           }}
         >
           ← Back to Home
@@ -304,12 +306,14 @@ export default function Article() {
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--text-color)';
-              e.target.style.color = 'var(--bg-color)';
+              e.target.style.backgroundColor = 'var(--button-hover-bg)';
+              e.target.style.color = 'var(--button-hover-text)';
+              e.target.style.borderColor = 'var(--button-hover-border)';
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = 'transparent';
               e.target.style.color = 'var(--text-color)';
+              e.target.style.borderColor = 'var(--border-color)';
             }}
           >
             {summaryType === 'detailed' ? '📝 Detailed' : '📋 Brief'}
@@ -321,8 +325,8 @@ export default function Article() {
               disabled={summaryLoading}
               style={{
                 background: 'var(--highlight-color)',
-                border: 'none',
-                color: 'var(--bg-color)',
+                border: '1px solid var(--highlight-color)',
+                color: 'white',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.9rem',
                 cursor: summaryLoading ? 'not-allowed' : 'pointer',
@@ -330,6 +334,18 @@ export default function Article() {
                 borderRadius: '0.25rem',
                 transition: 'all 0.2s ease',
                 opacity: summaryLoading ? 0.6 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!summaryLoading) {
+                  e.target.style.opacity = '0.8';
+                  e.target.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!summaryLoading) {
+                  e.target.style.opacity = '1';
+                  e.target.style.transform = 'translateY(0)';
+                }
               }}
             >
               {summaryLoading ? 'Generating...' : '🤖 Generate AI Summary'}
@@ -395,12 +411,14 @@ export default function Article() {
               gap: '0.5rem',
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--text-color)';
-              e.target.style.color = 'var(--bg-color)';
+              e.target.style.backgroundColor = 'var(--button-hover-bg)';
+              e.target.style.color = 'var(--button-hover-text)';
+              e.target.style.borderColor = 'var(--button-hover-border)';
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = 'transparent';
               e.target.style.color = 'var(--text-color)';
+              e.target.style.borderColor = 'var(--border-color)';
             }}
           >
             🔗 Original Article
@@ -424,14 +442,16 @@ export default function Article() {
             }}
             onMouseEnter={(e) => {
               if (!isSaved) {
-                e.target.style.backgroundColor = 'var(--text-color)';
-                e.target.style.color = 'var(--bg-color)';
+                e.target.style.backgroundColor = 'var(--button-hover-bg)';
+                e.target.style.color = 'var(--button-hover-text)';
+                e.target.style.borderColor = 'var(--button-hover-border)';
               }
             }}
             onMouseLeave={(e) => {
               if (!isSaved) {
                 e.target.style.backgroundColor = 'transparent';
                 e.target.style.color = 'var(--text-color)';
+                e.target.style.borderColor = 'var(--border-color)';
               }
             }}
           >
@@ -455,12 +475,14 @@ export default function Article() {
               gap: '0.5rem',
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--text-color)';
-              e.target.style.color = 'var(--bg-color)';
+              e.target.style.backgroundColor = 'var(--button-hover-bg)';
+              e.target.style.color = 'var(--button-hover-text)';
+              e.target.style.borderColor = 'var(--button-hover-border)';
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = 'transparent';
               e.target.style.color = 'var(--text-color)';
+              e.target.style.borderColor = 'var(--border-color)';
             }}
           >
             📤 Share
