@@ -200,15 +200,81 @@ def get_sort_options():
     }
 
 @router.post("/api/save")
-async def save_article(request: Request, db: Session = Depends(get_pg_service)):
-    data = await request.json()
-    user_id = data.get("userId")
-    news_id = data.get("newsId")
-    if not user_id or not news_id:
-        raise HTTPException(status_code=400, detail="Missing userId or newsId")
-    # upsert
-    exists = db.query(SavedArticle).filter_by(user_id=user_id, news_id=news_id).first()
-    if not exists:
-        db.add(SavedArticle(user_id=user_id, news_id=news_id))
-        db.commit()
-    return {"success": True}
+async def save_article(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
+    """保存文章到用户收藏"""
+    try:
+        data = await request.json()
+        user_id = data.get("userId")
+        news_id = data.get("newsId")
+        
+        if not user_id or not news_id:
+            raise HTTPException(status_code=400, detail="Missing userId or newsId")
+        
+        # 检查文章是否存在
+        article = pg_service.get_article_by_title(news_id)
+        if "error" in article:
+            raise HTTPException(status_code=404, detail="Article not found")
+        
+        # 保存到数据库
+        success = pg_service.save_article_for_user(user_id, news_id)
+        if success:
+            return {"success": True, "message": "Article saved successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save article")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error saving article: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.delete("/api/save")
+async def unsave_article(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
+    """从用户收藏中移除文章"""
+    try:
+        data = await request.json()
+        user_id = data.get("userId")
+        news_id = data.get("newsId")
+        
+        if not user_id or not news_id:
+            raise HTTPException(status_code=400, detail="Missing userId or newsId")
+        
+        # 从数据库中移除
+        success = pg_service.remove_article_from_user(user_id, news_id)
+        if success:
+            return {"success": True, "message": "Article removed from saved"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to remove article")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error removing article: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/api/saved")
+async def get_saved_articles(
+    user_id: str = Query(...),
+    pg_service: PostgresService = Depends(get_pg_service)
+):
+    """获取用户保存的文章列表"""
+    try:
+        saved_articles = pg_service.get_saved_articles_for_user(user_id)
+        return {"articles": saved_articles}
+    except Exception as e:
+        print(f"Error getting saved articles: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/api/saved/check")
+async def check_article_saved(
+    user_id: str = Query(...),
+    news_id: str = Query(...),
+    pg_service: PostgresService = Depends(get_pg_service)
+):
+    """检查文章是否已被用户保存"""
+    try:
+        is_saved = pg_service.is_article_saved_by_user(user_id, news_id)
+        return {"saved": is_saved}
+    except Exception as e:
+        print(f"Error checking saved status: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")

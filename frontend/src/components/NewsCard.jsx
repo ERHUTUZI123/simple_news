@@ -99,13 +99,28 @@ export default function NewsCard({ news, onVote, showScore = false }) {
 
   // Check if article is bookmarked
   useEffect(() => {
-    const saved = localStorage.getItem('savedArticles');
-    if (saved) {
-      const savedArticles = JSON.parse(saved);
-      const isArticleSaved = savedArticles.some(article => article.title === title);
-      setIsSaved(isArticleSaved);
-    }
-  }, [title]);
+    const checkSavedStatus = async () => {
+      if (!userSession) {
+        setIsSaved(false);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/saved/check?user_id=${userSession.user.id}&news_id=${encodeURIComponent(title)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsSaved(data.saved);
+        } else {
+          setIsSaved(false);
+        }
+      } catch (error) {
+        console.error("Error checking saved status:", error);
+        setIsSaved(false);
+      }
+    };
+    
+    checkSavedStatus();
+  }, [title, userSession]);
 
   // Like or undo
   const toggleHeadline = async () => {
@@ -138,20 +153,52 @@ export default function NewsCard({ news, onVote, showScore = false }) {
   // Bookmark function
   const onSaveClick = async () => {
     if (!userSession) {
-      toast("Login with Google to save this article.");
+      toast("Please login with Google to save articles.");
       if (window.triggerGoogleLogin) window.triggerGoogleLogin();
       return;
     }
+    
     try {
-      await fetch("/api/save", {
-        method: "POST",
-        body: JSON.stringify({ newsId: id || title, userId: userSession.user.id }),
-        headers: { "Content-Type": "application/json" }
-      });
-      setIsSaved(true);
-      toast("Article saved!");
-    } catch (e) {
-      toast("Failed to save article");
+      if (isSaved) {
+        // 取消保存
+        const response = await fetch("/api/save", {
+          method: "DELETE",
+          body: JSON.stringify({ 
+            newsId: title, 
+            userId: userSession.user.id 
+          }),
+          headers: { "Content-Type": "application/json" }
+        });
+        
+        if (response.ok) {
+          setIsSaved(false);
+          toast("Article removed from saved");
+        } else {
+          const error = await response.json();
+          toast(`Failed to remove article: ${error.detail}`);
+        }
+      } else {
+        // 保存文章
+        const response = await fetch("/api/save", {
+          method: "POST",
+          body: JSON.stringify({ 
+            newsId: title, 
+            userId: userSession.user.id 
+          }),
+          headers: { "Content-Type": "application/json" }
+        });
+        
+        if (response.ok) {
+          setIsSaved(true);
+          toast("Article saved successfully!");
+        } else {
+          const error = await response.json();
+          toast(`Failed to save article: ${error.detail}`);
+        }
+      }
+    } catch (error) {
+      console.error("Save operation failed:", error);
+      toast("Failed to save article. Please try again.");
     }
   };
 

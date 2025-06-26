@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchArticleByTitle } from "../services/api";
+import { UserContext } from "../context/UserContext";
+import { toast } from "react-toastify";
 
 // 格式化相对时间
 function formatRelativeTime(dateString) {
@@ -79,12 +81,35 @@ export default function Saved() {
   const [removedArticle, setRemovedArticle] = useState(null);
   const [showUndo, setShowUndo] = useState(false);
   const navigate = useNavigate();
+  const { user } = useContext(UserContext);
 
   // Load bookmarked articles
   useEffect(() => {
-    const saved = localStorage.getItem('savedArticles') || '[]';
-    setSavedArticles(JSON.parse(saved));
-  }, []);
+    const loadSavedArticles = async () => {
+      if (!user) {
+        setSavedArticles([]);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/saved?user_id=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSavedArticles(data.articles || []);
+        } else {
+          console.error("Failed to load saved articles");
+          toast("Failed to load saved articles");
+          setSavedArticles([]);
+        }
+      } catch (error) {
+        console.error("Error loading saved articles:", error);
+        toast("Error loading saved articles");
+        setSavedArticles([]);
+      }
+    };
+    
+    loadSavedArticles();
+  }, [user]);
 
   // Save bookmarks to localStorage
   const saveToStorage = (articles) => {
@@ -93,26 +118,73 @@ export default function Saved() {
   };
 
   // Remove bookmark
-  const removeFromSaved = (articleToRemove) => {
-    const updatedArticles = savedArticles.filter(article => article.title !== articleToRemove.title);
-    saveToStorage(updatedArticles);
-    setRemovedArticle(articleToRemove);
-    setShowUndo(true);
+  const removeFromSaved = async (articleToRemove) => {
+    if (!user) {
+      toast("Please login to manage saved articles");
+      return;
+    }
     
-    // Auto-hide undo button after 5 seconds
-    setTimeout(() => {
-      setShowUndo(false);
-      setRemovedArticle(null);
-    }, 5000);
+    try {
+      const response = await fetch("/api/save", {
+        method: "DELETE",
+        body: JSON.stringify({ 
+          newsId: articleToRemove.title, 
+          userId: user.id 
+        }),
+        headers: { "Content-Type": "application/json" }
+      });
+      
+      if (response.ok) {
+        const updatedArticles = savedArticles.filter(article => article.title !== articleToRemove.title);
+        setSavedArticles(updatedArticles);
+        setRemovedArticle(articleToRemove);
+        setShowUndo(true);
+        toast("Article removed from saved");
+        
+        // Auto-hide undo button after 5 seconds
+        setTimeout(() => {
+          setShowUndo(false);
+          setRemovedArticle(null);
+        }, 5000);
+      } else {
+        const error = await response.json();
+        toast(`Failed to remove article: ${error.detail}`);
+      }
+    } catch (error) {
+      console.error("Error removing article:", error);
+      toast("Failed to remove article");
+    }
   };
 
   // Undo remove
-  const undoRemove = () => {
-    if (removedArticle) {
-      const updatedArticles = [...savedArticles, removedArticle];
-      saveToStorage(updatedArticles);
-      setRemovedArticle(null);
-      setShowUndo(false);
+  const undoRemove = async () => {
+    if (!removedArticle || !user) {
+      return;
+    }
+    
+    try {
+      const response = await fetch("/api/save", {
+        method: "POST",
+        body: JSON.stringify({ 
+          newsId: removedArticle.title, 
+          userId: user.id 
+        }),
+        headers: { "Content-Type": "application/json" }
+      });
+      
+      if (response.ok) {
+        const updatedArticles = [...savedArticles, removedArticle];
+        setSavedArticles(updatedArticles);
+        setRemovedArticle(null);
+        setShowUndo(false);
+        toast("Article restored to saved");
+      } else {
+        const error = await response.json();
+        toast(`Failed to restore article: ${error.detail}`);
+      }
+    } catch (error) {
+      console.error("Error restoring article:", error);
+      toast("Failed to restore article");
     }
   };
 
@@ -174,6 +246,57 @@ export default function Saved() {
           Total: {savedArticles.length} articles
         </p>
       </div>
+
+      {/* Login prompt */}
+      {!user && (
+        <div style={{
+          textAlign: "center",
+          padding: "2rem",
+          background: "var(--card-bg)",
+          border: "1px solid var(--border-color)",
+          borderRadius: "0.5rem",
+          marginBottom: "2rem",
+        }}>
+          <h3 style={{
+            color: "var(--text-color)",
+            marginBottom: "1rem",
+            fontFamily: "var(--font-mono)",
+          }}>
+            Login Required
+          </h3>
+          <p style={{
+            color: "var(--secondary-color)",
+            marginBottom: "1.5rem",
+            fontFamily: "var(--font-mono)",
+          }}>
+            Please login with Google to view and manage your saved articles.
+          </p>
+          <button
+            onClick={() => {
+              if (window.triggerGoogleLogin) window.triggerGoogleLogin();
+            }}
+            style={{
+              background: "var(--highlight-color)",
+              border: "none",
+              color: "white",
+              fontFamily: "var(--font-mono)",
+              fontSize: "1rem",
+              cursor: "pointer",
+              padding: "0.75rem 1.5rem",
+              borderRadius: "0.25rem",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.opacity = "0.8";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.opacity = "1";
+            }}
+          >
+            🔐 Login with Google
+          </button>
+        </div>
+      )}
 
       {/* Export buttons */}
       {savedArticles.length > 0 && (

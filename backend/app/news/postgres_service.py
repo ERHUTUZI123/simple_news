@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc
-from app.models import News, Vote
+from app.models import News, Vote, SavedArticle
 from app.scoring import calculate_news_score, extract_keywords_from_text, build_existing_keyword_map
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy import func
@@ -368,4 +368,81 @@ class PostgresService:
                 return [str(keywords)]
         except Exception as e:
             print(f"Error processing keywords: {e}, keywords: {keywords}")
-            return [] 
+            return []
+
+    # 用户保存文章相关方法
+    def save_article_for_user(self, user_id: str, news_id: str) -> bool:
+        """为用户保存文章"""
+        try:
+            # 检查是否已经保存
+            existing = self.db.query(SavedArticle).filter(
+                SavedArticle.user_id == user_id,
+                SavedArticle.news_id == news_id
+            ).first()
+            
+            if existing:
+                return True  # 已经保存过了
+            
+            # 创建新的保存记录
+            saved_article = SavedArticle(user_id=user_id, news_id=news_id)
+            self.db.add(saved_article)
+            self.db.commit()
+            print(f"✅ Saved article {news_id} for user {user_id}")
+            return True
+        except Exception as e:
+            print(f"❌ Error saving article for user: {e}")
+            self.db.rollback()
+            return False
+
+    def remove_article_from_user(self, user_id: str, news_id: str) -> bool:
+        """从用户收藏中移除文章"""
+        try:
+            saved_article = self.db.query(SavedArticle).filter(
+                SavedArticle.user_id == user_id,
+                SavedArticle.news_id == news_id
+            ).first()
+            
+            if saved_article:
+                self.db.delete(saved_article)
+                self.db.commit()
+                print(f"✅ Removed article {news_id} from user {user_id}")
+                return True
+            else:
+                return True  # 本来就没有保存，也算成功
+        except Exception as e:
+            print(f"❌ Error removing article from user: {e}")
+            self.db.rollback()
+            return False
+
+    def get_saved_articles_for_user(self, user_id: str) -> List[Dict]:
+        """获取用户保存的文章列表"""
+        try:
+            saved_articles = self.db.query(SavedArticle).filter(
+                SavedArticle.user_id == user_id
+            ).all()
+            
+            articles = []
+            for saved in saved_articles:
+                # 获取文章详情
+                article = self.get_article_by_title(saved.news_id)
+                if "error" not in article:
+                    articles.append(article)
+            
+            print(f"✅ Retrieved {len(articles)} saved articles for user {user_id}")
+            return articles
+        except Exception as e:
+            print(f"❌ Error getting saved articles for user: {e}")
+            return []
+
+    def is_article_saved_by_user(self, user_id: str, news_id: str) -> bool:
+        """检查文章是否已被用户保存"""
+        try:
+            saved_article = self.db.query(SavedArticle).filter(
+                SavedArticle.user_id == user_id,
+                SavedArticle.news_id == news_id
+            ).first()
+            
+            return saved_article is not None
+        except Exception as e:
+            print(f"❌ Error checking if article is saved by user: {e}")
+            return False 
