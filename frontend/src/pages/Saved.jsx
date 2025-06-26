@@ -82,33 +82,34 @@ export default function Saved() {
   const [showUndo, setShowUndo] = useState(false);
   const navigate = useNavigate();
   const { userSession, triggerGoogleLogin } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Load bookmarked articles
   useEffect(() => {
-    const loadSavedArticles = async () => {
-      if (!userSession) {
-        setSavedArticles([]);
-        return;
-      }
+    const fetchSavedArticles = async () => {
+      if (!userSession?.user?.id) return;
       
       try {
-        const response = await fetch(`/api/saved?user_id=${userSession.user.id}`);
+        setLoading(true);
+        const response = await fetch(`https://simplenews-production.up.railway.app/api/saved?user_id=${userSession.user.id}`);
+        
         if (response.ok) {
           const data = await response.json();
           setSavedArticles(data.articles || []);
         } else {
-          console.error("Failed to load saved articles");
-          toast("Failed to load saved articles");
-          setSavedArticles([]);
+          console.error('Failed to fetch saved articles');
+          setError('Failed to load saved articles');
         }
       } catch (error) {
-        console.error("Error loading saved articles:", error);
-        toast("Error loading saved articles");
-        setSavedArticles([]);
+        console.error('Error fetching saved articles:', error);
+        setError('Error loading saved articles');
+      } finally {
+        setLoading(false);
       }
     };
     
-    loadSavedArticles();
+    fetchSavedArticles();
   }, [userSession]);
 
   // Save bookmarks to localStorage
@@ -125,7 +126,7 @@ export default function Saved() {
     }
     
     try {
-      const response = await fetch("/api/save", {
+      const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
         method: "DELETE",
         body: JSON.stringify({ newsId: articleToRemove.id, userId: userSession.user.id }),
         headers: { "Content-Type": "application/json" }
@@ -160,7 +161,7 @@ export default function Saved() {
     }
     
     try {
-      const response = await fetch("/api/save", {
+      const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
         method: "POST",
         body: JSON.stringify({ newsId: removedArticle.id, userId: userSession.user.id }),
         headers: { "Content-Type": "application/json" }

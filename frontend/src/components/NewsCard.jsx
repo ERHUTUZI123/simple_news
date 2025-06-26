@@ -106,7 +106,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
       }
       
       try {
-        const response = await fetch(`/api/saved/check?user_id=${userSession.user.id}&news_id=${id}`);
+        const response = await fetch(`https://simplenews-production.up.railway.app/api/saved/check?user_id=${userSession.user.id}&news_id=${id}`);
         if (response.ok) {
           const data = await response.json();
           setIsSaved(data.saved);
@@ -161,7 +161,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
     try {
       if (isSaved) {
         // 取消保存
-        const response = await fetch("/api/save", {
+        const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
           method: "DELETE",
           body: JSON.stringify({ 
             newsId: id, 
@@ -179,7 +179,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         }
       } else {
         // 保存文章
-        const response = await fetch("/api/save", {
+        const response = await fetch("https://simplenews-production.up.railway.app/api/save", {
           method: "POST",
           body: JSON.stringify({ 
             newsId: id, 
