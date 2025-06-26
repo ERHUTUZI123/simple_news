@@ -35,7 +35,7 @@ def background_news_refresh():
             refresh_news_cache()
             print("✅ 后台任务：新闻刷新完成")
         except Exception as e:
-            print(f"❌ 后台任务：新闻刷新失败 - {e}")
+            print(f"❌ Background task: News refresh failed - {e}")
         
         # 等待15分钟
         time.sleep(15 * 60)

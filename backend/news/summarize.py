@@ -9,10 +9,10 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 def summarize_news(text: str, summary_type: str = "brief") -> Dict[str, Any]:
     """
-    生成新闻摘要，支持brief和detailed两种类型
-    返回包含摘要和结构评分的字典
+    Generate news summary, supports brief and detailed types
+    Returns a dictionary containing summary and structure score
     """
-    # 用正文内容和类型做哈希
+    # Use content and type for hash
     cache_key = f"{text}_{summary_type}"
     key = hashlib.md5(cache_key.encode("utf-8")).hexdigest()
     cache_path = os.path.join(CACHE_DIR, key + ".json")
@@ -21,38 +21,40 @@ def summarize_news(text: str, summary_type: str = "brief") -> Dict[str, Any]:
         with open(cache_path, "r") as f:
             return json.load(f)
 
-    # 根据类型设置不同的提示词
+    # Set different prompts based on type
     if summary_type == "brief":
         prompt = f"""
-        请为以下新闻生成一个简洁的摘要，要求：
-        1. 2-3句话，约150-200字符
-        2. 突出核心事实和关键信息
-        3. 使用客观、准确的表述
-        4. 避免主观评论
+        Please generate a concise summary for the following news article in English. Requirements:
+        1. 2-3 sentences, approximately 150-200 characters
+        2. Highlight core facts and key information
+        3. Use objective and accurate language
+        4. Avoid subjective commentary
+        5. Write in clear, professional English
         
-        新闻内容：
+        News content:
         {text}
         
-        请只返回摘要内容，不要其他解释。
+        Please return only the summary content in English, no other explanations.
         """
         max_tokens = 100
     else:  # detailed
         prompt = f"""
-        请为以下新闻生成一个详细的摘要，要求：
-        1. 420+字符，65+单词
-        2. 包含背景信息、影响分析
-        3. 结构清晰，逻辑连贯
-        4. 提供深度洞察
+        Please generate a detailed summary for the following news article in English. Requirements:
+        1. 420+ characters, 65+ words
+        2. Include background information and impact analysis
+        3. Clear structure and logical flow
+        4. Provide deep insights
+        5. Write in clear, professional English
         
-        新闻内容：
+        News content:
         {text}
         
-        请只返回摘要内容，不要其他解释。
+        Please return only the summary content in English, no other explanations.
         """
         max_tokens = 300
 
     try:
-        # 调用OpenAI API
+        # Call OpenAI API
         client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -61,9 +63,9 @@ def summarize_news(text: str, summary_type: str = "brief") -> Dict[str, Any]:
             temperature=0.3
         )
         
-        summary = response.choices[0].message.content.strip() if response.choices[0].message.content else "摘要生成失败"
+        summary = response.choices[0].message.content.strip() if response.choices[0].message.content else "Summary generation failed"
         
-        # 计算结构评分（简化版本）
+        # Calculate structure score (simplified version)
         structure_score = calculate_structure_score(summary, summary_type)
         
         result = {
@@ -71,7 +73,7 @@ def summarize_news(text: str, summary_type: str = "brief") -> Dict[str, Any]:
             "structure_score": structure_score
         }
         
-        # 缓存结果
+        # Cache result
         with open(cache_path, "w") as f:
             json.dump(result, f)
         
@@ -79,20 +81,20 @@ def summarize_news(text: str, summary_type: str = "brief") -> Dict[str, Any]:
         
     except Exception as e:
         print(f"Error generating summary: {e}")
-        # 返回默认结果
+        # Return default result
         return {
-            "summary": "摘要生成失败",
+            "summary": "Summary generation failed",
             "structure_score": 3.0
         }
 
 def calculate_structure_score(summary: str, summary_type: str) -> float:
     """
-    计算摘要的结构评分（1-5分）
-    基于长度、完整性、逻辑性等因素
+    Calculate structure score for summary (1-5 points)
+    Based on length, completeness, logic, etc.
     """
-    score = 3.0  # 基础分
+    score = 3.0  # Base score
     
-    # 长度评分
+    # Length score
     char_count = len(summary)
     word_count = len(summary.split())
     
@@ -107,20 +109,20 @@ def calculate_structure_score(summary: str, summary_type: str) -> float:
         elif char_count >= 300 and word_count >= 50:
             score += 0.5
     
-    # 结构完整性评分
+    # Structure completeness score
     if "." in summary and len(summary.split(".")) >= 2:
         score += 0.5
     
-    # 关键词覆盖评分
-    important_words = ["因为", "所以", "但是", "然而", "此外", "同时", "因此"]
-    if any(word in summary for word in important_words):
+    # Keyword coverage score
+    important_words = ["because", "therefore", "however", "meanwhile", "additionally", "furthermore", "consequently", "nevertheless", "moreover", "thus"]
+    if any(word.lower() in summary.lower() for word in important_words):
         score += 0.5
     
     return min(5.0, max(1.0, score))
 
 def generate_both_summaries(text: str) -> Dict[str, Any]:
     """
-    生成brief和detailed两种摘要
+    Generate both brief and detailed summaries
     """
     brief_result = summarize_news(text, "brief")
     detailed_result = summarize_news(text, "detailed")

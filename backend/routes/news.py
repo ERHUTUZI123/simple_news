@@ -119,16 +119,16 @@ def get_vote(
 
 @router.post("/news/summary")
 def news_summary(data: dict = Body(...)):
-    """生成新闻摘要"""
+    """Generate news summary"""
     content = data.get("content", "")
-    summary_type = data.get("type", "detailed")  # 默认为detailed
+    summary_type = data.get("type", "detailed")  # Default to detailed
     
     if summary_type == "both":
-        # 生成两种摘要
+        # Generate both types of summaries
         result = generate_both_summaries(content)
         return result
     else:
-        # 生成单一类型摘要
+        # Generate single type summary
         result = summarize_news(content, summary_type)
         return {"summary": result["summary"], "structure_score": result["structure_score"]}
 
