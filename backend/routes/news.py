@@ -209,27 +209,32 @@ def summarize_news(text: str, word_count: int = 70) -> str:
         return "generation failed"
 
 def score_news(text: str) -> int:
-    """评分新闻质量，返回1-10分"""
+    """评分新闻重要性，返回1-10分"""
     if not text.strip():
+        print("❌ [ERROR] Empty text passed to score_news!")
         return 5
     
     prompt = (
-        "Rate the quality and newsworthiness of this news article on a scale of 1-10. "
-        "Consider factors like accuracy, relevance, depth, and journalistic quality. "
-        "Respond with only the number (1-10).\n\n"
-        f"Article: {text[:1000]}..."
+        "Please rate the significance of this news article (1–10):\n\n"
+        "Consider the scale and extent of impact.\n\n"
+        "Prioritize international politics, economics, and technological changes.\n"
+        "(1 = minor significance; 10 = extremely significant)\n\n"
+        f"{text[:1000]}..."
     )
-    
     try:
         result = _call_openai_score(prompt)
+        print(f"[DEBUG] OpenAI score raw result: {result}")
         if result:
-            # 提取数字
             import re
             numbers = re.findall(r'\d+', result)
             if numbers:
                 score = int(numbers[0])
-                return max(1, min(10, score))  # 确保在1-10范围内
+                print(f"[DEBUG] Parsed score: {score}")
+                return max(1, min(10, score))
+            else:
+                print("[ERROR] No number found in OpenAI response!")
+        else:
+            print("[ERROR] OpenAI returned empty result!")
     except Exception as e:
         print(f"❌ [ERROR] Score parsing error: {e}")
-    
     return 5  # 默认分数
