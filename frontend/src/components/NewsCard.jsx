@@ -1,17 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  fetchSummary,
   voteNews,
   downvoteNews,
 } from "../services/api";
-
-// 简单去除 HTML 标签
-function stripHtml(html) {
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || "";
-}
 
 // 格式化相对时间（展示分钟 m、小时 h、天 d）
 function formatRelativeTime(dateString) {
@@ -36,9 +28,6 @@ function formatRelativeTime(dateString) {
 
 export default function NewsCard({ title, link, date, source, content, comprehensive_score, vote_count }) {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(false);
-  const [tldr, setTldr] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
@@ -52,34 +41,6 @@ export default function NewsCard({ title, link, date, source, content, comprehen
       setIsSaved(isArticleSaved);
     }
   }, [title]);
-
-  // Click to generate or hide summary
-  const handleTldr = async () => {
-    if (tldr) {
-      setExpanded(!expanded);
-      return;
-    }
-    setLoading(true);
-    setExpanded(true);
-
-    const key = `tldr-${title}`;
-    const cached = localStorage.getItem(key);
-    if (cached) {
-      setTldr(stripHtml(cached));
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const s = await fetchSummary(content, "brief");
-      localStorage.setItem(key, s);
-      setTldr(stripHtml(s));
-    } catch {
-      setTldr("Generation failed, try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Like or undo
   const toggleHeadline = async () => {
@@ -101,7 +62,6 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     } else {
       setIsTrash(true);
       setIsHeadline(false);
-      setExpanded(false);
       await downvoteNews(title);
     }
   };
@@ -124,7 +84,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
         date,
         source,
         content,
-        summary: tldr || ""
+        summary: ""  // 不再需要摘要
       };
       const updatedArticles = [...savedArticles, articleToSave];
       localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
@@ -166,75 +126,6 @@ export default function NewsCard({ title, link, date, source, content, comprehen
         </a>
         {isHeadline && <span className="badge">HEADLINE</span>}
       </h3>
-
-      {/* AI Summary */}
-      <div className="summary-section">
-        {!expanded && !loading && (
-          <button 
-            className="tldr-button" 
-            onClick={handleTldr}
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-color)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.9rem",
-              cursor: "pointer",
-              padding: "0.5rem 0",
-              textDecoration: "none",
-            }}
-          >
-            - Show AI Summary
-          </button>
-        )}
-        
-        {loading && (
-          <div style={{ 
-            color: "var(--secondary-color)", 
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.9rem",
-            padding: "0.5rem 0"
-          }}>
-            Generating AI summary...
-          </div>
-        )}
-        
-        {expanded && !loading && tldr && (
-          <div className="expanded-summary">
-            <p style={{
-              margin: "0.5rem 0",
-              lineHeight: "1.6",
-              color: "var(--text-color)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.9rem",
-              maxHeight: "6rem",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: "vertical",
-            }}>
-              - {tldr}
-            </p>
-            <button 
-              className="tldr-button" 
-              onClick={() => setExpanded(false)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--secondary-color)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.8rem",
-                cursor: "pointer",
-                padding: "0.25rem 0",
-                textDecoration: "none",
-              }}
-            >
-              Hide Summary
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* 操作按钮 */}
       <div className="actions">
@@ -349,7 +240,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
             }
           }}
         >
-          {isHeadline ? "Undo Headline" : "👍 Headline"}
+          {isHeadline ? "✅ Headline" : "👍 Headline"}
         </button>
 
         <button 
@@ -379,7 +270,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
             }
           }}
         >
-          {isTrash ? "Undo Trash" : "💩 Trash"}
+          {isTrash ? "🗑️ Trash" : "🗑️ Trash"}
         </button>
       </div>
     </div>
