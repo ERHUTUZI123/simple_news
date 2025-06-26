@@ -458,37 +458,38 @@ class PostgresService:
     def save_user(self, user_id: str, email: str, name: str) -> bool:
         """保存用户信息到数据库"""
         try:
-            with self.db.connect() as conn:
-                # 检查用户是否已存在
-                result = conn.execute(
-                    text("SELECT id FROM users WHERE id = :user_id"),
-                    {"user_id": user_id}
+            # 检查用户是否已存在
+            result = self.db.execute(
+                text("SELECT id FROM users WHERE id = :user_id"),
+                {"user_id": user_id}
+            )
+            existing_user = result.fetchone()
+            
+            if existing_user:
+                # 用户已存在，更新信息
+                self.db.execute(
+                    text("""
+                        UPDATE users 
+                        SET email = :email, name = :name 
+                        WHERE id = :user_id
+                    """),
+                    {"user_id": user_id, "email": email, "name": name}
                 )
-                existing_user = result.fetchone()
-                
-                if existing_user:
-                    # 用户已存在，更新信息
-                    conn.execute(
-                        text("""
-                            UPDATE users 
-                            SET email = :email, name = :name 
-                            WHERE id = :user_id
-                        """),
-                        {"user_id": user_id, "email": email, "name": name}
-                    )
-                else:
-                    # 创建新用户
-                    conn.execute(
-                        text("""
-                            INSERT INTO users (id, email, name, created_at) 
-                            VALUES (:user_id, :email, :name, NOW())
-                        """),
-                        {"user_id": user_id, "email": email, "name": name}
-                    )
-                
-                conn.commit()
-                return True
-                
+            else:
+                # 创建新用户
+                self.db.execute(
+                    text("""
+                        INSERT INTO users (id, email, name, created_at) 
+                        VALUES (:user_id, :email, :name, NOW())
+                    """),
+                    {"user_id": user_id, "email": email, "name": name}
+                )
+            
+            self.db.commit()
+            print(f"✅ Saved user {user_id} to database")
+            return True
+            
         except Exception as e:
-            print(f"Error saving user: {e}")
+            print(f"❌ Error saving user: {e}")
+            self.db.rollback()
             return False 
