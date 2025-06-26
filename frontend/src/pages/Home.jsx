@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchVote, fetchNewsWithSort } from "../services/api";
-import NewsCard from "../components/NewsCard";
+import NewsCard, { NewsCardSkeleton } from "../components/NewsCard";
 import { GoogleLogin } from '@react-oauth/google';
 
 // 解析JWT token获取用户信息
@@ -507,29 +507,25 @@ export default function Home() {
 
       {/* 新闻列表 */}
       <div className="news-list">
-        {newsList.map((news, index) => (
-          <div
-            key={`${news.title}-${index}`}
-          >
-            <NewsCard
-              news={news}
-              onVote={handleVote}
-              showScore={sortBy === 'smart'} // 智能排序时显示评分
-            />
-          </div>
-        ))}
-        
-        {loading && (
-          <div style={{
-            textAlign: "center",
-            padding: "2rem",
-            color: "var(--secondary-color)",
-            fontFamily: "var(--font-mono)",
-          }}>
+        {loading && newsList.length === 0 ? (
+          // 加载中且无数据时显示骨架屏
+          Array.from({ length: 5 }).map((_, i) => <NewsCardSkeleton key={i} />)
+        ) : (
+          newsList.map((news, index) => (
+            <div key={`${news.title}-${index}`}>
+              <NewsCard
+                news={news}
+                onVote={handleVote}
+                showScore={sortBy === 'smart'}
+              />
+            </div>
+          ))
+        )}
+        {loading && newsList.length > 0 && (
+          <div style={{ textAlign: "center", padding: "2rem", color: "var(--secondary-color)", fontFamily: "var(--font-mono)" }}>
             Loading more news...
           </div>
         )}
-        
         <div ref={observerRef} style={{ height: "20px" }} />
       </div>
     </div>

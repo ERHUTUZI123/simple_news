@@ -17,13 +17,14 @@ class PostgresService:
 
     # 获取新闻
     def get_news(self, offset=0, limit=20, sort_by="smart", source_filter=None) -> List[Dict]:
-        """获取新闻，支持智能排序，带缓存"""
+        """获取新闻，支持智能排序，仅缓存首页数据（offset=0）"""
         try:
-            # 构造缓存key
+            use_cache = (offset == 0)
             cache_key = f"news:{sort_by}:{offset}:{limit}:{source_filter or 'all'}"
-            cached = redis_client.get(cache_key)
-            if cached:
-                return json.loads(cached)
+            if use_cache:
+                cached = redis_client.get(cache_key)
+                if cached:
+                    return json.loads(cached)
             query = self.db.query(News)
             
             # 应用来源过滤
@@ -86,8 +87,8 @@ class PostgresService:
                     "vote_count": self.get_vote_count(item.title)
                 })
             
-            # 设置缓存，120秒
-            redis_client.setex(cache_key, 120, json.dumps(results, ensure_ascii=False))
+            if use_cache:
+                redis_client.setex(cache_key, 120, json.dumps(results, ensure_ascii=False))
             return results
         except Exception as e:
             print(f"Error getting news: {e}")

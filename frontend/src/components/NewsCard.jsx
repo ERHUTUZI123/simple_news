@@ -338,3 +338,14 @@ export default function NewsCard({ news, onVote, showScore = false }) {
     </div>
   );
 }
+
+// 骨架屏组件
+export function NewsCardSkeleton() {
+  return (
+    <div className="news-card skeleton">
+      <div className="skeleton-title" style={{width: '70%', height: 24, background: '#eee', marginBottom: 8}}></div>
+      <div className="skeleton-content" style={{width: '100%', height: 48, background: '#f3f3f3', marginBottom: 8}}></div>
+      <div className="skeleton-footer" style={{width: '40%', height: 16, background: '#e0e0e0'}}></div>
+    </div>
+  );
+}

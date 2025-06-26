@@ -2,6 +2,9 @@ import logging
 from app.news.postgres_service import PostgresService
 from app.db import SessionLocal
 from news.fetch_news import get_tech_news
+import time
+from app import redis_client
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,5 +37,18 @@ def refresh_news_cache():
     except Exception as e:
         logger.error(f"❌ 刷新新闻缓存时出错: {e}")
 
+def prewarm_homepage_cache():
+    db = SessionLocal()
+    pg_service = PostgresService(db)
+    sort_types = ["smart", "time", "headlines"]
+    for sort_by in sort_types:
+        cache_key = f"news:{sort_by}:0:20:all"
+        news = pg_service.get_news(offset=0, limit=20, sort_by=sort_by, source_filter=None)
+        redis_client.setex(cache_key, 120, json.dumps(news, ensure_ascii=False))
+    db.close()
+
 if __name__ == "__main__":
-    refresh_news_cache() 
+    while True:
+        print("[CacheWorker] Prewarming homepage news cache...")
+        prewarm_homepage_cache()
+        time.sleep(300)  # 5 minutes 
