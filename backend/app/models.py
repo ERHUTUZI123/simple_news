@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, TIMESTAMP, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql import func
 from datetime import datetime
 
 Base = declarative_base()
@@ -26,4 +28,10 @@ class Vote(Base):
     __tablename__ = "votes"
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String, unique=True, index=True, nullable=False)
-    count = Column(Integer, default=0) 
+    count = Column(Integer, default=0)
+
+class SavedArticle(Base):
+    __tablename__ = "saved_articles"
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
+    news_id = Column(String, primary_key=True)
+    saved_at = Column(TIMESTAMP, server_default=func.now()) 

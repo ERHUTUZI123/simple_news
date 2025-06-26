@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   voteNews,
   downvoteNews,
 } from "../services/api";
+import { UserContext } from "../context/UserContext";
+import { toast } from "react-toastify";
 
 // 格式化相对时间（展示分钟 m、小时 h、天 d）
 function formatRelativeTime(dateString) {
@@ -56,12 +58,13 @@ function formatRelativeTime(dateString) {
 
 export default function NewsCard({ news, onVote, showScore = false }) {
   const navigate = useNavigate();
+  const userSession = useContext(UserContext);
   const [isSaved, setIsSaved] = useState(false);
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
 
   // 从news对象中提取数据
-  const { title, link, date, source, content, score, vote_count, keywords } = news;
+  const { id, title, link, date, source, content, score, vote_count, keywords } = news;
 
   // Check if article is bookmarked
   useEffect(() => {
@@ -102,28 +105,22 @@ export default function NewsCard({ news, onVote, showScore = false }) {
   };
 
   // Bookmark function
-  const toggleSaved = () => {
-    const saved = localStorage.getItem('savedArticles') || '[]';
-    const savedArticles = JSON.parse(saved);
-    
-    if (isSaved) {
-      // Remove bookmark
-      const updatedArticles = savedArticles.filter(article => article.title !== title);
-      localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
-      setIsSaved(false);
-    } else {
-      // Add bookmark
-      const articleToSave = {
-        title,
-        link,
-        date,
-        source,
-        content,
-        summary: ""  // 不再需要摘要
-      };
-      const updatedArticles = [...savedArticles, articleToSave];
-      localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
+  const onSaveClick = async () => {
+    if (!userSession) {
+      toast("Login with Google to save this article.");
+      if (window.triggerGoogleLogin) window.triggerGoogleLogin();
+      return;
+    }
+    try {
+      await fetch("/api/save", {
+        method: "POST",
+        body: JSON.stringify({ newsId: id || title, userId: userSession.user.id }),
+        headers: { "Content-Type": "application/json" }
+      });
       setIsSaved(true);
+      toast("Article saved!");
+    } catch (e) {
+      toast("Failed to save article");
     }
   };
 
@@ -241,7 +238,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         </a>
 
         <button
-          onClick={toggleSaved}
+          onClick={onSaveClick}
           style={{
             background: isSaved ? "var(--highlight-color)" : "none",
             border: "1px solid var(--border-color)",
@@ -254,14 +251,14 @@ export default function NewsCard({ news, onVote, showScore = false }) {
             transition: "all 0.2s ease",
             marginRight: "1rem",
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={e => {
             if (!isSaved) {
-              e.target.style.backgroundColor = "var(--button-hover-bg)";
-              e.target.style.color = "var(--button-hover-text)";
-              e.target.style.borderColor = "var(--button-hover-border)";
+              e.target.style.backgroundColor = "var(--like-hover-bg)";
+              e.target.style.color = "var(--like-hover-text)";
+              e.target.style.borderColor = "var(--like-hover-border)";
             }
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={e => {
             if (!isSaved) {
               e.target.style.backgroundColor = "transparent";
               e.target.style.color = "var(--text-color)";
@@ -269,7 +266,7 @@ export default function NewsCard({ news, onVote, showScore = false }) {
             }
           }}
         >
-          {isSaved ? "📖 Saved" : "📖 Save"}
+          {isSaved ? "⭐ Saved" : "⭐ Save"}
         </button>
 
         <button

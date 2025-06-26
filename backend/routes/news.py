@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Body, HTTPException, Header
+from fastapi import APIRouter, Depends, Query, Body, HTTPException, Header, Request
 from sqlalchemy.orm import Session
 from app.news.postgres_service import PostgresService
 from app.db import SessionLocal
@@ -12,6 +12,8 @@ import time
 import random
 from typing import Optional
 from datetime import datetime, timedelta
+from app.models import SavedArticle
+from sqlalchemy.dialects.postgresql import UUID
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -200,3 +202,17 @@ def get_sort_options():
             {"value": "headlines", "label": "Most Popular"}
         ]
     }
+
+@router.post("/api/save")
+async def save_article(request: Request, db: Session = Depends(get_pg_service)):
+    data = await request.json()
+    user_id = data.get("userId")
+    news_id = data.get("newsId")
+    if not user_id or not news_id:
+        raise HTTPException(status_code=400, detail="Missing userId or newsId")
+    # upsert
+    exists = db.query(SavedArticle).filter_by(user_id=user_id, news_id=news_id).first()
+    if not exists:
+        db.add(SavedArticle(user_id=user_id, news_id=news_id))
+        db.commit()
+    return {"success": True}
