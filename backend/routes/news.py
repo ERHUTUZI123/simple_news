@@ -12,7 +12,7 @@ import time
 import random
 from typing import Optional
 from datetime import datetime, timedelta
-from app.models import SavedArticle, User
+from app.models import SavedArticle, User, News
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import UUID
 
