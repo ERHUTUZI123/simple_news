@@ -96,12 +96,15 @@ def fetch_from_rss() -> List[Dict]:
                 # 创建摘要（用于显示）
                 summary = content[:600] if len(content) > 600 else content
 
+                # 格式化日期为ISO字符串
+                formatted_date = published_dt_utc.isoformat()
+
                 items.append({
                     "title": entry.title,
                     "content": content,  # 完整内容用于AI摘要
                     "summary": summary,  # 简短摘要用于显示
                     "link": entry.link,
-                    "date": raw_date,
+                    "date": formatted_date,  # 使用格式化的ISO日期字符串
                     "source": source_name
                 })
                 

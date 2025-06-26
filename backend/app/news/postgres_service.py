@@ -43,16 +43,35 @@ class PostgresService:
             # 转换为字典格式
             results = []
             for item in news_items:
-                published_at_str = item.published_at.isoformat() + 'Z' if item.published_at else None
+                # 确保日期格式正确
+                date_str = None
+                published_at = item.published_at
+                if published_at:
+                    try:
+                        # 确保是UTC时间并格式化为ISO字符串
+                        if published_at.tzinfo is None:
+                            # 如果没有时区信息，假设是UTC
+                            date_str = published_at.isoformat() + 'Z'
+                        else:
+                            # 如果有时区信息，转换为UTC
+                            from datetime import timezone
+                            utc_date = published_at.astimezone(timezone.utc)
+                            date_str = utc_date.isoformat()
+                    except Exception as e:
+                        print(f"Error formatting date: {e}")
+                        date_str = datetime.utcnow().isoformat() + 'Z'
+                else:
+                    date_str = datetime.utcnow().isoformat() + 'Z'
+                
                 results.append({
                     "id": item.id,
                     "title": item.title,
                     "content": item.content,
                     "summary": item.summary,
                     "link": item.link,
-                    "date": published_at_str,
+                    "date": date_str,
                     "source": item.source,
-                    "published_at": published_at_str,
+                    "published_at": date_str,
                     "summary_ai": item.summary_ai or {},
                     "headline_count": item.headline_count,
                     "keywords": item.keywords or [],

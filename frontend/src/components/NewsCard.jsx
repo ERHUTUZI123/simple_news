@@ -7,23 +7,51 @@ import {
 
 // 格式化相对时间（展示分钟 m、小时 h、天 d）
 function formatRelativeTime(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMin = Math.floor(diffMs / 1000 / 60);
+  if (!dateString) {
+    console.log("No date string provided");
+    return "unknown";
+  }
   
-  if (diffMin < 1) {
-    return "now";
+  console.log("Formatting date:", dateString, "Type:", typeof dateString);
+  
+  try {
+    const date = new Date(dateString);
+    console.log("Parsed date:", date, "Valid:", !isNaN(date.getTime()));
+    
+    if (isNaN(date.getTime())) {
+      console.log("Invalid date:", dateString);
+      return "invalid date";
+    }
+    
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / (1000 * 60));
+    
+    console.log("Time calculation:", {
+      date: date.toISOString(),
+      now: now.toISOString(),
+      diffMs,
+      diffMin
+    });
+    
+    if (diffMin < 1) {
+      return "now";
+    }
+    if (diffMin < 60) {
+      return `${diffMin}m`;
+    }
+    
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) {
+      return `${diffH}h`;
+    }
+    
+    const diffD = Math.floor(diffH / 24);
+    return `${diffD}d`;
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "error";
   }
-  if (diffMin < 60) {
-    return `${diffMin}m`;
-  }
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) {
-    return `${diffH}h`;
-  }
-  const diffD = Math.floor(diffH / 24);
-  return `${diffD}d`;
 }
 
 export default function NewsCard({ news, onVote, showScore = false }) {

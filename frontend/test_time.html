@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Format Test</title>
+</head>
+<body>
+    <h1>Time Format Test</h1>
+    <div id="results"></div>
+
+    <script>
+        function formatRelativeTime(dateString) {
+            if (!dateString) {
+                console.log("No date string provided");
+                return "unknown";
+            }
+            
+            console.log("Formatting date:", dateString, "Type:", typeof dateString);
+            
+            try {
+                const date = new Date(dateString);
+                console.log("Parsed date:", date, "Valid:", !isNaN(date.getTime()));
+                
+                if (isNaN(date.getTime())) {
+                    console.log("Invalid date:", dateString);
+                    return "invalid date";
+                }
+                
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMin = Math.floor(diffMs / (1000 * 60));
+                
+                console.log("Time calculation:", {
+                    date: date.toISOString(),
+                    now: now.toISOString(),
+                    diffMs,
+                    diffMin
+                });
+                
+                if (diffMin < 1) {
+                    return "now";
+                }
+                if (diffMin < 60) {
+                    return `${diffMin}m`;
+                }
+                
+                const diffH = Math.floor(diffMin / 60);
+                if (diffH < 24) {
+                    return `${diffH}h`;
+                }
+                
+                const diffD = Math.floor(diffH / 24);
+                return `${diffD}d`;
+            } catch (error) {
+                console.error("Error formatting date:", error);
+                return "error";
+            }
+        }
+
+        // 测试不同的日期格式
+        const testDates = [
+            "2024-06-24T08:00:00Z",
+            "2024-06-24T08:00:00.000Z",
+            "2024-06-24T08:00:00+00:00",
+            "2024-06-24T08:00:00",
+            new Date().toISOString(),
+            new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30分钟前
+            new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2小时前
+            new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // 25小时前
+        ];
+
+        const results = document.getElementById('results');
+        testDates.forEach(dateStr => {
+            const formatted = formatRelativeTime(dateStr);
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>${dateStr}</strong> → <span style="color: blue;">${formatted}</span>`;
+            results.appendChild(div);
+        });
+    </script>
+</body>
+</html> 
