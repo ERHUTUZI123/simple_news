@@ -12,7 +12,7 @@ import time
 import random
 from typing import Optional
 from datetime import datetime, timedelta
-from app.models import SavedArticle
+from app.models import SavedArticle, User
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import UUID
 
@@ -281,4 +281,29 @@ async def check_article_saved(
         return {"saved": is_saved}
     except Exception as e:
         print(f"Error checking saved status: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/api/auth/save-user")
+async def save_user(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
+    """保存Google用户信息到数据库"""
+    try:
+        data = await request.json()
+        user_id = data.get("id")
+        email = data.get("email")
+        name = data.get("name")
+        
+        if not user_id or not email:
+            raise HTTPException(status_code=400, detail="Missing required user information")
+        
+        # 保存用户到数据库
+        success = pg_service.save_user(user_id, email, name)
+        if success:
+            return {"success": True, "message": "User saved successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save user")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error saving user: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

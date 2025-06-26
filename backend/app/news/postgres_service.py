@@ -11,6 +11,7 @@ from dateutil import tz
 from app import redis_client
 import json
 from uuid import UUID
+from sqlalchemy.sql import text
 
 class PostgresService:
     def __init__(self, db: Session):
@@ -452,4 +453,42 @@ class PostgresService:
             return saved_article is not None
         except Exception as e:
             print(f"❌ Error checking if article is saved by user: {e}")
+            return False
+
+    def save_user(self, user_id: str, email: str, name: str) -> bool:
+        """保存用户信息到数据库"""
+        try:
+            with self.db.connect() as conn:
+                # 检查用户是否已存在
+                result = conn.execute(
+                    text("SELECT id FROM users WHERE id = :user_id"),
+                    {"user_id": user_id}
+                )
+                existing_user = result.fetchone()
+                
+                if existing_user:
+                    # 用户已存在，更新信息
+                    conn.execute(
+                        text("""
+                            UPDATE users 
+                            SET email = :email, name = :name 
+                            WHERE id = :user_id
+                        """),
+                        {"user_id": user_id, "email": email, "name": name}
+                    )
+                else:
+                    # 创建新用户
+                    conn.execute(
+                        text("""
+                            INSERT INTO users (id, email, name, created_at) 
+                            VALUES (:user_id, :email, :name, NOW())
+                        """),
+                        {"user_id": user_id, "email": email, "name": name}
+                    )
+                
+                conn.commit()
+                return True
+                
+        except Exception as e:
+            print(f"Error saving user: {e}")
             return False 

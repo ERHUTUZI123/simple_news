@@ -6,9 +6,16 @@ from datetime import datetime
 
 Base = declarative_base()
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(UUID(as_uuid=True), primary_key=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class News(Base):
     __tablename__ = "news"
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True)
     title = Column(String, unique=True, index=True, nullable=False)
     content = Column(String, nullable=False)
     summary = Column(String)
@@ -31,7 +38,8 @@ class Vote(Base):
     count = Column(Integer, default=0)
 
 class SavedArticle(Base):
-    __tablename__ = "saved_articles"
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
-    news_id = Column(String, primary_key=True)
-    saved_at = Column(TIMESTAMP, server_default=func.now()) 
+    __tablename__ = "saves"  # 匹配数据库表名
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    news_id = Column(UUID(as_uuid=True), ForeignKey("news.id"))
+    created_at = Column(TIMESTAMP, server_default=func.now()) 

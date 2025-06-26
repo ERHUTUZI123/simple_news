@@ -15,6 +15,15 @@ import Cancel from "./pages/Cancel";
 import Article from "./pages/Article";
 import { UserContext } from "./context/UserContext";
 
+// 生成UUID的函数
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 function GoogleLoginModal() {
   const { showGoogleLogin, closeGoogleLogin, login } = useContext(UserContext);
 
@@ -28,11 +37,47 @@ function GoogleLoginModal() {
       }).join(''));
       const userInfo = JSON.parse(jsonPayload);
       
-      login(userInfo, credentialResponse.credential);
-      closeGoogleLogin();
+      // 使用Google的sub字段作为用户ID，确保是UUID格式
+      const userId = userInfo.sub || generateUUID();
+      
+      // 先保存用户信息到数据库
+      saveUserToDatabase(userInfo, userId).then(() => {
+        // 然后更新前端状态
+        login({...userInfo, id: userId}, credentialResponse.credential);
+        closeGoogleLogin();
+      }).catch(error => {
+        console.error('Error saving user to database:', error);
+        alert('Login failed. Please try again.');
+      });
     } catch (error) {
       console.error('Error parsing JWT token:', error);
       alert('Login failed. Please try again.');
+    }
+  };
+
+  const saveUserToDatabase = async (userInfo, userId) => {
+    try {
+      const response = await fetch('https://simplenews-production.up.railway.app/api/auth/save-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: userId,
+          email: userInfo.email,
+          name: userInfo.name,
+          picture: userInfo.picture
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save user to database');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      throw error;
     }
   };
 
