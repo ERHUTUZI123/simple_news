@@ -86,7 +86,7 @@ class PostgresService:
                         "source": item.source,
                         "vote_count": self.get_vote_count(item.title),
                         "score": float(item.score) if item.score is not None else 0.0,  # Ensure float
-                        "keywords": item.keywords or []
+                        "keywords": self._ensure_keywords_array(item.keywords)
                     }
                     results.append(result_item)
                     print(f"🔍 DEBUG: Added item: {item.title[:50]}...")
@@ -322,7 +322,7 @@ class PostgresService:
                     "source": news.source,
                     "vote_count": self.get_vote_count(news.title),
                     "score": float(news.score) if news.score is not None else 0.0,
-                    "keywords": news.keywords or []
+                    "keywords": self._ensure_keywords_array(news.keywords)
                 }
                 
                 # 设置缓存，600秒
@@ -335,4 +335,30 @@ class PostgresService:
             return result
         except Exception as e:
             print(f"Error getting article by title: {e}")
-            return {"error": "Article not found"} 
+            return {"error": "Article not found"}
+
+    def _ensure_keywords_array(self, keywords: Any) -> List[str]:
+        """确保关键词是数组，处理各种可能的格式"""
+        try:
+            if keywords is None:
+                return []
+            elif isinstance(keywords, str):
+                # 如果是字符串，尝试解析为JSON
+                try:
+                    import json
+                    parsed = json.loads(keywords)
+                    if isinstance(parsed, list):
+                        return parsed
+                    else:
+                        return [keywords]  # 如果解析失败，返回原字符串作为单个元素
+                except (json.JSONDecodeError, TypeError):
+                    return [keywords]  # 如果解析失败，返回原字符串作为单个元素
+            elif isinstance(keywords, list):
+                # 确保列表中的元素都是字符串
+                return [str(kw) for kw in keywords if kw is not None]
+            else:
+                # 其他类型，转换为字符串
+                return [str(keywords)]
+        except Exception as e:
+            print(f"Error processing keywords: {e}")
+            return [] 

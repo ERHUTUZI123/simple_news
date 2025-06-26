@@ -56,6 +56,37 @@ function formatRelativeTime(dateString) {
   }
 }
 
+// 安全格式化关键词
+function formatKeywords(keywords) {
+  try {
+    if (!keywords) return "";
+    
+    // 如果是字符串，尝试解析为JSON
+    if (typeof keywords === 'string') {
+      try {
+        const parsed = JSON.parse(keywords);
+        if (Array.isArray(parsed)) {
+          return parsed.slice(0, 3).join(", ");
+        }
+      } catch (e) {
+        // 如果解析失败，直接返回字符串
+        return keywords;
+      }
+    }
+    
+    // 如果是数组
+    if (Array.isArray(keywords)) {
+      return keywords.slice(0, 3).join(", ");
+    }
+    
+    // 其他情况，转换为字符串
+    return String(keywords);
+  } catch (error) {
+    console.error("Error formatting keywords:", error);
+    return "";
+  }
+}
+
 export default function NewsCard({ news, onVote, showScore = false }) {
   const navigate = useNavigate();
   const userSession = useContext(UserContext);
@@ -158,14 +189,14 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         )}
         
         {/* 关键词显示 */}
-        {keywords && keywords.length > 0 && (
+        {keywords && (
           <span style={{ 
             margin: "0 0.5rem", 
             color: "var(--text-color)", 
             fontSize: "0.7rem",
             opacity: 0.7
           }}>
-            🏷️ {keywords.slice(0, 3).join(", ")}
+            🏷️ {formatKeywords(keywords)}
           </span>
         )}
       </div>
