@@ -166,14 +166,158 @@ export default function Article() {
   if (loading) {
     return (
       <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
         minHeight: '100vh',
-        fontFamily: 'var(--font-mono)',
+        background: 'var(--bg-color)',
         color: 'var(--text-color)',
+        fontFamily: 'var(--font-mono)',
       }}>
-        Loading...
+        {/* 顶部导航骨架屏 */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '3.5rem',
+          background: 'var(--bg-color)',
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 2rem',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            width: '120px',
+            height: '20px',
+            background: '#eee',
+            borderRadius: '4px',
+          }}></div>
+          <div style={{
+            width: '100px',
+            height: '32px',
+            background: '#eee',
+            borderRadius: '4px',
+          }}></div>
+        </div>
+
+        {/* 主要内容骨架屏 */}
+        <div style={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '5rem 2rem 2rem',
+        }}>
+          {/* 文章信息骨架屏 */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{
+              height: '20px',
+              width: '200px',
+              background: '#eee',
+              borderRadius: '4px',
+              marginBottom: '1rem',
+            }}></div>
+            <div style={{
+              height: '60px',
+              width: '100%',
+              background: '#eee',
+              borderRadius: '4px',
+              marginBottom: '2rem',
+            }}></div>
+          </div>
+
+          {/* 按钮区域骨架屏 */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            marginBottom: '2rem',
+          }}>
+            <div style={{
+              width: '120px',
+              height: '40px',
+              background: '#eee',
+              borderRadius: '4px',
+            }}></div>
+            <div style={{
+              width: '180px',
+              height: '40px',
+              background: '#eee',
+              borderRadius: '4px',
+            }}></div>
+          </div>
+
+          {/* 内容区域骨架屏 */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '0.5rem',
+            padding: '2rem',
+            marginBottom: '2rem',
+          }}>
+            <div style={{
+              height: '24px',
+              width: '300px',
+              background: '#eee',
+              borderRadius: '4px',
+              marginBottom: '1rem',
+            }}></div>
+            <div style={{
+              height: '16px',
+              width: '100%',
+              background: '#eee',
+              borderRadius: '4px',
+              marginBottom: '0.5rem',
+            }}></div>
+            <div style={{
+              height: '16px',
+              width: '90%',
+              background: '#eee',
+              borderRadius: '4px',
+              marginBottom: '0.5rem',
+            }}></div>
+            <div style={{
+              height: '16px',
+              width: '95%',
+              background: '#eee',
+              borderRadius: '4px',
+              marginBottom: '0.5rem',
+            }}></div>
+            <div style={{
+              height: '16px',
+              width: '85%',
+              background: '#eee',
+              borderRadius: '4px',
+            }}></div>
+          </div>
+
+          {/* 辅助功能区骨架屏 */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            padding: '1.5rem',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '0.5rem',
+          }}>
+            <div style={{
+              width: '120px',
+              height: '40px',
+              background: '#eee',
+              borderRadius: '4px',
+            }}></div>
+            <div style={{
+              width: '100px',
+              height: '40px',
+              background: '#eee',
+              borderRadius: '4px',
+            }}></div>
+            <div style={{
+              width: '80px',
+              height: '40px',
+              background: '#eee',
+              borderRadius: '4px',
+            }}></div>
+          </div>
+        </div>
       </div>
     );
   }

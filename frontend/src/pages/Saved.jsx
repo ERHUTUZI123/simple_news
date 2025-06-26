@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchArticleByTitle } from "../services/api";
 
 // 格式化相对时间
 function formatRelativeTime(dateString) {
@@ -129,6 +130,17 @@ export default function Saved() {
     } else {
       const content = exportToTxt(savedArticles);
       downloadFile(content, `saved-articles-${timestamp}.txt`, 'text/plain');
+    }
+  };
+
+  // 预加载文章数据
+  const preloadArticle = async (title) => {
+    try {
+      // 在后台预加载文章数据，不阻塞UI
+      await fetchArticleByTitle(title);
+    } catch (error) {
+      // 预加载失败不影响用户体验
+      console.log('Preload failed:', error);
     }
   };
 
@@ -319,6 +331,7 @@ export default function Saved() {
                   onMouseEnter={(e) => {
                     e.target.style.opacity = "0.8";
                     e.target.style.transform = "translateY(-1px)";
+                    preloadArticle(article.title);
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.opacity = "1";
