@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.news.postgres_service import PostgresService
 from app.db import SessionLocal
 from news.fetch_news import get_tech_news
+from news.summarize import generate_both_summaries, summarize_news
 from urllib.parse import urlparse
 import os
 from openai import OpenAI
@@ -64,9 +65,10 @@ def get_today_news(
     pg_service: PostgresService = Depends(get_pg_service),
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("time"),  # 可以支持 smart/time
+    sort_by: str = Query("smart"),  # 默认使用智能排序
     source_filter: str = Query(None)
 ):
+    """获取今日新闻，支持智能排序"""
     # 获取 Postgres 的新闻
     news_items = pg_service.get_news(offset, limit, sort_by, source_filter)
     
@@ -78,10 +80,15 @@ def get_today_news(
         # 检查最新新闻的年龄，如果超过2小时就刷新
         latest_news = pg_service.get_news(0, 1, "time")
         if latest_news and len(latest_news) > 0:
-            latest_date = getattr(latest_news[0], 'date', None)
-            now = datetime.utcnow()
-            if latest_date and (now - latest_date) > timedelta(hours=2):
-                should_refresh = True
+            latest_date_str = latest_news[0].get('published_at')
+            if latest_date_str:
+                try:
+                    latest_date = datetime.fromisoformat(latest_date_str.replace('Z', '+00:00'))
+                    now = datetime.utcnow()
+                    if (now - latest_date) > timedelta(hours=2):
+                        should_refresh = True
+                except:
+                    should_refresh = True
     
     if should_refresh:
         # 抓取 RSS 并存入
@@ -89,26 +96,7 @@ def get_today_news(
         pg_service.save_news(raw)
         news_items = pg_service.get_news(offset, limit, sort_by, source_filter)
     
-    results = []
-    for item in news_items:
-        title_str = str(getattr(item, 'title', ''))
-        # 确保返回ISO格式的时间字符串
-        date_obj = getattr(item, 'date', None)
-        if date_obj:
-            date_str = date_obj.isoformat() + 'Z'  # 添加Z表示UTC
-        else:
-            date_str = datetime.utcnow().isoformat() + 'Z'
-        vote_count = pg_service.get_vote_count(title_str)
-        results.append({
-            "title": title_str,
-            "content": item.content,
-            "summary": item.summary,
-            "link": item.link,
-            "date": date_str,
-            "source": item.source,
-            "vote_count": vote_count,
-        })
-    return results
+    return news_items
 
 @router.post("/news/vote")
 def vote_news(
@@ -134,8 +122,15 @@ def news_summary(data: dict = Body(...)):
     """生成新闻摘要"""
     content = data.get("content", "")
     summary_type = data.get("type", "detailed")  # 默认为detailed
-    summary = summarize_news(content, summary_type)
-    return {"summary": summary}
+    
+    if summary_type == "both":
+        # 生成两种摘要
+        result = generate_both_summaries(content)
+        return result
+    else:
+        # 生成单一类型摘要
+        result = summarize_news(content, summary_type)
+        return {"summary": result["summary"], "structure_score": result["structure_score"]}
 
 @router.get("/news/article")
 def get_article_by_title(
@@ -145,23 +140,8 @@ def get_article_by_title(
     """根据标题获取文章"""
     news_items = pg_service.get_news(0, 1000)
     for item in news_items:
-        title_str = str(getattr(item, 'title', ''))
-        if title_str == title:
-            # 确保返回ISO格式的时间字符串
-            date_obj = getattr(item, 'date', None)
-            if date_obj:
-                date_str = date_obj.isoformat() + 'Z'  # 添加Z表示UTC
-            else:
-                date_str = datetime.utcnow().isoformat() + 'Z'
-            return {
-                "title": title_str,
-                "content": item.content,
-                "summary": item.summary,
-                "link": item.link,
-                "date": date_str,
-                "source": item.source,
-                "vote_count": pg_service.get_vote_count(title_str),
-            }
+        if item.get('title') == title:
+            return item
     return {"error": "Article not found"}
 
 @router.get("/news/article/{article_id}")
@@ -169,63 +149,6 @@ def get_article_by_id(article_id: str):
     """根据ID获取文章（兼容性接口）"""
     # 这里可以根据需要实现具体的逻辑
     return {"error": "Article not found"}
-
-@handle_openai_rate_limit
-def _call_openai_summarize(prompt: str, max_tokens: int) -> Optional[str]:
-    """调用OpenAI生成摘要"""
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=max_tokens,
-            temperature=0.7
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"❌ [ERROR] OpenAI summarize error: {e}")
-        return None
-
-def summarize_news(text: str, summary_type: str = "detailed") -> str:
-    print(f"🤖 [DEBUG] summarize_news called with text length: {len(text)}, type: {summary_type}")
-    print(f"🤖 [DEBUG] Text preview: {text[:300]}...")
-    
-    if not text.strip():
-        print("❌ [ERROR] Empty text passed to summarize_news!")
-        return "No content available for summarization"
-    
-    # 根据摘要类型选择不同的prompt
-    if summary_type == "brief":
-        prompt = (
-            "Read the whole article and provide a BRIEF summary in 2-3 sentences (around 150-200 characters). "
-            "Be concise and focus only on the most essential points. "
-            "Do not mention the source, outlet, or 'the article'. "
-            "Just summarize the core content in a very brief manner.\n\n"
-            f"{text}"
-        )
-        max_tokens = 100
-    else:  # detailed
-        prompt = (
-            "Read the whole article and provide a DETAILED summary in at least 420 characters "
-            "and more than 65 words. Be comprehensive and include key details, context, and implications. "
-            "Do not just copy and paste content. "
-            "Do not mention the source, outlet, or 'the article'. "
-            "Just summarize the core content with depth and detail.\n\n"
-            f"{text}"
-        )
-        max_tokens = 200
-    
-    try:
-        content = _call_openai_summarize(prompt, max_tokens)
-        if content is None:
-            print("❌ [ERROR] OpenAI call failed due to rate limiting")
-            return "Summary generation temporarily unavailable due to high demand"
-        
-        result = content.strip() if content else "generation failed"
-        print(f"✅ [DEBUG] Generated {summary_type} summary: {result[:100]}...")
-        return result
-    except Exception as e:
-        print(f"❌ [ERROR] OpenAI summarize error: {e}")
-        return "generation failed"
 
 @router.post("/news/refresh")
 def refresh_news(
@@ -236,8 +159,35 @@ def refresh_news(
         raw = get_tech_news(force_refresh=True)
         success = pg_service.save_news(raw)
         if success:
-            return {"message": f"Successfully refreshed {len(raw)} news items"}
+            return {"message": "News refreshed successfully", "count": len(raw)}
         else:
             raise HTTPException(status_code=500, detail="Failed to save news")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to refresh news: {str(e)}")
+
+@router.get("/news/sources")
+def get_news_sources(
+    pg_service: PostgresService = Depends(get_pg_service)
+):
+    """获取所有新闻来源"""
+    try:
+        # 这里需要实现获取所有来源的逻辑
+        # 暂时返回一些常见来源
+        sources = [
+            "Financial Times", "Reuters", "AP", "BBC", "CNN", 
+            "The Guardian", "Bloomberg", "TechCrunch", "Ars Technica"
+        ]
+        return {"sources": sources}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get sources: {str(e)}")
+
+@router.get("/news/sort-options")
+def get_sort_options():
+    """获取排序选项"""
+    return {
+        "options": [
+            {"value": "smart", "label": "Smart Sort (Recommended)"},
+            {"value": "time", "label": "Latest First"},
+            {"value": "headlines", "label": "Most Popular"}
+        ]
+    }

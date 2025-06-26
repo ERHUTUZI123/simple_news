@@ -26,11 +26,14 @@ function formatRelativeTime(dateString) {
   return `${diffD}d`;
 }
 
-export default function NewsCard({ title, link, date, source, content, comprehensive_score, vote_count }) {
+export default function NewsCard({ news, onVote, showScore = false }) {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
+
+  // 从news对象中提取数据
+  const { title, link, date, source, content, score, vote_count, keywords } = news;
 
   // Check if article is bookmarked
   useEffect(() => {
@@ -47,10 +50,12 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     if (isHeadline) {
       setIsHeadline(false);
       await downvoteNews(title);
+      if (onVote) onVote(title, -1);
     } else {
       setIsHeadline(true);
       setIsTrash(false);
       await voteNews(title);
+      if (onVote) onVote(title, 1);
     }
   };
 
@@ -59,10 +64,12 @@ export default function NewsCard({ title, link, date, source, content, comprehen
     if (isTrash) {
       setIsTrash(false);
       await voteNews(title);
+      if (onVote) onVote(title, 1);
     } else {
       setIsTrash(true);
       setIsHeadline(false);
       await downvoteNews(title);
+      if (onVote) onVote(title, -1);
     }
   };
 
@@ -112,9 +119,28 @@ export default function NewsCard({ title, link, date, source, content, comprehen
             👍 {vote_count}
           </span>
         )}
-        {comprehensive_score && (
-          <span style={{ margin: "0 0.5rem", color: "var(--text-color)", fontSize: "0.8rem" }}>
-            📊 {Math.round(comprehensive_score * 100)}%
+        
+        {/* 智能评分显示 */}
+        {showScore && score && (
+          <span style={{ 
+            margin: "0 0.5rem", 
+            color: score > 0.7 ? "#4CAF50" : score > 0.4 ? "#FF9800" : "#F44336",
+            fontSize: "0.8rem",
+            fontWeight: "bold"
+          }}>
+            ⭐ {Math.round(score * 100)}%
+          </span>
+        )}
+        
+        {/* 关键词显示 */}
+        {keywords && keywords.length > 0 && (
+          <span style={{ 
+            margin: "0 0.5rem", 
+            color: "var(--text-color)", 
+            fontSize: "0.7rem",
+            opacity: 0.7
+          }}>
+            🏷️ {keywords.slice(0, 3).join(", ")}
           </span>
         )}
       </div>
@@ -209,16 +235,15 @@ export default function NewsCard({ title, link, date, source, content, comprehen
             }
           }}
         >
-          {isSaved ? "⭐ Saved" : "⭐ Save"}
+          {isSaved ? "📖 Saved" : "📖 Save"}
         </button>
 
-        <button 
-          className="action-button action-headline" 
+        <button
           onClick={toggleHeadline}
           style={{
-            background: "none",
+            background: isHeadline ? "var(--highlight-color)" : "none",
             border: "1px solid var(--border-color)",
-            color: isHeadline ? "var(--highlight-color)" : "var(--text-color)",
+            color: isHeadline ? "var(--bg-color)" : "var(--text-color)",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -235,21 +260,20 @@ export default function NewsCard({ title, link, date, source, content, comprehen
           }}
           onMouseLeave={(e) => {
             if (!isHeadline) {
-              e.target.style.backgroundColor = "transparent";
-              e.target.style.color = "var(--text-color)";
+              e.target.style.backgroundColor = isHeadline ? "var(--highlight-color)" : "transparent";
+              e.target.style.color = isHeadline ? "var(--bg-color)" : "var(--text-color)";
             }
           }}
         >
-          {isHeadline ? "✅ Headline" : "👍 Headline"}
+          {isHeadline ? "👍 Liked" : "👍 Like"}
         </button>
 
-        <button 
-          className="action-button action-trash" 
+        <button
           onClick={toggleTrash}
           style={{
-            background: "none",
+            background: isTrash ? "#f44336" : "none",
             border: "1px solid var(--border-color)",
-            color: isTrash ? "var(--trash-color)" : "var(--text-color)",
+            color: isTrash ? "white" : "var(--text-color)",
             fontFamily: "var(--font-mono)",
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -259,8 +283,8 @@ export default function NewsCard({ title, link, date, source, content, comprehen
           }}
           onMouseEnter={(e) => {
             if (!isTrash) {
-              e.target.style.backgroundColor = "var(--text-color)";
-              e.target.style.color = "var(--bg-color)";
+              e.target.style.backgroundColor = "#f44336";
+              e.target.style.color = "white";
             }
           }}
           onMouseLeave={(e) => {
@@ -270,7 +294,7 @@ export default function NewsCard({ title, link, date, source, content, comprehen
             }
           }}
         >
-          {isTrash ? "🗑️ Trash" : "🗑️ Trash"}
+          {isTrash ? "🗑️ Trashed" : "🗑️ Trash"}
         </button>
       </div>
     </div>

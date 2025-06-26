@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import desc, asc
 from app.models import News, Vote
+from app.scoring import calculate_news_score, extract_keywords_from_text, build_existing_keyword_map
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy import func
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Any
 from dateutil import parser as dateparser
 from dateutil import tz
 
@@ -12,26 +14,74 @@ class PostgresService:
         self.db = db
 
     # 获取新闻
-    def get_news(self, offset=0, limit=20, sort_by="time", source_filter=None) -> List[News]:
-        query = self.db.query(News)
-
-        if source_filter:
-            query = query.filter(News.source.ilike(f"%{source_filter}%"))
-
-        # 排序
-        if sort_by == "time":
-            query = query.order_by(News.date.desc())
-        else:  # 默认使用时间排序
-            query = query.order_by(News.date.desc())
-
-        return query.offset(offset).limit(limit).all()
+    def get_news(self, offset=0, limit=20, sort_by="smart", source_filter=None) -> List[Dict]:
+        """获取新闻，支持智能排序"""
+        try:
+            query = self.db.query(News)
+            
+            # 应用来源过滤
+            if source_filter:
+                query = query.filter(News.source.ilike(f"%{source_filter}%"))
+            
+            # 应用排序
+            if sort_by == "smart":
+                # 智能排序：按综合评分降序
+                query = query.order_by(desc(News.score))
+            elif sort_by == "time":
+                # 时间排序：按发布时间降序
+                query = query.order_by(desc(News.published_at))
+            elif sort_by == "headlines":
+                # 点赞数排序：按点赞数降序
+                query = query.order_by(desc(News.headline_count))
+            else:
+                # 默认使用智能排序
+                query = query.order_by(desc(News.score))
+            
+            # 应用分页
+            news_items = query.offset(offset).limit(limit).all()
+            
+            # 转换为字典格式
+            results = []
+            for item in news_items:
+                published_at_str = item.published_at.isoformat() + 'Z' if item.published_at else None
+                results.append({
+                    "id": item.id,
+                    "title": item.title,
+                    "content": item.content,
+                    "summary": item.summary,
+                    "link": item.link,
+                    "date": published_at_str,
+                    "source": item.source,
+                    "published_at": published_at_str,
+                    "summary_ai": item.summary_ai or {},
+                    "headline_count": item.headline_count,
+                    "keywords": item.keywords or [],
+                    "score": item.score,
+                    "vote_count": self.get_vote_count(item.title)
+                })
+            
+            return results
+        except Exception as e:
+            print(f"Error getting news: {e}")
+            return []
 
     # 保存新闻
     def save_news(self, news_items: List[Dict]) -> bool:
+        """保存新闻到数据库，包含智能评分"""
         try:
-            # 清空旧新闻
-            self.db.query(News).delete()
+            # 获取现有新闻的关键词映射
+            existing_news = self.get_news(0, 1000, "time")
+            existing_keyword_map = build_existing_keyword_map(existing_news)
+            
             for item in news_items:
+                # 检查是否已存在
+                existing = self.db.query(News).filter(News.title == item["title"]).first()
+                if existing:
+                    continue
+                
+                # 提取关键词
+                keywords = extract_keywords_from_text(item["title"] + " " + item["content"])
+                
                 # 标准化日期处理
                 raw_date = item.get("date", "")
                 try:
@@ -51,34 +101,123 @@ class PostgresService:
                     print(f"Error parsing date '{raw_date}': {e}")
                     normalized_date = datetime.utcnow()
                 
+                # 创建AI摘要结构
+                summary_ai = {
+                    "brief": "",
+                    "detailed": "",
+                    "structure_score": 3.0  # 默认评分
+                }
+                
+                # 计算综合评分
+                score = calculate_news_score(
+                    published_at=normalized_date,
+                    summary_ai=summary_ai,
+                    source=item.get("source", ""),
+                    keywords=keywords,
+                    headline_count=0,  # 新新闻初始点赞数为0
+                    existing_keyword_map=existing_keyword_map
+                )
+                
+                # 创建新闻对象
                 news = News(
                     title=item["title"],
                     content=item["content"],
                     summary=item.get("summary", ""),
                     link=item["link"],
                     date=normalized_date,
-                    source=item.get("source", "")
+                    source=item.get("source", ""),
+                    published_at=normalized_date,
+                    summary_ai=summary_ai,
+                    headline_count=0,
+                    keywords=keywords,
+                    score=score
                 )
+                
                 self.db.add(news)
+            
             self.db.commit()
             return True
         except Exception as e:
-            self.db.rollback()
             print(f"Error saving news: {e}")
+            self.db.rollback()
             return False
 
     # 获取投票数
     def get_vote_count(self, title: str) -> int:
-        vote = self.db.query(Vote).filter(Vote.title == title).first()
-        return int(getattr(vote, "count", 0)) if vote else 0
+        """获取投票数"""
+        try:
+            vote = self.db.query(Vote).filter(Vote.title == title).first()
+            return int(getattr(vote, "count", 0)) if vote else 0
+        except Exception as e:
+            print(f"Error getting vote count: {e}")
+            return 0
 
     # 更新投票
     def update_vote(self, title: str, delta: int) -> int:
-        vote = self.db.query(Vote).filter(Vote.title == title).first()
-        if not vote:
-            vote = Vote(title=title, count=delta)
-            self.db.add(vote)
-        else:
-            setattr(vote, "count", int(getattr(vote, "count", 0)) + delta)
-        self.db.commit()
-        return int(getattr(vote, "count", 0)) 
+        """更新投票数"""
+        try:
+            vote = self.db.query(Vote).filter(Vote.title == title).first()
+            if not vote:
+                vote = Vote(title=title, count=delta)
+                self.db.add(vote)
+            else:
+                current_count = int(getattr(vote, "count", 0))
+                new_count = max(0, current_count + delta)
+                setattr(vote, "count", new_count)
+            
+            # 同时更新新闻的headline_count
+            news = self.db.query(News).filter(News.title == title).first()
+            if news:
+                news.headline_count = int(getattr(vote, "count", 0))
+                # 重新计算评分
+                self._recalculate_news_score(news)
+            
+            self.db.commit()
+            return int(getattr(vote, "count", 0))
+        except Exception as e:
+            print(f"Error updating vote: {e}")
+            self.db.rollback()
+            return 0
+
+    def _recalculate_news_score(self, news: News):
+        """重新计算新闻评分"""
+        try:
+            # 获取现有新闻的关键词映射
+            existing_news = self.get_news(0, 1000, "time")
+            existing_keyword_map = build_existing_keyword_map(existing_news)
+            
+            # 重新计算评分
+            published_at = news.published_at or datetime.utcnow()
+            summary_ai = news.summary_ai or {}
+            keywords = news.keywords or []
+            headline_count = news.headline_count or 0
+            
+            score = calculate_news_score(
+                published_at=published_at,
+                summary_ai=summary_ai,
+                source=news.source,
+                keywords=keywords,
+                headline_count=headline_count,
+                existing_keyword_map=existing_keyword_map
+            )
+            
+            news.score = score
+        except Exception as e:
+            print(f"Error recalculating score: {e}")
+
+    def update_ai_summary(self, title: str, brief_summary: str, detailed_summary: str, structure_score: float = 3.0):
+        """更新AI摘要和结构评分"""
+        try:
+            news = self.db.query(News).filter(News.title == title).first()
+            if news:
+                news.summary_ai = {
+                    "brief": brief_summary,
+                    "detailed": detailed_summary,
+                    "structure_score": structure_score
+                }
+                # 重新计算评分
+                self._recalculate_news_score(news)
+                self.db.commit()
+        except Exception as e:
+            print(f"Error updating AI summary: {e}")
+            self.db.rollback() 
