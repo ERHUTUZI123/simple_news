@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import time
 import random
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -69,11 +69,26 @@ def get_today_news(
 ):
     # 获取 Postgres 的新闻
     news_items = pg_service.get_news(offset, limit, sort_by, source_filter)
+    
+    # 检查是否需要刷新新闻
+    should_refresh = False
     if not news_items:
-        # 如果没数据，抓取 RSS 并存入
+        should_refresh = True
+    else:
+        # 检查最新新闻的年龄，如果超过2小时就刷新
+        latest_news = pg_service.get_news(0, 1, "time")
+        if latest_news and len(latest_news) > 0:
+            latest_date = getattr(latest_news[0], 'date', None)
+            now = datetime.utcnow()
+            if latest_date and (now - latest_date) > timedelta(hours=2):
+                should_refresh = True
+    
+    if should_refresh:
+        # 抓取 RSS 并存入
         raw = get_tech_news(force_refresh=True)
         pg_service.save_news(raw)
         news_items = pg_service.get_news(offset, limit, sort_by, source_filter)
+    
     results = []
     for item in news_items:
         title_str = str(getattr(item, 'title', ''))
@@ -196,3 +211,18 @@ def summarize_news(text: str, word_count: int = 70) -> str:
     except Exception as e:
         print(f"❌ [ERROR] OpenAI summarize error: {e}")
         return "generation failed"
+
+@router.post("/news/refresh")
+def refresh_news(
+    pg_service: PostgresService = Depends(get_pg_service)
+):
+    """手动刷新新闻"""
+    try:
+        raw = get_tech_news(force_refresh=True)
+        success = pg_service.save_news(raw)
+        if success:
+            return {"message": f"Successfully refreshed {len(raw)} news items"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save news")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to refresh news: {str(e)}")

@@ -4,6 +4,7 @@ import feedparser
 from typing import List, Dict
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
+from dateutil import tz
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,16 @@ RSS_FEEDS = {
     "Financial Times": "https://www.ft.com/?format=rss",
     "Fox News": "https://feeds.foxnews.com/foxnews/latest",
     "Sky News": "https://feeds.skynews.com/feeds/rss/world.xml",
+    # 添加更多科技新闻源
+    "TechCrunch": "https://techcrunch.com/feed/",
+    "Ars Technica": "https://feeds.arstechnica.com/arstechnica/index",
+    "Wired": "https://www.wired.com/feed/rss",
+    "The Verge": "https://www.theverge.com/rss/index.xml",
+    "Engadget": "https://www.engadget.com/rss.xml",
+    "Gizmodo": "https://gizmodo.com/rss",
+    "Mashable": "https://mashable.com/feed.xml",
+    "VentureBeat": "https://venturebeat.com/feed/",
+    "CNET": "https://www.cnet.com/rss/all/",
 }
 
 def get_tech_news(force_refresh: bool = False) -> List[Dict]:
@@ -35,7 +46,7 @@ def fetch_from_rss() -> List[Dict]:
     """从RSS源获取新闻"""
     items = []
     now = datetime.utcnow()
-    one_day_ago = now - timedelta(days=1)
+    six_hours_ago = now - timedelta(hours=6)
 
     for source_name, feed_url in RSS_FEEDS.items():
         try:
@@ -48,10 +59,16 @@ def fetch_from_rss() -> List[Dict]:
                 except Exception:
                     continue  # 跳过无法解析日期的条目
 
-                # 只保留一天之内的新闻
+                # 正确处理时区：转换为UTC进行比较
                 if published_dt.tzinfo:
-                    published_dt = published_dt.astimezone(tz=None).replace(tzinfo=None)
-                if published_dt < one_day_ago:
+                    # 如果有时区信息，转换为UTC
+                    published_dt_utc = published_dt.astimezone(tz.tzutc())
+                else:
+                    # 如果没有时区信息，假设是UTC
+                    published_dt_utc = published_dt.replace(tzinfo=tz.tzutc())
+                
+                # 只保留6小时之内的新闻
+                if published_dt_utc.replace(tzinfo=None) < six_hours_ago:
                     continue
 
                 # 优化内容获取逻辑
