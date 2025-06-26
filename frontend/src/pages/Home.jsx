@@ -195,19 +195,32 @@ export default function Home() {
   // 来源选项
   const sourceOptions = [
     { value: '', label: 'All Sources' },
-    { value: 'Financial Times', label: 'Financial Times' },
-    { value: 'Wall Street Journal', label: 'Wall Street Journal' },
-    { value: 'The Economist', label: 'The Economist' },
+    // 美国主流媒体
+    { value: 'The New York Times', label: 'The New York Times' },
+    { value: 'The Washington Post', label: 'The Washington Post' },
+    { value: 'Los Angeles Times', label: 'Los Angeles Times' },
+    { value: 'NBC News', label: 'NBC News' },
+    { value: 'CBS News', label: 'CBS News' },
+    { value: 'ABC News', label: 'ABC News' },
+    { value: 'Fox News', label: 'Fox News' },
+    { value: 'CNBC', label: 'CNBC' },
+    { value: 'Axios', label: 'Axios' },
+    // 国际新闻机构
     { value: 'Reuters', label: 'Reuters' },
+    { value: 'Associated Press', label: 'Associated Press' },
     { value: 'Bloomberg', label: 'Bloomberg' },
-    { value: 'AP', label: 'Associated Press' },
-    { value: 'BBC', label: 'BBC' },
-    { value: 'CNN', label: 'CNN' },
+    // 英国媒体
+    { value: 'BBC News', label: 'BBC News' },
     { value: 'The Guardian', label: 'The Guardian' },
-    { value: 'TechCrunch', label: 'TechCrunch' },
-    { value: 'Ars Technica', label: 'Ars Technica' },
-    { value: 'Wired', label: 'Wired' },
-    { value: 'The Verge', label: 'The Verge' },
+    { value: 'The Telegraph', label: 'The Telegraph' },
+    { value: 'Financial Times', label: 'Financial Times' },
+    { value: 'Sky News', label: 'Sky News' },
+    { value: 'The Independent', label: 'The Independent' },
+    // 欧洲媒体
+    { value: 'Euronews', label: 'Euronews' },
+    { value: 'Deutsche Welle', label: 'Deutsche Welle' },
+    // 中东媒体
+    { value: 'Al Jazeera', label: 'Al Jazeera' },
   ];
 
   // 排序选项

@@ -11,28 +11,36 @@ logger = logging.getLogger(__name__)
 
 # 支持多个 RSS 源
 RSS_FEEDS = {
-    "BBC": "https://feeds.bbci.co.uk/news/rss.xml",
-    "CNN": "https://rss.cnn.com/rss/edition.rss",
-    "Reuters": "https://feeds.reuters.com/reuters/topNews",
-    "NYTimes": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-    "The Guardian": "https://www.theguardian.com/world/rss",
-    "Al Jazeera": "https://www.aljazeera.com/xml/rss/all.xml",
-    "Bloomberg": "https://www.bloomberg.com/feed/podcast/etf-report.xml",
-    "AP News": "https://apnews.com/rss/apf-topnews",
-    "NPR": "https://feeds.npr.org/1001/rss.xml",
-    "Financial Times": "https://www.ft.com/?format=rss",
+    # 美国主流媒体
+    "The New York Times": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+    "The Washington Post": "https://feeds.washingtonpost.com/rss/national",
+    "Los Angeles Times": "https://www.latimes.com/local/rss2.0.xml",
+    "NBC News": "https://feeds.nbcnews.com/nbcnews/public/world",
+    "CBS News": "https://www.cbsnews.com/latest/rss/main",
+    "ABC News": "https://feeds.abcnews.com/abcnews/usheadlines",
     "Fox News": "https://feeds.foxnews.com/foxnews/latest",
+    "CNBC": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "Axios": "https://api.axios.com/feed/",
+    
+    # 国际新闻机构
+    "Reuters": "https://feeds.reuters.com/reuters/topNews",
+    "Associated Press": "https://apnews.com/rss/apf-topnews",
+    "Bloomberg": "https://feeds.bloomberg.com/politics/news.rss",
+    
+    # 英国媒体
+    "BBC News": "https://feeds.bbci.co.uk/news/rss.xml",
+    "The Guardian": "https://www.theguardian.com/world/rss",
+    "The Telegraph": "https://www.telegraph.co.uk/rss.xml",
+    "Financial Times": "https://www.ft.com/?format=rss",
     "Sky News": "https://feeds.skynews.com/feeds/rss/world.xml",
-    # 添加更多科技新闻源
-    "TechCrunch": "https://techcrunch.com/feed/",
-    "Ars Technica": "https://feeds.arstechnica.com/arstechnica/index",
-    "Wired": "https://www.wired.com/feed/rss",
-    "The Verge": "https://www.theverge.com/rss/index.xml",
-    "Engadget": "https://www.engadget.com/rss.xml",
-    "Gizmodo": "https://gizmodo.com/rss",
-    "Mashable": "https://mashable.com/feed.xml",
-    "VentureBeat": "https://venturebeat.com/feed/",
-    "CNET": "https://www.cnet.com/rss/all/",
+    "The Independent": "https://www.independent.co.uk/news/world/rss",
+    
+    # 欧洲媒体
+    "Euronews": "https://www.euronews.com/rss?format=mrss&level=theme&name=news",
+    "Deutsche Welle": "https://rss.dw.com/xml/rss-de-all",
+    
+    # 中东媒体
+    "Al Jazeera": "https://www.aljazeera.com/xml/rss/all.xml",
 }
 
 def get_tech_news(force_refresh: bool = False) -> List[Dict]:

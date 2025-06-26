@@ -4,31 +4,39 @@ from typing import List, Dict, Any
 
 # 新闻源权重配置
 SOURCE_RATINGS = {
+    # 美国主流媒体
+    "The New York Times": 5,
+    "The Washington Post": 5,
+    "Los Angeles Times": 4,
+    "NBC News": 4,
+    "CBS News": 4,
+    "ABC News": 4,
+    "Fox News": 3,
+    "CNBC": 4,
+    "Axios": 4,
+    
+    # 国际新闻机构
+    "Reuters": 5,
+    "Associated Press": 5,
+    "AP": 5,
+    "AP News": 5,
+    "Bloomberg": 5,
+    
+    # 英国媒体
+    "BBC News": 5,
+    "BBC": 5,
+    "The Guardian": 4,
+    "The Telegraph": 4,
     "Financial Times": 5,
-    "Wall Street Journal": 5,
-    "WSJ": 5,
-    "Reuters": 4,
-    "AP": 4,
-    "AP News": 4,
-    "BBC": 4,
-    "CNN": 3,
-    "The Guardian": 3,
-    "NYTimes": 4,
-    "The New York Times": 4,
-    "Bloomberg": 4,
-    "Al Jazeera": 3,
-    "NPR": 3,
-    "Fox News": 2,
-    "Sky News": 3,
-    "TechCrunch": 3,
-    "Ars Technica": 3,
-    "Wired": 3,
-    "The Verge": 3,
-    "Engadget": 2,
-    "Gizmodo": 2,
-    "Mashable": 2,
-    "VentureBeat": 3,
-    "CNET": 2,
+    "Sky News": 4,
+    "The Independent": 4,
+    
+    # 欧洲媒体
+    "Euronews": 4,
+    "Deutsche Welle": 4,
+    
+    # 中东媒体
+    "Al Jazeera": 4,
 }
 
 def time_decay_weight(published_at: datetime) -> float:

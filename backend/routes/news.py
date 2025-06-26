@@ -171,11 +171,20 @@ def get_news_sources(
 ):
     """获取所有新闻来源"""
     try:
-        # 这里需要实现获取所有来源的逻辑
-        # 暂时返回一些常见来源
+        # 返回所有支持的新闻来源
         sources = [
-            "Financial Times", "Reuters", "AP", "BBC", "CNN", 
-            "The Guardian", "Bloomberg", "TechCrunch", "Ars Technica"
+            # 美国主流媒体
+            "The New York Times", "The Washington Post", "Los Angeles Times", 
+            "NBC News", "CBS News", "ABC News", "Fox News", "CNBC", "Axios",
+            # 国际新闻机构
+            "Reuters", "Associated Press", "Bloomberg",
+            # 英国媒体
+            "BBC News", "The Guardian", "The Telegraph", 
+            "Financial Times", "Sky News", "The Independent",
+            # 欧洲媒体
+            "Euronews", "Deutsche Welle",
+            # 中东媒体
+            "Al Jazeera",
         ]
         return {"sources": sources}
     except Exception as e:
