@@ -54,7 +54,8 @@ def fetch_from_rss() -> List[Dict]:
     """从RSS源获取新闻"""
     items = []
     now = datetime.utcnow()
-    six_hours_ago = now - timedelta(hours=6)
+    # 将时间过滤从6小时改为24小时，获取更多较新的新闻
+    twenty_four_hours_ago = now - timedelta(hours=24)
 
     for source_name, feed_url in RSS_FEEDS.items():
         try:
@@ -75,8 +76,8 @@ def fetch_from_rss() -> List[Dict]:
                     # 如果没有时区信息，假设是UTC
                     published_dt_utc = published_dt.replace(tzinfo=tz.tzutc())
                 
-                # 只保留6小时之内的新闻
-                if published_dt_utc.replace(tzinfo=None) < six_hours_ago:
+                # 只保留24小时之内的新闻（改为24小时）
+                if published_dt_utc.replace(tzinfo=None) < twenty_four_hours_ago:
                     continue
 
                 # 优化内容获取逻辑
