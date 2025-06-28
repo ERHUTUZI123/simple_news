@@ -12,10 +12,10 @@ import time
 import random
 from typing import Optional
 from datetime import datetime, timedelta
-from app.models import SavedArticle, User, News
+from app.models import SavedArticle, User, News, Vote
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import UUID
-from sqlalchemy import func
+from sqlalchemy import func, desc
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -64,43 +64,24 @@ def get_first_n_words(text: str, n: int) -> str:
     words = text.split()
     return " ".join(words[:n])
 
-@router.get("/news/today")
-def get_today_news(
-    pg_service: PostgresService = Depends(get_pg_service),
+@router.get("/news")
+def get_news(
     offset: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("smart_score"),  # 默认使用智能评分排序
-    source_filter: str = Query(None)
+    limit: int = Query(10, ge=1, le=50),
+    source: Optional[str] = Query(None),
+    pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """获取今日新闻，支持智能排序"""
-    # 获取 Postgres 的新闻
-    news_items = pg_service.get_news(offset, limit, sort_by, source_filter)
-    
-    # 检查是否需要刷新新闻
-    should_refresh = False
-    if not news_items:
-        should_refresh = True
-    else:
-        # 检查最新新闻的年龄，如果超过2小时就刷新
-        latest_news = pg_service.get_news(0, 1, "time")
-        if latest_news and len(latest_news) > 0:
-            latest_date_str = latest_news[0].get('published_at')
-            if latest_date_str:
-                try:
-                    latest_date = datetime.fromisoformat(latest_date_str.replace('Z', '+00:00'))
-                    now = datetime.utcnow()
-                    if (now - latest_date) > timedelta(hours=2):
-                        should_refresh = True
-                except:
-                    should_refresh = True
-    
-    if should_refresh:
-        # 抓取 RSS 并存入
-        raw = get_tech_news(force_refresh=True)
-        pg_service.save_news(raw)
-        news_items = pg_service.get_news(offset, limit, sort_by, source_filter)
-    
-    return news_items
+    """
+    获取新闻列表，按时间排序（最新优先）
+    """
+    try:
+        # 使用PostgresService获取新闻，按时间排序
+        news_items = pg_service.get_news(offset, limit, "time", source)
+        return {"news": news_items}
+        
+    except Exception as e:
+        print(f"Error fetching news: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/news/vote")
 def vote_news(
@@ -156,12 +137,10 @@ def refresh_news(
 ):
     """手动刷新新闻"""
     try:
+        # 抓取 RSS 并存入
         raw = get_tech_news(force_refresh=True)
-        success = pg_service.save_news(raw)
-        if success:
-            return {"message": "News refreshed successfully", "count": len(raw)}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to save news")
+        pg_service.save_news(raw)
+        return {"message": "News refreshed successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to refresh news: {str(e)}")
 
@@ -192,39 +171,34 @@ def get_news_sources(
 
 @router.get("/news/sort-options")
 def get_sort_options():
-    """获取排序选项"""
+    """获取排序选项（已废弃，保留兼容性）"""
     return {
-        "options": [
-            {"value": "smart_score", "label": "Smart Sort V2 (Recommended)"},
-            {"value": "smart", "label": "Smart Sort V1"},
-            {"value": "time", "label": "Latest First"},
-            {"value": "headlines", "label": "Most Popular"}
+        "sort_options": [
+            {"value": "time", "label": "Latest First"}
         ]
     }
 
 @router.post("/api/save")
 async def save_article(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
-    """保存文章到用户收藏"""
+    """保存文章"""
     try:
         data = await request.json()
-        user_id = UUID(data.get("userId"))
-        news_id = UUID(data.get("newsId"))
+        user_id = data.get("user_id")
+        news_id = data.get("news_id")
         
         if not user_id or not news_id:
-            raise HTTPException(status_code=400, detail="Missing userId or newsId")
+            raise HTTPException(status_code=400, detail="Missing user_id or news_id")
         
-        # 检查文章是否存在
-        article = pg_service.get_article_by_title(news_id)
-        if "error" in article:
-            raise HTTPException(status_code=404, detail="Article not found")
+        # 检查用户是否存在，如果不存在则创建
+        user = pg_service.get_user_by_id(user_id)
+        if not user:
+            user_data = data.get("user", {})
+            user = pg_service.create_user(user_id, user_data.get("email"), user_data.get("name"))
         
-        # 保存到数据库
-        success = pg_service.save_article_for_user(user_id, news_id)
-        if success:
-            return {"success": True, "message": "Article saved successfully"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to save article")
-            
+        # 保存文章
+        saved_article = pg_service.save_article(user_id, news_id)
+        return {"message": "Article saved successfully", "saved_article": saved_article}
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -233,26 +207,22 @@ async def save_article(request: Request, pg_service: PostgresService = Depends(g
 
 @router.delete("/api/save")
 async def unsave_article(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
-    """从用户收藏中移除文章"""
+    """取消保存文章"""
     try:
         data = await request.json()
-        user_id = UUID(data.get("userId"))
-        news_id = UUID(data.get("newsId"))
+        user_id = data.get("user_id")
+        news_id = data.get("news_id")
         
         if not user_id or not news_id:
-            raise HTTPException(status_code=400, detail="Missing userId or newsId")
+            raise HTTPException(status_code=400, detail="Missing user_id or news_id")
         
-        # 从数据库中移除
-        success = pg_service.remove_article_from_user(user_id, news_id)
-        if success:
-            return {"success": True, "message": "Article removed from saved"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to remove article")
-            
+        pg_service.unsave_article(user_id, news_id)
+        return {"message": "Article unsaved successfully"}
+        
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error removing article: {e}")
+        print(f"Error unsaving article: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/api/saved")
@@ -260,11 +230,11 @@ async def get_saved_articles(
     user_id: str = Query(...),
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """获取用户保存的文章列表"""
+    """获取用户保存的文章"""
     try:
-        user_id = UUID(user_id)
         saved_articles = pg_service.get_saved_articles_for_user(user_id)
-        return {"articles": saved_articles}
+        return {"saved_articles": saved_articles}
+        
     except Exception as e:
         print(f"Error getting saved articles: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -275,35 +245,30 @@ async def check_article_saved(
     news_id: str = Query(...),
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """检查文章是否已被用户保存"""
+    """检查文章是否已保存"""
     try:
-        user_id = UUID(user_id)
-        news_id = UUID(news_id)
-        is_saved = pg_service.is_article_saved_by_user(user_id, news_id)
-        return {"saved": is_saved}
+        is_saved = pg_service.is_article_saved(user_id, news_id)
+        return {"is_saved": is_saved}
+        
     except Exception as e:
-        print(f"Error checking saved status: {e}")
+        print(f"Error checking saved article: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/api/auth/save-user")
 async def save_user(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
-    """保存Google用户信息到数据库"""
+    """保存用户信息"""
     try:
         data = await request.json()
-        user_id = data.get("id")
+        user_id = data.get("user_id")
         email = data.get("email")
         name = data.get("name")
         
-        if not user_id or not email:
-            raise HTTPException(status_code=400, detail="Missing required user information")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Missing user_id")
         
-        # 保存用户到数据库
-        success = pg_service.save_user(user_id, email, name)
-        if success:
-            return {"success": True, "message": "User saved successfully"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to save user")
-            
+        user = pg_service.create_user(user_id, email, name)
+        return {"message": "User saved successfully", "user": user}
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -312,94 +277,48 @@ async def save_user(request: Request, pg_service: PostgresService = Depends(get_
 
 @router.post("/news/clean-duplicates")
 def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
-    """清理重复的新闻条目"""
+    """清理重复新闻"""
     try:
-        from app.models import News
-        
         # 获取所有新闻
-        all_news = pg_service.get_news(0, 10000, "time")  # 获取所有新闻
-        print(f"🔍 Found {len(all_news)} total news articles")
+        all_news = pg_service.get_all_news()
         
-        # 按标准化标题分组
+        # 按标题分组，找出重复的
         title_groups = {}
-        for news_item in all_news:
-            normalized_title = pg_service._normalize_title(news_item["title"])
-            if normalized_title not in title_groups:
-                title_groups[normalized_title] = []
-            title_groups[normalized_title].append(news_item)
+        for news in all_news:
+            title = news.get('title', '').strip().lower()
+            if title:
+                if title not in title_groups:
+                    title_groups[title] = []
+                title_groups[title].append(news)
         
-        # 找出重复的组
-        duplicates_removed = 0
-        for normalized_title, news_list in title_groups.items():
+        # 删除重复的新闻（保留最新的）
+        deleted_count = 0
+        for title, news_list in title_groups.items():
             if len(news_list) > 1:
-                print(f"🔍 Found {len(news_list)} duplicates for: {normalized_title[:50]}...")
+                # 按发布时间排序，保留最新的
+                sorted_news = sorted(news_list, key=lambda x: x.get('published_at', ''), reverse=True)
                 
-                # 保留最新的一个，删除其他的
-                sorted_news = sorted(news_list, key=lambda x: x.get("date", ""), reverse=True)
-                for news_to_delete in sorted_news[1:]:
-                    # 通过标题删除重复的新闻
-                    existing = pg_service.db.query(News).filter(News.title == news_to_delete["title"]).first()
-                    if existing:
-                        pg_service.db.delete(existing)
-                        duplicates_removed += 1
-                        print(f"🗑️ Deleted duplicate: {news_to_delete['title'][:50]}...")
+                # 删除除最新之外的所有新闻
+                for news in sorted_news[1:]:
+                    pg_service.delete_news_by_title(news['title'])
+                    deleted_count += 1
         
-        pg_service.db.commit()
-        print(f"✅ Cleaned up {duplicates_removed} duplicate articles")
-        
-        return {
-            "success": True, 
-            "message": f"Cleaned up {duplicates_removed} duplicate articles",
-            "duplicates_removed": duplicates_removed
-        }
+        return {"message": f"Cleaned {deleted_count} duplicate news articles"}
         
     except Exception as e:
-        print(f"❌ Error cleaning duplicates: {e}")
-        pg_service.db.rollback()
+        print(f"Error cleaning duplicates: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clean duplicates: {str(e)}")
 
 @router.post("/news/clean-duplicates-direct")
 def clean_duplicate_news_direct(pg_service: PostgresService = Depends(get_pg_service)):
-    """直接清理重复的新闻条目"""
+    """直接清理重复新闻（使用SQL）"""
     try:
-        from app.models import News
-        
-        # 查找重复的标题
-        duplicate_titles = pg_service.db.query(
-            News.title, 
-            func.count(News.id).label('count')
-        ).group_by(News.title).having(func.count(News.id) > 1).all()
-        
-        print(f"🔍 Found {len(duplicate_titles)} duplicate titles")
-        
-        total_removed = 0
-        for title, count in duplicate_titles:
-            print(f"🔍 Processing duplicates for: {title[:50]}... (count: {count})")
-            
-            # 获取所有具有相同标题的新闻，按创建时间排序
-            duplicates = pg_service.db.query(News).filter(
-                News.title == title
-            ).order_by(News.created_at.desc()).all()
-            
-            # 保留最新的一个，删除其他的
-            for duplicate in duplicates[1:]:
-                pg_service.db.delete(duplicate)
-                total_removed += 1
-                print(f"🗑️ Deleted duplicate with ID: {duplicate.id}")
-        
-        pg_service.db.commit()
-        print(f"✅ Cleaned up {total_removed} duplicate articles")
-        
-        return {
-            "success": True, 
-            "message": f"Cleaned up {total_removed} duplicate articles",
-            "duplicates_removed": total_removed,
-            "duplicate_titles_found": len(duplicate_titles)
-        }
+        # 使用SQL直接删除重复的新闻
+        deleted_count = pg_service.clean_duplicates_direct()
+        return {"message": f"Cleaned {deleted_count} duplicate news articles"}
         
     except Exception as e:
-        print(f"❌ Error cleaning duplicates: {e}")
-        pg_service.db.rollback()
+        print(f"Error cleaning duplicates directly: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clean duplicates: {str(e)}")
 
 @router.post("/news/clean-old")
@@ -410,21 +329,32 @@ def clean_old_news(
 ):
     """清理旧新闻"""
     try:
-        from datetime import datetime
-        from sqlalchemy import delete
-        from app.models import News
-        
         # 解析截止日期
-        cutoff = datetime.fromisoformat(cutoff_date.replace('Z', '+00:00'))
+        try:
+            cutoff = datetime.fromisoformat(cutoff_date.replace('Z', '+00:00'))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)")
         
-        # 删除旧新闻
-        deleted_count = pg_service.db.query(News).filter(News.published_at < cutoff).delete()
-        pg_service.db.commit()
+        # 获取要删除的新闻数量
+        old_news_count = pg_service.get_old_news_count(cutoff)
         
-        return {
-            "message": f"Cleaned {deleted_count} old articles",
-            "deleted_count": deleted_count,
-            "cutoff_date": cutoff_date
-        }
+        if old_news_count == 0:
+            return {"message": "No old news to clean"}
+        
+        if not force:
+            return {
+                "message": f"Found {old_news_count} old news articles to clean",
+                "cutoff_date": cutoff_date,
+                "count": old_news_count,
+                "force_required": True
+            }
+        
+        # 执行删除
+        deleted_count = pg_service.clean_old_news(cutoff)
+        return {"message": f"Cleaned {deleted_count} old news articles"}
+        
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Error cleaning old news: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clean old news: {str(e)}")

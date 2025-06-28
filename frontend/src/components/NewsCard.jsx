@@ -67,7 +67,7 @@ function formatKeywords(keywords) {
         if (Array.isArray(parsed)) {
           return parsed.slice(0, 3).join(", ");
         }
-      } catch (e) {
+      } catch {
         // 如果解析失败，直接返回字符串
         return keywords;
       }
@@ -98,23 +98,14 @@ function setSavedIds(ids) {
   localStorage.setItem('saved_article_ids', JSON.stringify(ids));
 }
 
-export default function NewsCard({ news, onVote, showScore = true }) {
+export default function NewsCard({ news, onVote }) {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(() => getSavedIds().includes(news.id));
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
 
   // 从news对象中提取数据
-  const { id, title, link, date, source, smart_score, vote_count, keywords } = news;
-
-  // 获取评分颜色
-  const getScoreColor = (score) => {
-    if (!score) return "var(--text-color)";
-    if (score >= 6.4) return "#4CAF50"; // 绿色 - 高分
-    if (score >= 6.2) return "#FF9800"; // 橙色 - 中等
-    if (score >= 6.0) return "#F44336"; // 红色 - 低分
-    return "var(--text-color)";
-  };
+  const { id, title, link, date, source, vote_count, keywords } = news;
 
   // Like or undo
   const toggleHeadline = async () => {
@@ -181,24 +172,12 @@ export default function NewsCard({ news, onVote, showScore = true }) {
           </span>
         )}
         
-        {/* 智能评分显示 */}
-        {showScore && smart_score && (
-          <span style={{ 
-            margin: "0 0.5rem", 
-            color: getScoreColor(smart_score),
-            fontSize: "0.8rem",
-            fontWeight: "bold"
-          }}>
-            🧠 {smart_score.toFixed(1)}
-          </span>
-        )}
-        
         {/* 关键词显示 */}
         {keywords && (
           <span style={{ 
             margin: "0 0.5rem", 
             color: "var(--text-color)", 
-            fontSize: "0.7rem",
+            fontSize: "0.8rem",
             opacity: 0.7
           }}>
             🏷️ {formatKeywords(keywords)}

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { fetchVote, fetchNewsWithSort } from "../services/api";
-import NewsCard, { NewsCardSkeleton } from "../components/NewsCard";
-import { GoogleLogin } from '@react-oauth/google';
+import { fetchNewsWithSort, voteNews } from "../services/api";
+import NewsCard from "../components/NewsCard";
+import PageTitle from "../components/PageTitle";
 import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
+import { GoogleLogin } from '@react-oauth/google';
 
 function LoginButton() {
   const { userSession, logout } = useContext(UserContext);
@@ -70,9 +71,7 @@ export default function Home() {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [sourceFilter, setSourceFilter] = useState('');
-  const [sortBy, setSortBy] = useState('smart_score'); // 默认使用Smart Sort V2
   const [showSourceMenu, setShowSourceMenu] = useState(false);
-  const [showSortMenu, setShowSortMenu] = useState(false);
   const observerRef = useRef(null);
   const LIMIT = 10;
 
@@ -107,19 +106,6 @@ export default function Home() {
     { value: 'Al Jazeera', label: 'Al Jazeera' },
   ];
 
-  // 排序选项
-  const sortOptions = [
-    { value: 'smart_score', label: 'Smart Sort V2 (Recommended)' },
-    { value: 'smart', label: 'Smart Sort V1' },
-    { value: 'time', label: 'Latest First' },
-    { value: 'headlines', label: 'Most Popular' },
-  ];
-
-  const getSortLabel = (value) => {
-    const option = sortOptions.find(opt => opt.value === value);
-    return option ? option.label : 'Smart Sort';
-  };
-
   const getSourceLabel = (value) => {
     const option = sourceOptions.find(opt => opt.value === value);
     return option ? option.label : 'All Sources';
@@ -135,7 +121,7 @@ export default function Home() {
     if (loading) return;
     setLoading(true);
     try {
-      const newNews = await fetchNewsWithSort(offset, LIMIT, sortBy, sourceFilter);
+      const newNews = await fetchNewsWithSort(offset, LIMIT, sourceFilter);
       if (offset === 0) {
         setNewsList(newNews);
       } else {
@@ -151,7 +137,7 @@ export default function Home() {
 
   useEffect(() => {
     resetAndLoadNews();
-  }, [sortBy, sourceFilter]);
+  }, [sourceFilter]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -168,24 +154,20 @@ export default function Home() {
     }
 
     return () => observer.disconnect();
-  }, [loading, offset, sortBy, sourceFilter]);
+  }, [loading, offset, sourceFilter]);
 
   const handleVote = async (title, delta) => {
     try {
-      await fetchVote(title, delta);
-      // 更新本地新闻列表中的投票数
-      setNewsList(prev => prev.map(news => 
-        news.title === title 
-          ? { ...news, vote_count: (news.vote_count || 0) + delta }
-          : news
-      ));
+      await voteNews(title, delta);
+      // 重新加载新闻以更新投票数
+      resetAndLoadNews();
     } catch (error) {
       console.error('Error voting:', error);
     }
   };
 
   return (
-    <div className="news-container">
+    <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
       <LoginButton />
       
       {/* 标题和描述 */}
@@ -213,97 +195,13 @@ export default function Home() {
         </p>
       </div>
 
-      {/* 过滤器和排序控件 */}
+      {/* 过滤器区域 */}
       <div style={{
-        display: "flex",
-        justifyContent: "center",
-        gap: "1rem",
         marginBottom: "2rem",
+        display: "flex",
+        gap: "1rem",
         flexWrap: "wrap",
       }}>
-        {/* 排序选择器 */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setShowSortMenu(!showSortMenu)}
-            style={{
-              background: "none",
-              border: "1px solid var(--border-color)",
-              borderRadius: "8px",
-              padding: "0.75rem 1rem",
-              color: "var(--text-color)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.9rem",
-              cursor: "pointer",
-              minWidth: "200px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "var(--button-hover-bg)";
-              e.target.style.color = "var(--button-hover-text)";
-              e.target.style.borderColor = "var(--button-hover-border)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "transparent";
-              e.target.style.color = "var(--text-color)";
-              e.target.style.borderColor = "var(--border-color)";
-            }}
-          >
-            <span>📊 {getSortLabel(sortBy)}</span>
-            <span>▼</span>
-          </button>
-          
-          {showSortMenu && (
-            <div style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              right: 0,
-              background: "var(--bg-color)",
-              border: "1px solid var(--border-color)",
-              borderRadius: "8px",
-              padding: "0.5rem 0",
-              marginTop: "0.5rem",
-              zIndex: 1000,
-            }}>
-              {sortOptions.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    setSortBy(option.value);
-                    setShowSortMenu(false);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "0.5rem 1rem",
-                    background: "none",
-                    border: "none",
-                    textAlign: "left",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.9rem",
-                    color: sortBy === option.value ? "var(--highlight-color)" : "var(--text-color)",
-                    cursor: "pointer",
-                    fontWeight: sortBy === option.value ? "bold" : "normal",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "var(--button-hover-bg)";
-                    e.target.style.color = "var(--button-hover-text)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = "transparent";
-                    e.target.style.color = sortBy === option.value ? "var(--highlight-color)" : "var(--text-color)";
-                  }}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* 来源过滤器 */}
         <div style={{ position: "relative" }}>
           <button
@@ -391,28 +289,31 @@ export default function Home() {
       </div>
 
       {/* 新闻列表 */}
-      <div className="news-list">
-        {loading && newsList.length === 0 ? (
-          // 加载中且无数据时显示骨架屏
-          Array.from({ length: 5 }).map((_, i) => <NewsCardSkeleton key={i} />)
-        ) : (
-          newsList.map((news, index) => (
-            <div key={`${news.title}-${index}`}>
-              <NewsCard
-                news={news}
-                onVote={handleVote}
-                showScore={sortBy === 'smart'}
-              />
-            </div>
-          ))
-        )}
-        {loading && newsList.length > 0 && (
-          <div style={{ textAlign: "center", padding: "2rem", color: "var(--secondary-color)", fontFamily: "var(--font-mono)" }}>
-            Loading more news...
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        {newsList.map((news, index) => (
+          <div key={`${news.id}-${index}`}>
+            <NewsCard
+              news={news}
+              onVote={handleVote}
+            />
           </div>
-        )}
-        <div ref={observerRef} style={{ height: "20px" }} />
+        ))}
       </div>
+
+      {/* 加载更多指示器 */}
+      {loading && (
+        <div style={{
+          textAlign: "center",
+          padding: "2rem",
+          color: "var(--text-secondary)",
+          fontFamily: "var(--font-mono)",
+        }}>
+          Loading more news...
+        </div>
+      )}
+
+      {/* 无限滚动观察器 */}
+      <div ref={observerRef} style={{ height: "20px" }} />
     </div>
   );
 }
