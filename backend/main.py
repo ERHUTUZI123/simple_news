@@ -38,6 +38,12 @@ cached_news = []
 def fetch_and_cache_news():
     global cached_news
     logging.info('scheduled rss fetching...')
+    try:
+        # 实际执行新闻获取和缓存刷新
+        refresh_news_cache()
+        logging.info('scheduled rss fetching completed successfully')
+    except Exception as e:
+        logging.error(f'scheduled rss fetching failed: {e}')
 
 # Run it every 10 minutes
 scheduler.add_job(fetch_and_cache_news, 
