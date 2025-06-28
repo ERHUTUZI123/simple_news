@@ -9,10 +9,16 @@ from app.db import SessionLocal
 from app.models import Vote
 from app.db import init_db
 from cache_worker import refresh_news_cache
+from apscheduler.schedulers.background import BackgroundScheduler
+from news.fetch_news import fetch_from_rss
+import logging
 
 init_db()
 
 app = FastAPI()
+
+scheduler = BackgroundScheduler()
+logging.basicConfig(level=logging.INFO)
 
 # CORS 配置，允许所有域名访问（可根据需要指定前端域名）
 app.add_middleware(
@@ -25,6 +31,19 @@ app.add_middleware(
 
 app.include_router(news_router)
 app.include_router(pay_router)
+
+
+cached_news = []
+
+def fetch_and_cache_news():
+    global cached_news
+    logging.info('scheduled rss fetching...')
+
+# Run it every 10 minutes
+scheduler.add_job(fetch_and_cache_news, 
+                  'interval',
+                  minutes=5)
+scheduler.start()
 
 # 后台定时任务
 def background_news_refresh():
