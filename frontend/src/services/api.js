@@ -49,6 +49,11 @@ export const voteNews = async (title, delta) => {
   }
 };
 
+// 向下投票（兼容性函数）
+export const downvoteNews = async (title) => {
+  return voteNews(title, -1);
+};
+
 // 获取投票数
 export const getVoteCount = async (title) => {
   try {
@@ -105,6 +110,9 @@ export const getArticleByTitle = async (title) => {
   }
 };
 
+// 兼容性函数别名
+export const fetchArticleByTitle = getArticleByTitle;
+
 // 生成新闻摘要
 export const generateSummary = async (content, summaryType = 'detailed') => {
   try {
@@ -129,6 +137,12 @@ export const generateSummary = async (content, summaryType = 'detailed') => {
     console.error('Error generating summary:', error);
     throw error;
   }
+};
+
+// 兼容性函数别名
+export const fetchSummary = async (content, type = 'detailed') => {
+  const result = await generateSummary(content, type);
+  return result.summary || result;
 };
 
 // 刷新新闻

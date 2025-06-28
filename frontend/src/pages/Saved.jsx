@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { fetchArticleByTitle } from "../services/api";
 
 // 格式化相对时间
 function formatRelativeTime(dateString) {
@@ -93,8 +94,8 @@ export default function Saved() {
         return;
       }
       try {
-        // 批量获取新闻详情（这里用/news/today拉取全部后筛选，或逐个请求/news/article/{id}）
-        const response = await fetch('https://simplenews-production.up.railway.app/news/today?offset=0&limit=100');
+        // 批量获取新闻详情（这里用/news拉取全部后筛选，或逐个请求/news/article/{id}）
+        const response = await fetch('https://simplenews-production.up.railway.app/news?offset=0&limit=100');
         const allNews = await response.json();
         const filtered = allNews.filter(article => savedIds.includes(article.id));
         setSavedArticles(filtered);
