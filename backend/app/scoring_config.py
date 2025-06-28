@@ -1,9 +1,9 @@
 """
-Smart Sort V2 - 评分配置模块
-定义各种评分的权重、关键词映射和配置参数
+Smart Sort V2 - 评分配置模块（改进版）
+参考专业新闻网站的评分标准，使用更合理的评分范围
 """
 
-# 权重配置
+# 权重配置（保持原有权重）
 WEIGHTS = {
     'significance': 0.3,    # 事件影响力
     'freshness': 0.2,       # 时效性
@@ -13,120 +13,123 @@ WEIGHTS = {
     'summary_quality': 0.1  # 摘要质量
 }
 
-# 重要性关键词映射（Significance Score）
+# 重要性关键词映射（改进版，参考专业新闻标准）
 SIGNIFICANCE_KEYWORDS = {
-    # 10分 - 重大国际政治事件、战争、重大科技突破
-    10: [
+    # 6.5分 - 重大国际政治事件、战争、重大科技突破
+    6.5: [
         'war', 'conflict', 'invasion', 'attack', 'missile', 'nuclear', 'weapon',
         'president', 'prime minister', 'election', 'vote', 'referendum',
         'breakthrough', 'discovery', 'invention', 'innovation', 'revolutionary',
-        'crisis', 'emergency', 'disaster', 'catastrophe', 'pandemic', 'epidemic'
+        'crisis', 'emergency', 'disaster', 'catastrophe', 'pandemic', 'epidemic',
+        'trump', 'biden', 'putin', 'nato', 'supreme court', 'congress'
     ],
     
-    # 8-9分 - 经济政策、重要选举、重大自然灾害
-    8: [
+    # 6.4分 - 重要国际协议、经济政策、重大自然灾害
+    6.4: [
         'economy', 'economic', 'policy', 'regulation', 'law', 'bill', 'act',
         'election', 'campaign', 'candidate', 'political', 'government',
         'earthquake', 'tsunami', 'hurricane', 'tornado', 'flood', 'wildfire',
-        'trade', 'tariff', 'sanction', 'embargo', 'diplomatic', 'treaty'
+        'trade', 'tariff', 'sanction', 'embargo', 'diplomatic', 'treaty',
+        'agreement', 'deal', 'peace', 'ceasefire', 'negotiation'
     ],
     
-    # 6-7分 - 商业并购、体育重大赛事、娱乐重大事件
-    6: [
+    # 6.3分 - 政策变化、科技突破、商业并购
+    6.3: [
         'merger', 'acquisition', 'takeover', 'deal', 'agreement', 'partnership',
         'olympics', 'world cup', 'championship', 'tournament', 'final',
         'award', 'oscar', 'grammy', 'nobel', 'prize', 'celebration',
-        'business', 'corporate', 'company', 'stock', 'market', 'investment'
+        'business', 'corporate', 'company', 'stock', 'market', 'investment',
+        'ai', 'artificial intelligence', 'technology', 'innovation', 'copyright'
     ],
     
-    # 4-5分 - 一般商业新闻、地方政治
-    4: [
+    # 6.2分 - 国际关系、科技新闻、地区冲突
+    6.2: [
+        'international', 'foreign', 'diplomatic', 'relations', 'alliance',
+        'technology', 'software', 'app', 'platform', 'service', 'product',
+        'conflict', 'tension', 'dispute', 'protest', 'demonstration',
+        'virus', 'infection', 'health', 'medical', 'research'
+    ],
+    
+    # 6.1分 - 地区性重要新闻、一般商业新闻
+    6.1: [
         'local', 'city', 'town', 'community', 'neighborhood', 'district',
         'business', 'company', 'startup', 'funding', 'venture', 'capital',
-        'technology', 'software', 'app', 'platform', 'service', 'product'
+        'technology', 'software', 'app', 'platform', 'service', 'product',
+        'regional', 'provincial', 'state', 'county'
     ],
     
-    # 1-3分 - 娱乐八卦、生活新闻
-    1: [
+    # 6.0分 - 娱乐八卦、生活新闻
+    6.0: [
         'celebrity', 'star', 'actor', 'actress', 'singer', 'musician',
         'gossip', 'rumor', 'scandal', 'divorce', 'marriage', 'wedding',
         'lifestyle', 'fashion', 'beauty', 'food', 'recipe', 'travel'
     ]
 }
 
-# 来源权重映射（Source Weight Score）
+# 来源权重映射（改进版，更细致的评分）
 SOURCE_WEIGHTS = {
-    # 10分 - 顶级权威媒体
-    10: [
+    # 6.5分 - 顶级权威媒体
+    6.5: [
         'Financial Times', 'The New York Times', 'Reuters', 'Associated Press',
-        'AP', 'AP News'
+        'AP', 'AP News', 'BBC News', 'BBC'
     ],
     
-    # 9分 - 知名国际媒体
-    9: [
-        'BBC News', 'BBC', 'The Washington Post', 'The Guardian'
+    # 6.4分 - 知名国际媒体
+    6.4: [
+        'The Washington Post', 'The Guardian', 'Bloomberg', 'CNBC'
     ],
     
-    # 8分 - 专业财经媒体
-    8: [
-        'Bloomberg', 'CNBC', 'Los Angeles Times'
+    # 6.3分 - 专业财经媒体
+    6.3: [
+        'Los Angeles Times', 'NBC News', 'CBS News', 'ABC News'
     ],
     
-    # 7分 - 主流电视媒体
-    7: [
-        'NBC News', 'CBS News', 'ABC News'
+    # 6.2分 - 其他知名媒体
+    6.2: [
+        'Fox News', 'Sky News', 'The Telegraph', 'The Independent'
     ],
     
-    # 6分 - 其他知名媒体
-    6: [
-        'Fox News', 'Sky News', 'The Telegraph'
+    # 6.1分 - 国际媒体
+    6.1: [
+        'Euronews', 'Deutsche Welle', 'Al Jazeera', 'Axios'
     ],
     
-    # 5分 - 国际媒体
-    5: [
-        'The Independent', 'Euronews', 'Deutsche Welle'
-    ],
-    
-    # 4分 - 地区媒体
-    4: [
-        'Al Jazeera', 'Axios'
-    ],
-    
-    # 3分 - 其他一般媒体
-    3: [
+    # 6.0分 - 其他一般媒体
+    6.0: [
         'other', 'unknown', 'blog', 'social'
     ]
 }
 
-# 时效性评分配置（Freshness Score）
+# 时效性评分配置（改进版，更细致的时效性处理）
 FRESHNESS_CONFIG = {
-    '3_hours': 10,    # 3小时内
-    '6_hours': 7,     # 6小时内
-    '12_hours': 5,    # 12小时内
-    '24_hours': 3,    # 24小时内
-    '48_hours': 1,    # 48小时内
-    'beyond': 0       # 48小时以上
+    '1_hour': 6.5,     # 1小时内
+    '3_hours': 6.4,    # 3小时内
+    '6_hours': 6.3,    # 6小时内
+    '12_hours': 6.2,   # 12小时内
+    '24_hours': 6.1,   # 24小时内
+    '48_hours': 6.0,   # 48小时内
+    'beyond': 5.9      # 48小时以上
 }
 
-# 流行度评分配置（Popularity Score）
+# 流行度评分配置（改进版）
 POPULARITY_CONFIG = {
-    'no_votes': 0,        # 无点赞
-    'low_votes': 3,       # 1-5个点赞
-    'medium_votes': 6,    # 6-10个点赞
-    'high_votes': 10,     # 10个以上点赞
-    'duplicate_bonus': 2  # 被多个源报道的额外加分
+    'no_votes': 6.0,       # 无点赞
+    'low_votes': 6.1,      # 1-5个点赞
+    'medium_votes': 6.2,   # 6-10个点赞
+    'high_votes': 6.3,     # 10个以上点赞
+    'duplicate_bonus': 0.1 # 被多个源报道的额外加分
 }
 
-# 摘要质量评分配置（Summary Quality Score）
+# 摘要质量评分配置（改进版）
 SUMMARY_QUALITY_CONFIG = {
-    'excellent': 10,  # 结构完整，逻辑清晰
-    'good': 8,        # 结构良好
-    'fair': 6,        # 结构一般
-    'poor': 3,        # 结构较差
-    'none': 0         # 无摘要
+    'excellent': 6.5,  # 结构完整，逻辑清晰
+    'good': 6.3,       # 结构良好
+    'fair': 6.1,       # 结构一般
+    'poor': 6.0,       # 结构较差
+    'none': 5.9        # 无摘要
 }
 
-# 标题相似度阈值（Novelty Score）
+# 标题相似度阈值（改进版）
 SIMILARITY_THRESHOLDS = {
     'exact_match': 0.95,    # 完全重复
     'high_similar': 0.8,    # 高度相似

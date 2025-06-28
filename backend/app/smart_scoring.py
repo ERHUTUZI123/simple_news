@@ -14,9 +14,9 @@ from .scoring_config import (
     get_weights
 )
 
-def normalize_score(score: float, min_val: float = 0, max_val: float = 10) -> float:
+def normalize_score(score: float, min_val: float = 5.9, max_val: float = 6.5) -> float:
     """
-    标准化分数到指定范围
+    标准化分数到指定范围（改进版）
     
     Args:
         score: 原始分数
@@ -34,14 +34,14 @@ def normalize_score(score: float, min_val: float = 0, max_val: float = 10) -> fl
 
 def compute_significance_score(title: str, content: str) -> float:
     """
-    计算事件影响力分数
+    计算事件影响力分数（改进版）
     
     Args:
         title: 新闻标题
         content: 新闻内容
     
     Returns:
-        重要性分数 (1-10)
+        重要性分数 (6.0-6.5)
     """
     # 合并标题和内容进行关键词匹配
     text = f"{title} {content}".lower()
@@ -50,7 +50,7 @@ def compute_significance_score(title: str, content: str) -> float:
     significance_keywords = get_significance_keywords()
     
     # 计算最高匹配分数
-    max_score = 1  # 默认最低分
+    max_score = 6.0  # 默认最低分
     
     for score, keywords in significance_keywords.items():
         for keyword in keywords:
@@ -58,17 +58,17 @@ def compute_significance_score(title: str, content: str) -> float:
                 max_score = max(max_score, score)
                 break  # 找到该分数段的匹配就跳出
     
-    return normalize_score(max_score, 1, 10)
+    return normalize_score(max_score, 6.0, 6.5)
 
 def compute_freshness_score(published_at: datetime) -> float:
     """
-    计算时效性分数
+    计算时效性分数（改进版）
     
     Args:
         published_at: 发布时间
     
     Returns:
-        时效性分数 (0-10)
+        时效性分数 (5.9-6.5)
     """
     now = datetime.utcnow()
     time_diff = now - published_at
@@ -77,7 +77,9 @@ def compute_freshness_score(published_at: datetime) -> float:
     # 获取时效性配置
     freshness_config = get_freshness_config()
     
-    if hours_diff <= 3:
+    if hours_diff <= 1:
+        return freshness_config['1_hour']
+    elif hours_diff <= 3:
         return freshness_config['3_hours']
     elif hours_diff <= 6:
         return freshness_config['6_hours']
@@ -92,13 +94,13 @@ def compute_freshness_score(published_at: datetime) -> float:
 
 def compute_source_weight_score(source: str) -> float:
     """
-    计算来源可信度分数
+    计算来源可信度分数（改进版）
     
     Args:
         source: 新闻来源
     
     Returns:
-        来源权重分数 (1-10)
+        来源权重分数 (6.0-6.5)
     """
     source_weights = get_source_weights()
     
@@ -108,18 +110,18 @@ def compute_source_weight_score(source: str) -> float:
             return score
     
     # 如果没有找到匹配，返回默认值
-    return 3
+    return 6.0
 
 def compute_popularity_score(headline_count: int, duplicate_count: int = 0) -> float:
     """
-    计算流行度分数
+    计算流行度分数（改进版）
     
     Args:
         headline_count: 点赞数
         duplicate_count: 重复报道数
     
     Returns:
-        流行度分数 (0-10)
+        流行度分数 (6.0-6.3)
     """
     popularity_config = get_popularity_config()
     
@@ -137,7 +139,7 @@ def compute_popularity_score(headline_count: int, duplicate_count: int = 0) -> f
     duplicate_bonus = duplicate_count * popularity_config['duplicate_bonus']
     
     total_score = base_score + duplicate_bonus
-    return normalize_score(total_score, 0, 10)
+    return normalize_score(total_score, 6.0, 6.3)
 
 def calculate_title_similarity(title1: str, title2: str) -> float:
     """
@@ -156,17 +158,17 @@ def calculate_title_similarity(title1: str, title2: str) -> float:
 
 def compute_novelty_score(title: str, existing_titles: List[str]) -> float:
     """
-    计算新颖性分数
+    计算新颖性分数（改进版）
     
     Args:
         title: 当前新闻标题
         existing_titles: 已存在的新闻标题列表
     
     Returns:
-        新颖性分数 (0-10)
+        新颖性分数 (5.9-6.5)
     """
     if not existing_titles:
-        return 10  # 如果没有已存在的新闻，认为完全新颖
+        return 6.5  # 如果没有已存在的新闻，认为完全新颖
     
     # 计算与所有已存在标题的最大相似度
     max_similarity = 0
@@ -178,28 +180,28 @@ def compute_novelty_score(title: str, existing_titles: List[str]) -> float:
     similarity_thresholds = get_similarity_thresholds()
     
     if max_similarity >= similarity_thresholds['exact_match']:
-        return 0  # 完全重复
+        return 5.9  # 完全重复
     elif max_similarity >= similarity_thresholds['high_similar']:
-        return 2  # 高度相似
+        return 6.0  # 高度相似
     elif max_similarity >= similarity_thresholds['medium_similar']:
-        return 5  # 中等相似
+        return 6.1  # 中等相似
     elif max_similarity >= similarity_thresholds['low_similar']:
-        return 8  # 轻微相似
+        return 6.2  # 轻微相似
     else:
-        return 10  # 独特
+        return 6.5  # 独特
 
 def compute_summary_quality_score(summary_ai: Dict[str, Any]) -> float:
     """
-    计算摘要质量分数
+    计算摘要质量分数（改进版）
     
     Args:
         summary_ai: AI摘要结构
     
     Returns:
-        摘要质量分数 (0-10)
+        摘要质量分数 (5.9-6.5)
     """
     if not summary_ai:
-        return 0
+        return 5.9
     
     # 获取结构评分
     structure_score = summary_ai.get('structure_score', 0)
@@ -223,14 +225,14 @@ def compute_smart_score(
     existing_news: List[Dict[str, Any]] = None
 ) -> float:
     """
-    计算综合智能评分
+    计算综合智能评分（改进版）
     
     Args:
         article: 新闻文章数据
         existing_news: 已存在的新闻列表（用于计算新颖性）
     
     Returns:
-        综合智能评分 (0-10)
+        综合智能评分 (5.9-6.5)
     """
     if existing_news is None:
         existing_news = []
@@ -248,7 +250,7 @@ def compute_smart_score(
     
     # 计算各维度分数
     significance_score = compute_significance_score(title, content)
-    freshness_score = compute_freshness_score(published_at) if published_at else 0
+    freshness_score = compute_freshness_score(published_at) if published_at else 6.0
     source_weight_score = compute_source_weight_score(source)
     popularity_score = compute_popularity_score(headline_count)
     
@@ -269,7 +271,7 @@ def compute_smart_score(
         weights['summary_quality'] * summary_quality_score
     )
     
-    return normalize_score(smart_score, 0, 10)
+    return normalize_score(smart_score, 5.9, 6.5)
 
 def compute_smart_score_batch(
     articles: List[Dict[str, Any]],
