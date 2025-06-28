@@ -189,7 +189,7 @@ class PostgresService:
                     
                     # 创建新闻对象
                     news = News(
-                        id=str(uuid.uuid4()),  # 手动生成UUID
+                        id=str(uuid.uuid4()),
                         title=item["title"],
                         content=item["content"],
                         summary=item.get("summary", ""),
@@ -204,14 +204,10 @@ class PostgresService:
                     )
                     
                     self.db.add(news)
+                    self.db.commit()
                     saved_count += 1
-                    
-                    # 每保存10条新闻就提交一次，避免事务过大
-                    if saved_count % 10 == 0:
-                        self.db.commit()
-                        print(f"🔍 DEBUG: Committed {saved_count} articles so far...")
-                    
                 except Exception as e:
+                    self.db.rollback()
                     print(f"❌ Error saving individual article {i}: {e}")
                     continue
             
