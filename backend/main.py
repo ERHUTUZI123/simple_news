@@ -79,6 +79,9 @@ def get_votes():
         return {"votes": [{"title": vote.title, "count": vote.count} for vote in votes]}
     finally:
         db.close()
+@app.get("/news/auto")
+def get_auto_news():
+    return cached_news
 
 if __name__ == "__main__":
     import uvicorn
