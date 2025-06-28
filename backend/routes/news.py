@@ -400,3 +400,30 @@ def clean_duplicate_news_direct(pg_service: PostgresService = Depends(get_pg_ser
         print(f"❌ Error cleaning duplicates: {e}")
         pg_service.db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to clean duplicates: {str(e)}")
+
+@router.post("/news/clean-old")
+def clean_old_news(
+    pg_service: PostgresService = Depends(get_pg_service),
+    cutoff_date: str = Body(...),
+    force: bool = Body(False)
+):
+    """清理旧新闻"""
+    try:
+        from datetime import datetime
+        from sqlalchemy import delete
+        from app.models import News
+        
+        # 解析截止日期
+        cutoff = datetime.fromisoformat(cutoff_date.replace('Z', '+00:00'))
+        
+        # 删除旧新闻
+        deleted_count = pg_service.db.query(News).filter(News.published_at < cutoff).delete()
+        pg_service.db.commit()
+        
+        return {
+            "message": f"Cleaned {deleted_count} old articles",
+            "deleted_count": deleted_count,
+            "cutoff_date": cutoff_date
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to clean old news: {str(e)}")
