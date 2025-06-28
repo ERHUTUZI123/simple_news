@@ -98,14 +98,31 @@ function setSavedIds(ids) {
   localStorage.setItem('saved_article_ids', JSON.stringify(ids));
 }
 
-export default function NewsCard({ news, onVote, showScore = false }) {
+export default function NewsCard({ news, onVote, showScore = true }) {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(() => getSavedIds().includes(news.id));
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
 
   // 从news对象中提取数据
-  const { id, title, link, date, source, score, vote_count, keywords } = news;
+  const { id, title, link, date, source, score, smart_score, vote_count, keywords } = news;
+
+  // 格式化智能评分显示
+  const formatSmartScore = (score) => {
+    if (!score) return null;
+    // 将6.0-6.5的评分转换为百分比显示
+    const percentage = Math.round(((score - 5.9) / 0.6) * 100);
+    return percentage;
+  };
+
+  // 获取评分颜色
+  const getScoreColor = (score) => {
+    if (!score) return "var(--text-color)";
+    if (score >= 6.4) return "#4CAF50"; // 绿色 - 高分
+    if (score >= 6.2) return "#FF9800"; // 橙色 - 中等
+    if (score >= 6.0) return "#F44336"; // 红色 - 低分
+    return "var(--text-color)";
+  };
 
   // Like or undo
   const toggleHeadline = async () => {
@@ -173,14 +190,26 @@ export default function NewsCard({ news, onVote, showScore = false }) {
         )}
         
         {/* 智能评分显示 */}
-        {showScore && score && (
+        {showScore && smart_score && (
           <span style={{ 
             margin: "0 0.5rem", 
-            color: score > 0.7 ? "#4CAF50" : score > 0.4 ? "#FF9800" : "#F44336",
+            color: getScoreColor(smart_score),
             fontSize: "0.8rem",
             fontWeight: "bold"
           }}>
-            ⭐ {Math.round(score * 100)}%
+            🧠 {smart_score.toFixed(1)}
+          </span>
+        )}
+        
+        {/* 旧版评分显示（兼容性） */}
+        {showScore && score && !smart_score && (
+          <span style={{ 
+            margin: "0 0.5rem", 
+            color: getScoreColor(score),
+            fontSize: "0.8rem",
+            fontWeight: "bold"
+          }}>
+            ⭐ {formatSmartScore(score)}%
           </span>
         )}
         

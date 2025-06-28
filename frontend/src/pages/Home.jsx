@@ -70,7 +70,7 @@ export default function Home() {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [sourceFilter, setSourceFilter] = useState('');
-  const [sortBy, setSortBy] = useState('smart'); // 默认智能排序
+  const [sortBy, setSortBy] = useState('smart_score'); // 默认使用Smart Sort V2
   const [showSourceMenu, setShowSourceMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const observerRef = useRef(null);
@@ -109,7 +109,8 @@ export default function Home() {
 
   // 排序选项
   const sortOptions = [
-    { value: 'smart', label: 'Smart Sort (Recommended)' },
+    { value: 'smart_score', label: 'Smart Sort V2 (Recommended)' },
+    { value: 'smart', label: 'Smart Sort V1' },
     { value: 'time', label: 'Latest First' },
     { value: 'headlines', label: 'Most Popular' },
   ];
