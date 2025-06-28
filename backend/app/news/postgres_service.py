@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc
-from app.models import News, Vote, SavedArticle
+from app.models import News, Vote, SavedArticle, User
 from app.scoring import calculate_news_score, extract_keywords_from_text, build_existing_keyword_map
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy import func
@@ -14,6 +14,7 @@ from uuid import UUID
 from sqlalchemy.sql import text
 import re
 import uuid
+from app.smart_scoring import compute_smart_score, get_score_breakdown
 
 class PostgresService:
     def __init__(self, db: Session):
@@ -39,7 +40,10 @@ class PostgresService:
                 query = query.filter(News.source.ilike(f"%{source_filter}%"))
             
             # 应用排序
-            if sort_by == "smart":
+            if sort_by == "smart_score":
+                # 智能评分排序：按smart_score降序
+                query = query.order_by(desc(News.smart_score))
+            elif sort_by == "smart":
                 # 智能排序：按综合评分降序
                 query = query.order_by(desc(News.score))
             elif sort_by == "time":
@@ -49,8 +53,8 @@ class PostgresService:
                 # 点赞数排序：按点赞数降序
                 query = query.order_by(desc(News.headline_count))
             else:
-                # 默认使用智能排序
-                query = query.order_by(desc(News.score))
+                # 默认使用智能评分排序
+                query = query.order_by(desc(News.smart_score))
             
             # 应用分页
             news_items = query.offset(offset).limit(limit).all()
@@ -90,6 +94,7 @@ class PostgresService:
                         "source": item.source,
                         "vote_count": self.get_vote_count(item.title),
                         "score": float(item.score) if item.score is not None else 0.0,  # Ensure float
+                        "smart_score": float(item.smart_score) if item.smart_score is not None else 0.0,  # 智能评分
                         "keywords": self._ensure_keywords_array(item.keywords)
                     }
                     results.append(result_item)
@@ -187,6 +192,33 @@ class PostgresService:
                         print(f"⚠️ Score calculation failed for item {i}: {e}")
                         score = 1.0  # 默认评分
                     
+                    # 计算智能评分
+                    try:
+                        # 获取现有新闻用于新颖性计算
+                        existing_news = self.get_news(0, 1000, "time")
+                        existing_titles = [news.get('title', '') for news in existing_news]
+                        
+                        # 准备文章数据用于评分
+                        article_data = {
+                            'title': item["title"],
+                            'content': item["content"],
+                            'source': item.get("source", ""),
+                            'published_at': normalized_date,
+                            'headline_count': 0,
+                            'summary_ai': summary_ai
+                        }
+                        
+                        # 计算智能评分
+                        smart_score = compute_smart_score(article_data, existing_news)
+                        
+                        # 可选：获取详细评分分解（用于调试）
+                        score_breakdown = get_score_breakdown(article_data, existing_news)
+                        print(f"🔍 DEBUG: Smart score breakdown for '{item['title'][:50]}...': {score_breakdown}")
+                        
+                    except Exception as e:
+                        print(f"⚠️ Error computing smart score: {e}")
+                        smart_score = 0.0
+                    
                     # 创建新闻对象
                     news = News(
                         id=str(uuid.uuid4()),
@@ -200,7 +232,8 @@ class PostgresService:
                         summary_ai=summary_ai,
                         headline_count=0,
                         keywords=keywords,
-                        score=score
+                        score=score,
+                        smart_score=smart_score  # 添加智能评分
                     )
                     
                     self.db.add(news)

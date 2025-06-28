@@ -69,7 +69,7 @@ def get_today_news(
     pg_service: PostgresService = Depends(get_pg_service),
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("smart"),  # 默认使用智能排序
+    sort_by: str = Query("smart_score"),  # 默认使用智能评分排序
     source_filter: str = Query(None)
 ):
     """获取今日新闻，支持智能排序"""
@@ -195,7 +195,8 @@ def get_sort_options():
     """获取排序选项"""
     return {
         "options": [
-            {"value": "smart", "label": "Smart Sort (Recommended)"},
+            {"value": "smart_score", "label": "Smart Sort V2 (Recommended)"},
+            {"value": "smart", "label": "Smart Sort V1"},
             {"value": "time", "label": "Latest First"},
             {"value": "headlines", "label": "Most Popular"}
         ]

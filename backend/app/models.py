@@ -30,6 +30,7 @@ class News(Base):
     headline_count = Column(Integer, default=0)  # 点赞数
     keywords = Column(JSON)  # 关键词数组 ["AI", "regulation", "Europe"]
     score = Column(Float, default=0.0)  # 综合评分
+    smart_score = Column(Float, default=0.0)  # 智能评分 (Smart Sort V2)
 
 class Vote(Base):
     __tablename__ = "votes"
