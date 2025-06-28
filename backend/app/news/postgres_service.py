@@ -13,6 +13,7 @@ import json
 from uuid import UUID
 from sqlalchemy.sql import text
 import re
+import uuid
 
 class PostgresService:
     def __init__(self, db: Session):
@@ -188,6 +189,7 @@ class PostgresService:
                     
                     # 创建新闻对象
                     news = News(
+                        id=str(uuid.uuid4()),  # 手动生成UUID
                         title=item["title"],
                         content=item["content"],
                         summary=item.get("summary", ""),
