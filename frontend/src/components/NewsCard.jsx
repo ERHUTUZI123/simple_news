@@ -105,15 +105,7 @@ export default function NewsCard({ news, onVote, showScore = true }) {
   const [isTrash, setIsTrash] = useState(false);
 
   // 从news对象中提取数据
-  const { id, title, link, date, source, score, smart_score, vote_count, keywords } = news;
-
-  // 格式化智能评分显示
-  const formatSmartScore = (score) => {
-    if (!score) return null;
-    // 将6.0-6.5的评分转换为百分比显示
-    const percentage = Math.round(((score - 5.9) / 0.6) * 100);
-    return percentage;
-  };
+  const { id, title, link, date, source, smart_score, vote_count, keywords } = news;
 
   // 获取评分颜色
   const getScoreColor = (score) => {
@@ -198,18 +190,6 @@ export default function NewsCard({ news, onVote, showScore = true }) {
             fontWeight: "bold"
           }}>
             🧠 {smart_score.toFixed(1)}
-          </span>
-        )}
-        
-        {/* 旧版评分显示（兼容性） */}
-        {showScore && score && !smart_score && (
-          <span style={{ 
-            margin: "0 0.5rem", 
-            color: getScoreColor(score),
-            fontSize: "0.8rem",
-            fontWeight: "bold"
-          }}>
-            ⭐ {formatSmartScore(score)}%
           </span>
         )}
         
