@@ -515,26 +515,9 @@ class PostgresService:
     def _is_duplicate_title(self, new_title: str) -> bool:
         """检查标题是否重复（简化版本）"""
         try:
-            # 直接检查完全相同的标题
+            # 只检查完全相同的标题
             existing = self.db.query(News).filter(News.title == new_title).first()
-            if existing:
-                return True
-            
-            # 检查相似标题（简单的包含关系）
-            normalized_new = new_title.lower().strip()
-            
-            # 获取所有现有新闻标题
-            existing_news = self.db.query(News.title).all()
-            
-            for existing_title, in existing_news:
-                normalized_existing = existing_title.lower().strip()
-                
-                # 如果新标题包含在现有标题中，或现有标题包含在新标题中
-                if (normalized_new in normalized_existing and len(normalized_existing) - len(normalized_new) < 10) or \
-                   (normalized_existing in normalized_new and len(normalized_new) - len(normalized_existing) < 10):
-                    return True
-            
-            return False
+            return existing is not None
         except Exception as e:
             print(f"Error checking duplicate title: {e}")
             return False 
