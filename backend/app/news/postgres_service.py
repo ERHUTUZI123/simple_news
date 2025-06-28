@@ -118,32 +118,38 @@ class PostgresService:
         try:
             print(f"🔍 DEBUG: Saving {len(news_items)} news items to database")
             
-            # 获取现有新闻的关键词映射
-            existing_news = self.get_news(0, 1000, "time")
-            existing_keyword_map = build_existing_keyword_map(existing_news)
+            if not news_items:
+                print("⚠️ No news items to save")
+                return True
             
             saved_count = 0
-            for item in news_items:
+            for i, item in enumerate(news_items):
                 try:
-                    # 使用智能去重检查
-                    if self._is_duplicate_title(item["title"]):
-                        print(f"🔍 DEBUG: Skipping duplicate article: {item['title'][:50]}...")
+                    # 基本验证
+                    if not item.get("title") or not item.get("content") or not item.get("link"):
+                        print(f"⚠️ Skipping item {i}: missing required fields")
                         continue
                     
-                    # 检查是否已存在（传统检查作为备用）
+                    # 检查是否已存在（只检查标题）
                     existing = self.db.query(News).filter(News.title == item["title"]).first()
                     if existing:
                         print(f"🔍 DEBUG: Skipping existing article: {item['title'][:50]}...")
                         continue
                     
                     # 提取关键词
-                    keywords = extract_keywords_from_text(item["title"] + " " + item["content"])
+                    try:
+                        keywords = extract_keywords_from_text(item["title"] + " " + item["content"])
+                    except Exception as e:
+                        print(f"⚠️ Keyword extraction failed for item {i}: {e}")
+                        keywords = []
                     
                     # 标准化日期处理
                     raw_date = item.get("date", "")
                     try:
                         if isinstance(raw_date, str):
                             # 解析RSS日期字符串并转换为UTC时间
+                            from dateutil import parser as dateparser
+                            from dateutil import tz
                             parsed_date = dateparser.parse(raw_date)
                             if parsed_date.tzinfo:
                                 # 如果有时区信息，转换为UTC
@@ -155,7 +161,8 @@ class PostgresService:
                         else:
                             normalized_date = raw_date
                     except Exception as e:
-                        print(f"Error parsing date '{raw_date}': {e}")
+                        print(f"⚠️ Date parsing failed for item {i}: {e}")
+                        from datetime import datetime
                         normalized_date = datetime.utcnow()
                     
                     # 创建AI摘要结构
@@ -166,14 +173,18 @@ class PostgresService:
                     }
                     
                     # 计算综合评分
-                    score = calculate_news_score(
-                        published_at=normalized_date,
-                        summary_ai=summary_ai,
-                        source=item.get("source", ""),
-                        keywords=keywords,
-                        headline_count=0,  # 新新闻初始点赞数为0
-                        existing_keyword_map=existing_keyword_map
-                    )
+                    try:
+                        score = calculate_news_score(
+                            published_at=normalized_date,
+                            summary_ai=summary_ai,
+                            source=item.get("source", ""),
+                            keywords=keywords,
+                            headline_count=0,  # 新新闻初始点赞数为0
+                            existing_keyword_map={}  # 简化，不使用现有关键词映射
+                        )
+                    except Exception as e:
+                        print(f"⚠️ Score calculation failed for item {i}: {e}")
+                        score = 1.0  # 默认评分
                     
                     # 创建新闻对象
                     news = News(
@@ -192,12 +203,17 @@ class PostgresService:
                     
                     self.db.add(news)
                     saved_count += 1
-                    print(f"🔍 DEBUG: Added article: {item['title'][:50]}...")
+                    
+                    # 每保存10条新闻就提交一次，避免事务过大
+                    if saved_count % 10 == 0:
+                        self.db.commit()
+                        print(f"🔍 DEBUG: Committed {saved_count} articles so far...")
                     
                 except Exception as e:
-                    print(f"❌ Error saving individual article: {e}")
+                    print(f"❌ Error saving individual article {i}: {e}")
                     continue
             
+            # 最终提交
             self.db.commit()
             print(f"🔍 DEBUG: Successfully saved {saved_count} new articles to database")
             return True
