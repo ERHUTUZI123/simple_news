@@ -3,8 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from datetime import datetime
-
-Base = declarative_base()
+from db import Base
 
 class User(Base):
     __tablename__ = "users"
