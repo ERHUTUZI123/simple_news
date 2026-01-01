@@ -1,4 +1,4 @@
-#!/Users/xiaoyangliu/Desktop/oneminews/venv/bin/python
+#!/Users/xiaoyangliu/Desktop/codes/simple_news/simple_news/venv/bin/python3.13
 # -*- coding: utf-8 -*-
 import re
 import sys

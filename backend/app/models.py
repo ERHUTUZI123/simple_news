@@ -1,45 +1,69 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, TIMESTAMP, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.postgresql import UUID
+# Column: column in a db table, each one defined with data type and constriants
+# Integer, String, DateTime, Float, JSON TIMESTAP, ForeignKey (Represents a foreign key constraint, linking one table to another)
+from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, TIMESTAMP, ForeignKey, UUID
+# UUID is unique identifiers
+# Provide access for SQL functions such as now() for getting the current timestamp
 from sqlalchemy.sql import func
+# Datetime is a py lib for working with times and dates
 from datetime import datetime
+# Import Base
 from db import Base
 
-class User(Base):
+# Define user model, which maps to the users table in db
+class Users(Base):
     __tablename__ = "users"
+    # id rep the primary key since primary_key=True
+    # Column just builds a column within db
+    # UUID(as_uuid=True) specifies that the column stores UUIDs as 16-byte binary to increase efficiency 
+    # primary_key=True defines id as the primary key
     id = Column(UUID(as_uuid=True), primary_key=True)
+    # email rep user's email
+    # String means a string
+    # unique=True to make it unique
+    # index=True to creates an index on thi scolumn to speed up queries since email requires checkup and is not
+    #   set to be the primary key
+    # nullable=False to ensures this column cannot be empty
     email = Column(String, unique=True, index=True, nullable=False)
-    name = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    # rep name of user
+    # String means a string
+    name = Column(String, nullable=False)
+    # created_at stores the timestamp when the user was created
+    # automatically sets the current utc time when a new record is created
+    create_at = Column(DateTime, default=datetime.utcnow)
 
+# Define News, which maps to the news table in the db
 class News(Base):
+    # __tablename__ = 'news'
     __tablename__ = "news"
+    # news id
     id = Column(UUID(as_uuid=True), primary_key=True)
+    # title is string and u wanna index them and make sure they are not empty
     title = Column(String, unique=True, index=True, nullable=False)
+    # content string and doesnt need to be indexed but still non-empty
     content = Column(String, nullable=False)
+    # summary is just string
     summary = Column(String)
+    # link is just string
     link = Column(String)
-    date = Column(DateTime, default=datetime.utcnow)
+    # soruce is string
     source = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    # created_at is datetime and default=datetime.utcnow
+    create_at = Column(DateTime, default=datetime.utcnow)
+    # followings are designed for supporting smart sort
+    # published_at is datetime and default=datetime.utcnow
+    publish_at = Column(DateTime, default=datetime.utcnow)
+    # summary JSON
+    # AI summary structure
+    #    {"brief": "...", "detailed": "...", "structure_score": 4.5}
+    summary = Column(JSON) 
+    # likes is integer and default=0 
+    likes = Column(Integer, default=0) # likes
+    # keywords is in JSON format
+    keywords = Column(JSON)  # keywords ["AI", "regulation", "Europe"]
     
-    # 新增字段支持智能排序
-    published_at = Column(DateTime, default=datetime.utcnow)  # 新闻发布时间
-    summary_ai = Column(JSON)  # AI摘要结构 {"brief": "...", "detailed": "...", "structure_score": 4.5}
-    headline_count = Column(Integer, default=0)  # 点赞数
-    keywords = Column(JSON)  # 关键词数组 ["AI", "regulation", "Europe"]
-    score = Column(Float, default=0.0)  # 综合评分
-    smart_score = Column(Float, default=0.0)  # 智能评分 (Smart Sort V2)
-
-class Vote(Base):
-    __tablename__ = "votes"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String, unique=True, index=True, nullable=False)
-    count = Column(Integer, default=0)
-
-class SavedArticle(Base):
+class Saves(Base):
     __tablename__ = "saves"  # 匹配数据库表名
-    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     news_id = Column(UUID(as_uuid=True), ForeignKey("news.id"))
-    created_at = Column(TIMESTAMP, server_default=func.now()) 
+    save_at = Column(TIMESTAMP, default=datetime.utcnow)
+    rating = Column(Float, default=0.0) 
