@@ -62,7 +62,7 @@ class News(Base):
     keywords = Column(JSON)  # keywords ["AI", "regulation", "Europe"]
     
 class Saves(Base):
-    __tablename__ = "saves"  # 匹配数据库表名
+    __tablename__ = "saves"  
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     news_id = Column(UUID(as_uuid=True), ForeignKey("news.id"))
     save_at = Column(TIMESTAMP, default=datetime.utcnow)

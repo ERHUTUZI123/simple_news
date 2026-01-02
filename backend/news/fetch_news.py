@@ -1,17 +1,44 @@
 # backend/app/news/fetch_news.py
+# feedparser parsing principles for rss items:
+# feed = feedparser.parse(rss_source)
+# feed.entries
+# ├─ entry[0]
+# │   ├─ entry.title
+# │   ├─ entry.summary
+# │   ├─ entry.content
+# │   └─ entry.link
+# ├─ entry[1]
+# └─ entry[2]
+# <title> </title> => feed.entry[x].title
+# <link> </link>
+# <pubDate> </pubDate> => feed.published
 
+
+# feedparser can parse RSS and Atom feeds 
 import feedparser
+# List and Dict helps specify List and Dict expected
+#  data types 
 from typing import List, Dict
+# datetime is for current time and timedelta is
+#  for time differences
 from datetime import datetime, timedelta
+# parser is used to convert data strings into Python datetime objects
 from dateutil import parser as dateparser
+# tz is used for timezone handling
 from dateutil import tz
+# logging module is used to record events and errors
 import logging
 
+# create a logger
+# write .getLogger(__name__) to let logs show their origins
 logger = logging.getLogger(__name__)
 
-# 支持多个 RSS 源
+# support multi RSS
+# define a dict to store rss feeds
+# allow code to fetch news by looping through the dict
+# divide them into groups
 RSS_FEEDS = {
-    # 美国主流媒体
+    # American top meida
     "The New York Times": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
     "The Washington Post": "https://feeds.washingtonpost.com/rss/national",
     "Los Angeles Times": "https://www.latimes.com/local/rss2.0.xml",
@@ -21,13 +48,15 @@ RSS_FEEDS = {
     "Fox News": "https://feeds.foxnews.com/foxnews/latest",
     "CNBC": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
     "Axios": "https://api.axios.com/feed/",
-    
-    # 国际新闻机构
-    "Reuters": "https://feeds.reuters.com/reuters/topNews",
-    "Associated Press": "https://apnews.com/rss/apf-topnews",
     "Bloomberg": "https://feeds.bloomberg.com/politics/news.rss",
-    
-    # 英国媒体
+    "Associated Press": "https://apnews.com/rss/apf-topnews",
+
+    # International media
+    "Reuters": "https://feeds.reuters.com/reuters/topNews",
+    "CGTN": "https://www.cgtn.com/subscribe/rss/section/world.xml",
+    "Russai Today": "https://www.rt.com/rss/news/",
+
+    # British media
     "BBC News": "https://feeds.bbci.co.uk/news/rss.xml",
     "The Guardian": "https://www.theguardian.com/world/rss",
     "The Telegraph": "https://www.telegraph.co.uk/rss.xml",
@@ -35,77 +64,81 @@ RSS_FEEDS = {
     "Sky News": "https://feeds.skynews.com/feeds/rss/world.xml",
     "The Independent": "https://www.independent.co.uk/news/world/rss",
     
-    # 欧洲媒体
+    # Euro meida
     "Euronews": "https://www.euronews.com/rss?format=mrss&level=theme&name=news",
     "Deutsche Welle": "https://rss.dw.com/xml/rss-de-all",
     
-    # 中东媒体
+    # Middle east media
     "Al Jazeera": "https://www.aljazeera.com/xml/rss/all.xml",
 }
 
-def get_tech_news(force_refresh: bool = False) -> List[Dict]:
-    """
-    获取新闻，直接从RSS获取
-    """
-    logger.info("Fetching fresh news from RSS feeds...")
-    return fetch_from_rss()
-
+# define fetch_from_rss() which returns a list of news
 def fetch_from_rss() -> List[Dict]:
-    """从RSS源获取新闻"""
+    """
+    fetch news from rss
+    """
+    # log that it is fetching news
+    logger.info("Fetching fresh news from RSS feeds...")
+    # initialize an empty list to store news
     items = []
+    # gets the current utc time
     now = datetime.utcnow()
-    # 将时间过滤从6小时改为24小时，获取更多较新的新闻
-    twenty_four_hours_ago = now - timedelta(hours=24)
-
+    # calculate the time 24 hrs ago to filter out old news
+    twenty_four_hours_ago = dateparser.parse("24 hrs ago")
+    # loop through each news source and its RSS URL
     for source_name, feed_url in RSS_FEEDS.items():
         try:
+            # parse feed URL
             feed = feedparser.parse(feed_url)
             for entry in feed.entries:
-                # 尝试解析日期
-                raw_date = getattr(entry, "published", "") or getattr(entry, "updated", "")
+                # parse raw date
+                raw_date = (getattr(entry, "published", "") or 
+                            getattr(entry, "updated", ""))
                 try:
+                    # define pubslished_at through parsing raw_date
                     published_dt = dateparser.parse(raw_date)
                 except Exception:
-                    continue  # 跳过无法解析日期的条目
+                    # skip news that cannot be parsed
+                    continue  
 
-                # 正确处理时区：转换为UTC进行比较
+                # convert date to utc and make comparisons
                 if published_dt.tzinfo:
-                    # 如果有时区信息，转换为UTC
+                    # convert to utc if there is tz
                     published_dt_utc = published_dt.astimezone(tz.tzutc())
                 else:
-                    # 如果没有时区信息，假设是UTC
+                    # assume to be utc if no tz info
                     published_dt_utc = published_dt.replace(tzinfo=tz.tzutc())
                 
-                # 只保留24小时之内的新闻（改为24小时）
+                # keep only news within 24 hrs
                 if published_dt_utc.replace(tzinfo=None) < twenty_four_hours_ago:
                     continue
 
-                # 优化内容获取逻辑
+                # define content and summary
                 content = ""
                 summary = ""
                 
-                # 1. 优先获取完整内容
+                # 1. prioritize complete content
                 if hasattr(entry, "content") and entry.content:
                     content = entry.content[0].value
                     logger.debug(f"{source_name} - Using content field, length: {len(content)}")
-                # 2. 如果没有content，尝试获取summary
+                # 2. get summary if no content
                 elif hasattr(entry, "summary") and entry.summary:
                     content = entry.summary
                     logger.debug(f"{source_name} - Using summary as content, length: {len(content)}")
-                # 3. 如果都没有，跳过这条新闻
+                # 3. if neither then skip
                 else:
                     logger.warning(f"{source_name} - No content or summary found for: {entry.title}")
                     continue
                 
-                # 确保内容不为空
+                # ensure content is non-empty
                 if not content or not str(content).strip():
                     logger.warning(f"{source_name} - Empty content for: {entry.title}")
                     continue
                 
-                # 创建摘要（用于显示）
+                # create summary for display
                 summary = content[:600] if len(content) > 600 else content
 
-                # 格式化日期为ISO字符串
+                # format date to ISO
                 formatted_date = published_dt_utc.isoformat()
 
                 items.append({

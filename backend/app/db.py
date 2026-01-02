@@ -25,7 +25,7 @@ engine = create_engine(DATABASE_URL)
 # autocommit=False force you to commit explicitly
 # autoflush=False disables auto flushing of changes to db which give you more control 
 # bind=engine binds the sessionmaker to engine created before
-# autoflush i slike git.add, autocommit is like git.commit, edit->flush->commit
+# autoflush is like git.add, autocommit is like git.commit, edit->flush->commit
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Define base class for all ORM models
 Base = declarative_base()
