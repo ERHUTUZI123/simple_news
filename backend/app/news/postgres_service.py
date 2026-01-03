@@ -18,9 +18,9 @@ class PostgresService:
     def __init__(self, db: Session):
         self.db = db
 
-    # 获取新闻
+    # Get news
     def get_news(self, offset=0, limit=20, sort_by="time", source_filter=None) -> List[Dict]:
-        """获取新闻，只支持时间排序"""
+        """Get news, only supports time sorting"""
         try:
             use_cache = (offset == 0)
             cache_key = f"news:{sort_by}:{offset}:{limit}:{source_filter or 'all'}"
@@ -33,33 +33,33 @@ class PostgresService:
             
             query = self.db.query(News)
             
-            # 应用来源过滤
+            # Apply source filter
             if source_filter:
                 query = query.filter(News.source.ilike(f"%{source_filter}%"))
             
-            # 只支持时间排序
+            # Only support time sorting
             query = query.order_by(desc(News.published_at))
             
-            # 应用分页
+            # Apply pagination
             news_items = query.offset(offset).limit(limit).all()
             
             print(f"🔍 DEBUG: Found {len(news_items)} news items in database")
             
-            # 转换为字典格式
+            # Convert to dictionary format
             results = []
             for item in news_items:
                 try:
-                    # 确保日期格式正确
+                    # Ensure date format is correct
                     date_str = None
                     published_at = item.published_at
                     if published_at:
                         try:
-                            # 确保是UTC时间并格式化为ISO字符串
+                            # Ensure UTC time and format as ISO string
                             if published_at.tzinfo is None:
-                                # 如果没有时区信息，假设是UTC
+                                # If no timezone info, assume UTC
                                 date_str = published_at.isoformat() + 'Z'
                             else:
-                                # 如果有时区信息，转换为UTC
+                                # If timezone info exists, convert to UTC
                                 from datetime import timezone
                                 utc_date = published_at.astimezone(timezone.utc)
                                 date_str = utc_date.isoformat()
@@ -100,9 +100,9 @@ class PostgresService:
             traceback.print_exc()
             return []
 
-    # 保存新闻
+    # Save news
     def save_news(self, news_items: List[Dict]) -> bool:
-        """保存新闻到数据库"""
+        """Save news to database"""
         try:
             print(f"🔍 DEBUG: Saving {len(news_items)} news items to database")
             
@@ -113,31 +113,31 @@ class PostgresService:
             saved_count = 0
             for i, item in enumerate(news_items):
                 try:
-                    # 基本验证
+                    # Basic validation
                     if not item.get("title") or not item.get("content") or not item.get("link"):
                         print(f"⚠️ Skipping item {i}: missing required fields")
                         continue
                     
-                    # 检查是否已存在（只检查标题）
+                    # Check if already exists (only check title)
                     existing = self.db.query(News).filter(News.title == item["title"]).first()
                     if existing:
                         print(f"🔍 DEBUG: Skipping existing article: {item['title'][:50]}...")
                         continue
                     
-                    # 标准化日期处理
+                    # Normalize date handling
                     raw_date = item.get("date", "")
                     try:
                         if isinstance(raw_date, str):
-                            # 解析RSS日期字符串并转换为UTC时间
+                            # Parse RSS date string and convert to UTC time
                             from dateutil import parser as dateparser
                             from dateutil import tz
                             parsed_date = dateparser.parse(raw_date)
                             if parsed_date.tzinfo:
-                                # 如果有时区信息，转换为UTC
+                                # If timezone info exists, convert to UTC
                                 utc_date = parsed_date.astimezone(tz.tzutc())
                                 normalized_date = utc_date.replace(tzinfo=None)
                             else:
-                                # 如果没有时区信息，假设是UTC
+                                # If no timezone info, assume UTC
                                 normalized_date = parsed_date
                         else:
                             normalized_date = raw_date
@@ -146,7 +146,7 @@ class PostgresService:
                         from datetime import datetime
                         normalized_date = datetime.utcnow()
                     
-                    # 创建新闻条目
+                    # Create news item
                     news_item = News(
                         id=uuid.uuid4(),
                         title=item["title"],
@@ -156,7 +156,7 @@ class PostgresService:
                         source=item.get("source", ""),
                         published_at=normalized_date,
                         created_at=datetime.utcnow(),
-                        keywords=[]  # 简化，不使用关键词
+                        keywords=[]  # Simplified, not using keywords
                     )
                     
                     self.db.add(news_item)
@@ -176,9 +176,9 @@ class PostgresService:
             self.db.rollback()
             return False
 
-    # 获取投票数
+    # Get vote count
     def get_vote_count(self, title: str) -> int:
-        """获取新闻的投票数"""
+        """Get news vote count"""
         try:
             vote = self.db.query(Vote).filter(Vote.title == title).first()
             return vote.count if vote else 0
@@ -186,9 +186,9 @@ class PostgresService:
             print(f"Error getting vote count: {e}")
             return 0
 
-    # 更新投票
+    # Update vote
     def update_vote(self, title: str, delta: int) -> int:
-        """更新新闻的投票数"""
+        """Update news vote count"""
         try:
             vote = self.db.query(Vote).filter(Vote.title == title).first()
             if vote:
@@ -204,9 +204,9 @@ class PostgresService:
             self.db.rollback()
             return 0
 
-    # 获取文章详情
+    # Get article details
     def get_article_by_title(self, title: str) -> Dict:
-        """根据标题获取文章详情"""
+        """Get article details by title"""
         try:
             news = self.db.query(News).filter(News.title == title).first()
             if not news:
@@ -225,9 +225,9 @@ class PostgresService:
             print(f"Error getting article: {e}")
             return {"error": "Failed to get article"}
 
-    # 确保关键词是数组格式
+    # Ensure keywords are in array format
     def _ensure_keywords_array(self, keywords: Any) -> List[str]:
-        """确保关键词是数组格式"""
+        """Ensure keywords are in array format"""
         try:
             if not keywords:
                 return []
@@ -250,9 +250,9 @@ class PostgresService:
             print(f"Error ensuring keywords array: {e}")
             return []
 
-    # 用户保存文章相关方法
+    # User saved article related methods
     def save_article_for_user(self, user_id: UUID, news_id: UUID) -> bool:
-        """为用户保存文章"""
+        """Save article for user"""
         try:
             existing = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id,
@@ -271,7 +271,7 @@ class PostgresService:
             return False
 
     def remove_article_from_user(self, user_id: UUID, news_id: UUID) -> bool:
-        """从用户收藏中移除文章"""
+        """Remove article from user's saved articles"""
         try:
             saved_article = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id,
@@ -290,7 +290,7 @@ class PostgresService:
             return False
 
     def get_saved_articles_for_user(self, user_id: UUID) -> list:
-        """获取用户保存的文章列表"""
+        """Get user's saved articles list"""
         try:
             saved_articles = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id
@@ -299,7 +299,7 @@ class PostgresService:
             for saved in saved_articles:
                 article = self.db.query(News).filter(News.id == saved.news_id).first()
                 if article:
-                    # 组装前端需要的字段
+                    # Assemble fields needed by frontend
                     articles.append({
                         "id": str(article.id),
                         "title": article.title,
@@ -322,7 +322,7 @@ class PostgresService:
             return []
 
     def is_article_saved_by_user(self, user_id: UUID, news_id: UUID) -> bool:
-        """检查文章是否已被用户保存"""
+        """Check if article is saved by user"""
         try:
             saved_article = self.db.query(SavedArticle).filter(
                 SavedArticle.user_id == user_id,
@@ -334,9 +334,9 @@ class PostgresService:
             return False
 
     def save_user(self, user_id: str, email: str, name: str) -> bool:
-        """保存用户信息到数据库"""
+        """Save user information to database"""
         try:
-            # 检查用户是否已存在
+            # Check if user already exists
             result = self.db.execute(
                 text("SELECT id FROM users WHERE id = :user_id"),
                 {"user_id": user_id}
@@ -344,7 +344,7 @@ class PostgresService:
             existing_user = result.fetchone()
             
             if existing_user:
-                # 用户已存在，更新信息
+                # User exists, update information
                 self.db.execute(
                     text("""
                         UPDATE users 
@@ -354,7 +354,7 @@ class PostgresService:
                     {"user_id": user_id, "email": email, "name": name}
                 )
             else:
-                # 创建新用户
+                # Create new user
                 self.db.execute(
                     text("""
                         INSERT INTO users (id, email, name, created_at) 
@@ -373,21 +373,21 @@ class PostgresService:
             return False
 
     def _normalize_title(self, title: str) -> str:
-        """标准化标题用于去重比较"""
-        # 转换为小写
+        """Normalize title for duplicate comparison"""
+        # Convert to lowercase
         normalized = title.lower()
-        # 移除多余的空白字符
+        # Remove extra whitespace
         normalized = re.sub(r'\s+', ' ', normalized)
-        # 移除常见的标点符号
+        # Remove common punctuation
         normalized = re.sub(r'[^\w\s]', '', normalized)
-        # 移除首尾空白
+        # Remove leading/trailing whitespace
         normalized = normalized.strip()
         return normalized
 
     def _is_duplicate_title(self, new_title: str) -> bool:
-        """检查标题是否重复（简化版本）"""
+        """Check if title is duplicate (simplified version)"""
         try:
-            # 只检查完全相同的标题
+            # Only check for exactly the same title
             existing = self.db.query(News).filter(News.title == new_title).first()
             return existing is not None
         except Exception as e:

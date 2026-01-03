@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchArticleByTitle } from "../services/api";
 
-// 格式化相对时间
+// Format relative time
 function formatRelativeTime(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -73,7 +73,7 @@ function downloadFile(content, filename, type) {
   URL.revokeObjectURL(url);
 }
 
-// 新增：本地存储操作函数
+// New: Local storage operation functions
 function getSavedIds() {
   try {
     return JSON.parse(localStorage.getItem('saved_article_ids') || '[]');
@@ -85,7 +85,7 @@ function getSavedIds() {
 export default function Saved() {
   const [savedArticles, setSavedArticles] = useState([]);
 
-  // 加载本地保存的文章ID并批量获取详情
+  // Load locally saved article IDs and batch fetch details
   useEffect(() => {
     const fetchSavedArticles = async () => {
       const savedIds = getSavedIds();
@@ -94,7 +94,7 @@ export default function Saved() {
         return;
       }
       try {
-        // 批量获取新闻详情（这里用/news拉取全部后筛选，或逐个请求/news/article/{id}）
+        // Batch fetch news details (here use /news to fetch all then filter, or request /news/article/{id} one by one)
         const response = await fetch('https://simplenews-production.up.railway.app/news?offset=0&limit=100');
         const allNews = await response.json();
         const filtered = allNews.filter(article => savedIds.includes(article.id));
@@ -106,7 +106,7 @@ export default function Saved() {
     fetchSavedArticles();
   }, []);
 
-  // 移除已保存
+  // Remove from saved
   const removeFromSaved = (articleId) => {
     const savedIds = getSavedIds().filter(id => id !== articleId);
     localStorage.setItem('saved_article_ids', JSON.stringify(savedIds));
@@ -130,18 +130,18 @@ export default function Saved() {
     }
   };
 
-  // 预加载文章数据
+  // Preload article data
   const preloadArticle = async (title) => {
     try {
-      // 在后台预加载文章数据，不阻塞UI
+      // Preload article data in background, don't block UI
       await fetchArticleByTitle(title);
     } catch (error) {
-      // 预加载失败不影响用户体验
+      // Preload failure doesn't affect user experience
       console.log('Preload failed:', error);
     }
   };
 
-  // 跳转到文章详情页
+  // Jump to article detail page
   const goToArticle = (title) => {
     const slug = encodeURIComponent(title);
     window.location.href = `/article/${slug}`;

@@ -1,6 +1,6 @@
 const API_BASE = "https://simplenews-production.up.railway.app";
 
-// 获取新闻列表（只支持时间排序）
+// Get news list (only supports time sorting)
 export const fetchNewsWithSort = async (offset = 0, limit = 10, sourceFilter = '') => {
   try {
     const params = new URLSearchParams({
@@ -25,7 +25,7 @@ export const fetchNewsWithSort = async (offset = 0, limit = 10, sourceFilter = '
   }
 };
 
-// 投票功能
+// Vote functionality
 export const voteNews = async (title, delta) => {
   try {
     const params = new URLSearchParams({
@@ -49,12 +49,12 @@ export const voteNews = async (title, delta) => {
   }
 };
 
-// 向下投票（兼容性函数）
+// Downvote (compatibility function)
 export const downvoteNews = async (title) => {
   return voteNews(title, -1);
 };
 
-// 获取投票数
+// Get vote count
 export const getVoteCount = async (title) => {
   try {
     const params = new URLSearchParams({
@@ -74,7 +74,7 @@ export const getVoteCount = async (title) => {
   }
 };
 
-// 获取新闻来源
+// Get news sources
 export const getNewsSources = async () => {
   try {
     const response = await fetch(`${API_BASE}/news/sources`);
@@ -90,7 +90,7 @@ export const getNewsSources = async () => {
   }
 };
 
-// 获取文章详情
+// Get article details
 export const getArticleByTitle = async (title) => {
   try {
     const params = new URLSearchParams({
@@ -110,10 +110,10 @@ export const getArticleByTitle = async (title) => {
   }
 };
 
-// 兼容性函数别名
+// Compatibility function alias
 export const fetchArticleByTitle = getArticleByTitle;
 
-// 生成新闻摘要
+// Generate news summary
 export const generateSummary = async (content, summaryType = 'detailed') => {
   try {
     const response = await fetch(`${API_BASE}/news/summary`, {
@@ -139,13 +139,13 @@ export const generateSummary = async (content, summaryType = 'detailed') => {
   }
 };
 
-// 兼容性函数别名
+// Compatibility function alias
 export const fetchSummary = async (content, type = 'detailed') => {
   const result = await generateSummary(content, type);
   return result.summary || result;
 };
 
-// 刷新新闻
+// Refresh news
 export const refreshNews = async () => {
   try {
     const response = await fetch(`${API_BASE}/news/refresh`, {

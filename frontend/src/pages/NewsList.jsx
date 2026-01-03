@@ -7,12 +7,12 @@
 
 //   useEffect(() => {
 //     fetchTodayNews().then(data => {
-//       // 前端初始没有 voteCount，这里先全部设为 0，后续 NewsCard 会自动拉取
+//       // Frontend initially has no voteCount, set all to 0 here, NewsCard will automatically fetch later
 //       setNews(data);
 //     });
 //   }, []);
 
-//   // 按 voteCount 降序排序（NewsCard 会自动更新 voteCount，排序会在初次渲染后生效）
+//   // Sort by voteCount descending (NewsCard will automatically update voteCount, sorting will take effect after initial render)
 //   const sortedNews = [...news].sort(
 //     (a, b) => (b.voteCount ?? 0) - (a.voteCount ?? 0)
 //   );

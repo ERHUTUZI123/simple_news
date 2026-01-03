@@ -7,7 +7,7 @@ export default function Navigation() {
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
-    // 这里可以添加主题切换逻辑
+    // Theme switching logic can be added here
     document.documentElement.classList.toggle('light-mode');
   };
 
@@ -28,7 +28,7 @@ export default function Navigation() {
       fontFamily: 'var(--font-mono)',
       fontSize: '0.875rem',
     }}>
-      {/* 左侧 Logo */}
+      {/* Left Logo */}
       <Link 
         to="/" 
         style={{
@@ -42,10 +42,10 @@ export default function Navigation() {
         ONEMINEWS
       </Link>
 
-      {/* 中间空白 */}
+      {/* Middle blank space */}
       <div style={{ flex: 1 }}></div>
 
-      {/* 右侧导航按钮 */}
+      {/* Right navigation buttons */}
       <div style={{
         display: 'flex',
         alignItems: 'center',

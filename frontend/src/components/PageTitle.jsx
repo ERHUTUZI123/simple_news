@@ -30,5 +30,5 @@ export default function PageTitle() {
     document.title = getPageTitle();
   }, [location.pathname]);
 
-  return null; // 这个组件不渲染任何内容
+  return null; // This component doesn't render any content
 } 

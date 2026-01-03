@@ -33,7 +33,7 @@ SIGNIFICANCE_KEYWORDS = {
         'agreement', 'deal', 'peace', 'ceasefire', 'negotiation'
     ],
     
-    # 6 - less important policies changes, tech breakthroughs, commericial things
+    # 6 - less important policies changes, tech breakthroughs, commercial things
     6: [
         'merger', 'acquisition', 'takeover', 'deal', 'agreement', 'partnership',
         'olympics', 'world cup', 'championship', 'tournament', 'final',
@@ -50,7 +50,7 @@ SIGNIFICANCE_KEYWORDS = {
         'regional', 'provincial', 'state', 'county'
     ],
     
-    # 2 - bullshit
+    # 2 - less important news
     2: [
         'celebrity', 'star', 'actor', 'actress', 'singer', 'musician',
         'gossip', 'rumor', 'scandal', 'divorce', 'marriage', 'wedding',
@@ -82,7 +82,7 @@ SOURCE_WEIGHTS = {
         'Fox News', 'Sky News', 'The Telegraph', 'The Independent'
     ],
     
-    # 2 - international Media
+    # 2 - international media
     2: [
         'Euronews', 'Deutsche Welle', 'Al Jazeera', 'Axios', 'CGTN'
     ],
@@ -99,7 +99,7 @@ FRESHNESS_CONFIG = {
     '3_hours': 8.5,    # within 3 hrs
     '6_hours': 7.0,    # within 6 hrs
     '12_hours': 5.5,   # within 12 hrs
-    '24_hours': 4,   # wtihin 24 hrs
+    '24_hours': 4,   # within 24 hrs
     '48_hours': 2.5,   # within 48 hrs
     'beyond': 1      # over 48 hrs
 }
@@ -116,8 +116,8 @@ POPULARITY_CONFIG = {
 # summary quality
 SUMMARY_QUALITY_CONFIG = {
     'excellent': 10,  # well organized and logical
-    'good': 8,       # well organized 结构良好
-    'fair': 6,       # averagely organized结构一般
+    'good': 8,       # well organized
+    'fair': 6,       # averagely organized
     'poor': 2,       # badly organized
     'none': 0        # no summary
 }
@@ -132,29 +132,29 @@ SIMILARITY_THRESHOLDS = {
 }
 
 def get_significance_keywords():
-    """获取重要性关键词映射"""
+    """Get significance keywords mapping"""
     return SIGNIFICANCE_KEYWORDS
 
 def get_source_weights():
-    """获取来源权重映射"""
+    """Get source weights mapping"""
     return SOURCE_WEIGHTS
 
 def get_freshness_config():
-    """获取时效性配置"""
+    """Get freshness configuration"""
     return FRESHNESS_CONFIG
 
 def get_popularity_config():
-    """获取流行度配置"""
+    """Get popularity configuration"""
     return POPULARITY_CONFIG
 
 def get_summary_quality_config():
-    """获取摘要质量配置"""
+    """Get summary quality configuration"""
     return SUMMARY_QUALITY_CONFIG
 
 def get_similarity_thresholds():
-    """获取相似度阈值"""
+    """Get similarity thresholds"""
     return SIMILARITY_THRESHOLDS
 
 def get_weights():
-    """获取权重配置"""
+    """Get weights configuration"""
     return WEIGHTS 

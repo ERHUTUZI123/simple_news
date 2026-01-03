@@ -32,13 +32,13 @@ Base = declarative_base()
 
 # init_db is a function used to initialize the database
 def init_db():
-    """初始化数据库，创建所有表"""
+    """Initialize database, create all tables"""
     # Scan all models from Base and create tables
     Base.metadata.create_all(bind=engine)
 
 # get_db() is a generator function that provides a database session
 def get_db():
-    """获取数据库会话"""
+    """Get database session"""
     # Session() creates a new session
     db = Session()
     try:

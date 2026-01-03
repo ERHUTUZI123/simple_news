@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchSummary, fetchArticleByTitle } from '../services/api';
 
-// 格式化相对时间
+// Format relative time
 function formatRelativeTime(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -23,7 +23,7 @@ function formatRelativeTime(dateString) {
   return `${diffD}d`;
 }
 
-// 简单去除 HTML 标签
+// Simply remove HTML tags
 function stripHtml(html) {
   const tmp = document.createElement("div");
   tmp.innerHTML = html;
@@ -171,7 +171,7 @@ export default function Article() {
         color: 'var(--text-color)',
         fontFamily: 'var(--font-mono)',
       }}>
-        {/* 顶部导航骨架屏 */}
+        {/* Top navigation skeleton */}
         <div style={{
           position: 'fixed',
           top: 0,
@@ -200,13 +200,13 @@ export default function Article() {
           }}></div>
         </div>
 
-        {/* 主要内容骨架屏 */}
+        {/* Main content skeleton */}
         <div style={{
           maxWidth: '800px',
           margin: '0 auto',
           padding: '5rem 2rem 2rem',
         }}>
-          {/* 文章信息骨架屏 */}
+          {/* Article info skeleton */}
           <div style={{ marginBottom: '2rem' }}>
             <div style={{
               height: '20px',
@@ -224,7 +224,7 @@ export default function Article() {
             }}></div>
           </div>
 
-          {/* 按钮区域骨架屏 */}
+          {/* Button area skeleton */}
           <div style={{
             display: 'flex',
             gap: '1rem',
@@ -244,7 +244,7 @@ export default function Article() {
             }}></div>
           </div>
 
-          {/* 内容区域骨架屏 */}
+          {/* Content area skeleton */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.05)',
             border: '1px solid var(--border-color)',
@@ -288,7 +288,7 @@ export default function Article() {
             }}></div>
           </div>
 
-          {/* 辅助功能区骨架屏 */}
+          {/* Auxiliary function area skeleton */}
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -344,7 +344,7 @@ export default function Article() {
       color: 'var(--text-color)',
       fontFamily: 'var(--font-mono)',
     }}>
-      {/* 顶部导航 */}
+      {/* Top navigation */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -401,14 +401,14 @@ export default function Article() {
         </button>
       </div>
 
-      {/* 主要内容 */}
+      {/* Main content */}
       <div style={{
         maxWidth: '800px',
         margin: '0 auto',
         padding: '5rem 2rem 2rem',
         lineHeight: '1.6',
       }}>
-        {/* 文章信息 */}
+        {/* Article info */}
         <div style={{ marginBottom: '2rem' }}>
           <div style={{
             fontSize: '0.9rem',
@@ -533,7 +533,7 @@ export default function Article() {
           </div>
         )}
 
-        {/* 辅助功能区 */}
+        {/* Auxiliary function area */}
         <div style={{
           display: 'flex',
           flexWrap: 'wrap',

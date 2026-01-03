@@ -19,7 +19,7 @@ export const UserProvider = ({ children }) => {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
         const userInfo = JSON.parse(jsonPayload);
-        // 确保用户信息包含ID
+        // Ensure user information includes ID
         userInfo.id = userId;
         setUserSession({ user: userInfo, token });
       } catch (error) {

@@ -15,7 +15,7 @@ import Cancel from "./pages/Cancel";
 import Article from "./pages/Article";
 import { UserContext } from "./context/UserContext";
 
-// 生成UUID的函数
+// Function to generate UUID
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
@@ -37,12 +37,12 @@ function GoogleLoginModal() {
       }).join(''));
       const userInfo = JSON.parse(jsonPayload);
       
-      // 使用Google的sub字段作为用户ID，确保是UUID格式
+      // Use Google's sub field as user ID, ensure it's in UUID format
       const userId = userInfo.sub || generateUUID();
       
-      // 先保存用户信息到数据库
+      // First save user information to database
       saveUserToDatabase(userInfo, userId).then(() => {
-        // 然后更新前端状态
+        // Then update frontend state
         login({...userInfo, id: userId}, credentialResponse.credential);
         closeGoogleLogin();
       }).catch(error => {

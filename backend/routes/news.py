@@ -61,12 +61,12 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter()
 
-# 速率限制配置
-RATE_LIMIT_DELAY = 2.0  # 基础延迟时间（秒）
-MAX_RETRIES = 3  # 最大重试次数
+# Rate limit configuration
+RATE_LIMIT_DELAY = 2.0  # Base delay time (seconds)
+MAX_RETRIES = 3  # Maximum retry attempts
 
 def handle_openai_rate_limit(func):
-    """装饰器：处理OpenAI速率限制"""
+    """Decorator: Handle OpenAI rate limiting"""
     def wrapper(*args, **kwargs):
         for attempt in range(MAX_RETRIES):
             try:
@@ -75,7 +75,7 @@ def handle_openai_rate_limit(func):
                 error_str = str(e)
                 if "rate_limit" in error_str.lower() or "429" in error_str:
                     if attempt < MAX_RETRIES - 1:
-                        # 计算延迟时间：基础延迟 + 随机抖动
+                        # Calculate delay time: base delay + random jitter
                         delay = RATE_LIMIT_DELAY + random.uniform(0, 1)
                         print(f"⚠️ [RATE_LIMIT] Attempt {attempt + 1} failed, retrying in {delay:.2f}s...")
                         time.sleep(delay)
@@ -84,7 +84,7 @@ def handle_openai_rate_limit(func):
                         print(f"❌ [RATE_LIMIT] Max retries reached, returning default value")
                         return None
                 else:
-                    # 非速率限制错误，直接抛出
+                    # Non-rate limit error, raise directly
                     raise e
         return None
     return wrapper
@@ -97,7 +97,7 @@ def get_pg_service():
         db.close()
 
 def get_first_n_words(text: str, n: int) -> str:
-    """获取文本的前n个单词"""
+    """Get the first n words of text"""
     if not text:
         return ""
     words = text.split()
@@ -111,10 +111,10 @@ def get_news(
     pg_service: PostgresService = Depends(get_pg_service)
 ):
     """
-    获取新闻列表，按时间排序（最新优先）
+    Get news list, sorted by time (newest first)
     """
     try:
-        # 使用PostgresService获取新闻，按时间排序
+        # Use PostgresService to get news, sorted by time
         news_items = pg_service.get_news(offset, limit, "time", source)
         return {"news": news_items}
         
@@ -128,7 +128,7 @@ def vote_news(
     delta: int = Query(1),
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """投票接口"""
+    """Vote endpoint"""
     new_count = pg_service.update_vote(title, delta)
     return {"count": new_count}
 
@@ -137,7 +137,7 @@ def get_vote(
     title: str = Query(...),
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """获取投票数"""
+    """Get vote count"""
     count = pg_service.get_vote_count(title)
     return {"count": count}
 
@@ -161,22 +161,22 @@ def get_article_by_title(
     title: str = Query(...),
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """根据标题获取文章"""
+    """Get article by title"""
     return pg_service.get_article_by_title(title)
 
 @router.get("/news/article/{article_id}")
 def get_article_by_id(article_id: str):
-    """根据ID获取文章（兼容性接口）"""
-    # 这里可以根据需要实现具体的逻辑
+    """Get article by ID (compatibility endpoint)"""
+    # Specific logic can be implemented here as needed
     return {"error": "Article not found"}
 
 @router.post("/news/refresh")
 def refresh_news(
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """手动刷新新闻"""
+    """Manually refresh news"""
     try:
-        # 抓取 RSS 并存入
+        # Fetch RSS and save
         raw = get_tech_news(force_refresh=True)
         pg_service.save_news(raw)
         return {"message": "News refreshed successfully"}
@@ -187,21 +187,21 @@ def refresh_news(
 def get_news_sources(
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """获取所有新闻来源"""
+    """Get all news sources"""
     try:
-        # 返回所有支持的新闻来源
+        # Return all supported news sources
         sources = [
-            # 美国主流媒体
+            # American mainstream media
             "The New York Times", "The Washington Post", "Los Angeles Times", 
             "NBC News", "CBS News", "ABC News", "Fox News", "CNBC", "Axios",
-            # 国际新闻机构
+            # International news agencies
             "Reuters", "Associated Press", "Bloomberg",
-            # 英国媒体
+            # British media
             "BBC News", "The Guardian", "The Telegraph", 
             "Financial Times", "Sky News", "The Independent",
-            # 欧洲媒体
+            # European media
             "Euronews", "Deutsche Welle",
-            # 中东媒体
+            # Middle Eastern media
             "Al Jazeera",
         ]
         return {"sources": sources}
@@ -210,7 +210,7 @@ def get_news_sources(
 
 @router.get("/news/sort-options")
 def get_sort_options():
-    """获取排序选项（已废弃，保留兼容性）"""
+    """Get sort options (deprecated, kept for compatibility)"""
     return {
         "sort_options": [
             {"value": "time", "label": "Latest First"}
@@ -219,7 +219,7 @@ def get_sort_options():
 
 @router.post("/api/save")
 async def save_article(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
-    """保存文章"""
+    """Save article"""
     try:
         data = await request.json()
         user_id = data.get("user_id")
@@ -228,13 +228,13 @@ async def save_article(request: Request, pg_service: PostgresService = Depends(g
         if not user_id or not news_id:
             raise HTTPException(status_code=400, detail="Missing user_id or news_id")
         
-        # 检查用户是否存在，如果不存在则创建
+        # Check if user exists, create if not
         user = pg_service.get_user_by_id(user_id)
         if not user:
             user_data = data.get("user", {})
             user = pg_service.create_user(user_id, user_data.get("email"), user_data.get("name"))
         
-        # 保存文章
+        # Save article
         saved_article = pg_service.save_article(user_id, news_id)
         return {"message": "Article saved successfully", "saved_article": saved_article}
         
@@ -246,7 +246,7 @@ async def save_article(request: Request, pg_service: PostgresService = Depends(g
 
 @router.delete("/api/save")
 async def unsave_article(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
-    """取消保存文章"""
+    """Unsave article"""
     try:
         data = await request.json()
         user_id = data.get("user_id")
@@ -269,7 +269,7 @@ async def get_saved_articles(
     user_id: str = Query(...),
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """获取用户保存的文章"""
+    """Get user's saved articles"""
     try:
         saved_articles = pg_service.get_saved_articles_for_user(user_id)
         return {"saved_articles": saved_articles}
@@ -284,7 +284,7 @@ async def check_article_saved(
     news_id: str = Query(...),
     pg_service: PostgresService = Depends(get_pg_service)
 ):
-    """检查文章是否已保存"""
+    """Check if article is saved"""
     try:
         is_saved = pg_service.is_article_saved(user_id, news_id)
         return {"is_saved": is_saved}
@@ -295,7 +295,7 @@ async def check_article_saved(
 
 @router.post("/api/auth/save-user")
 async def save_user(request: Request, pg_service: PostgresService = Depends(get_pg_service)):
-    """保存用户信息"""
+    """Save user information"""
     try:
         data = await request.json()
         user_id = data.get("user_id")
@@ -316,12 +316,12 @@ async def save_user(request: Request, pg_service: PostgresService = Depends(get_
 
 @router.post("/news/clean-duplicates")
 def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
-    """清理重复新闻"""
+    """Clean duplicate news"""
     try:
-        # 获取所有新闻
+        # Get all news
         all_news = pg_service.get_all_news()
         
-        # 按标题分组，找出重复的
+        # Group by title, find duplicates
         title_groups = {}
         for news in all_news:
             title = news.get('title', '').strip().lower()
@@ -330,14 +330,14 @@ def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
                     title_groups[title] = []
                 title_groups[title].append(news)
         
-        # 删除重复的新闻（保留最新的）
+        # Delete duplicate news (keep newest)
         deleted_count = 0
         for title, news_list in title_groups.items():
             if len(news_list) > 1:
-                # 按发布时间排序，保留最新的
+                # Sort by publish time, keep newest
                 sorted_news = sorted(news_list, key=lambda x: x.get('published_at', ''), reverse=True)
                 
-                # 删除除最新之外的所有新闻
+                # Delete all news except the newest
                 for news in sorted_news[1:]:
                     pg_service.delete_news_by_title(news['title'])
                     deleted_count += 1
@@ -350,9 +350,9 @@ def clean_duplicate_news(pg_service: PostgresService = Depends(get_pg_service)):
 
 @router.post("/news/clean-duplicates-direct")
 def clean_duplicate_news_direct(pg_service: PostgresService = Depends(get_pg_service)):
-    """直接清理重复新闻（使用SQL）"""
+    """Directly clean duplicate news (using SQL)"""
     try:
-        # 使用SQL直接删除重复的新闻
+        # Use SQL to directly delete duplicate news
         deleted_count = pg_service.clean_duplicates_direct()
         return {"message": f"Cleaned {deleted_count} duplicate news articles"}
         
@@ -366,15 +366,15 @@ def clean_old_news(
     cutoff_date: str = Body(...),
     force: bool = Body(False)
 ):
-    """清理旧新闻"""
+    """Clean old news"""
     try:
-        # 解析截止日期
+        # Parse cutoff date
         try:
             cutoff = datetime.fromisoformat(cutoff_date.replace('Z', '+00:00'))
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)")
         
-        # 获取要删除的新闻数量
+        # Get count of news to delete
         old_news_count = pg_service.get_old_news_count(cutoff)
         
         if old_news_count == 0:
@@ -388,7 +388,7 @@ def clean_old_news(
                 "force_required": True
             }
         
-        # 执行删除
+        # Execute deletion
         deleted_count = pg_service.clean_old_news(cutoff)
         return {"message": f"Cleaned {deleted_count} old news articles"}
         

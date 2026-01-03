@@ -10,32 +10,32 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def refresh_news_cache():
-    """刷新新闻缓存"""
+    """Refresh news cache"""
     try:
-        logger.info("🔄 开始刷新新闻缓存...")
+        logger.info("🔄 Starting news cache refresh...")
         
-        # 获取新的新闻数据
+        # Get new news data
         news_items = get_tech_news(force_refresh=True)
-        logger.info(f"📰 获取到 {len(news_items)} 条新闻")
+        logger.info(f"📰 Fetched {len(news_items)} news items")
         
         if not news_items:
-            logger.warning("⚠️ 没有获取到新闻数据")
+            logger.warning("⚠️ No news data fetched")
             return
         
-        # 保存到数据库
+        # Save to database
         db = SessionLocal()
         try:
             pg_service = PostgresService(db)
             success = pg_service.save_news(news_items)
             if success:
-                logger.info("✅ 新闻缓存刷新成功")
+                logger.info("✅ News cache refresh successful")
             else:
-                logger.error("❌ 新闻缓存刷新失败")
+                logger.error("❌ News cache refresh failed")
         finally:
             db.close()
             
     except Exception as e:
-        logger.error(f"❌ 刷新新闻缓存时出错: {e}")
+        logger.error(f"❌ Error refreshing news cache: {e}")
 
 def prewarm_homepage_cache():
     db = SessionLocal()

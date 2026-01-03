@@ -27,10 +27,10 @@ app = FastAPI()
 scheduler = BackgroundScheduler()
 logging.basicConfig(level=logging.INFO)
 
-# CORS 配置，允许所有域名访问（可根据需要指定前端域名）
+# CORS configuration, allow all domains to access (can specify frontend domain as needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境建议写成 ["https://www.simplenews.online"]
+    allow_origins=["*"],  # In production, recommend writing as ["https://www.simplenews.online"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,7 +46,7 @@ def fetch_and_cache_news():
     global cached_news
     logging.info('scheduled rss fetching...')
     try:
-        # 实际执行新闻获取和缓存刷新
+        # Actually execute news fetching and cache refresh
         refresh_news_cache()
         logging.info('scheduled rss fetching completed successfully')
     except Exception as e:
@@ -58,25 +58,25 @@ scheduler.add_job(fetch_and_cache_news,
                   minutes=5)
 scheduler.start()
 
-# 后台定时任务
+# Background scheduled task
 def background_news_refresh():
-    """后台新闻刷新任务"""
+    """Background news refresh task"""
     while True:
         try:
-            print("🔄 后台任务：开始刷新新闻...")
+            print("🔄 Background task: Starting news refresh...")
             refresh_news_cache()
-            print("✅ 后台任务：新闻刷新完成")
+            print("✅ Background task: News refresh completed")
         except Exception as e:
             print(f"❌ Background task: News refresh failed - {e}")
         
-        # 等待15分钟
+        # Wait 15 minutes
         time.sleep(15 * 60)
 
-# 启动后台任务
+# Start background task
 @app.on_event("startup")
 async def startup_event():
-    """应用启动时启动后台任务"""
-    print("🚀 启动后台新闻刷新任务...")
+    """Start background task when application starts"""
+    print("🚀 Starting background news refresh task...")
     thread = threading.Thread(target=background_news_refresh, daemon=True)
     thread.start()
 

@@ -6,7 +6,7 @@ import {
 } from "../services/api";
 import { toast } from "react-toastify";
 
-// 格式化相对时间（展示分钟 m、小时 h、天 d）
+// Format relative time (display minutes m, hours h, days d)
 function formatRelativeTime(dateString) {
   if (!dateString) {
     console.log("No date string provided");
@@ -55,12 +55,12 @@ function formatRelativeTime(dateString) {
   }
 }
 
-// 安全格式化关键词
+// Safely format keywords
 function formatKeywords(keywords) {
   try {
     if (!keywords) return "";
     
-    // 如果是字符串，尝试解析为JSON
+    // If it's a string, try to parse as JSON
     if (typeof keywords === 'string') {
       try {
         const parsed = JSON.parse(keywords);
@@ -68,17 +68,17 @@ function formatKeywords(keywords) {
           return parsed.slice(0, 3).join(", ");
         }
       } catch {
-        // 如果解析失败，直接返回字符串
+        // If parsing fails, return string directly
         return keywords;
       }
     }
     
-    // 如果是数组
+    // If it's an array
     if (Array.isArray(keywords)) {
       return keywords.slice(0, 3).join(", ");
     }
     
-    // 其他情况，转换为字符串
+    // Other cases, convert to string
     return String(keywords);
   } catch (error) {
     console.error("Error formatting keywords:", error);
@@ -86,7 +86,7 @@ function formatKeywords(keywords) {
   }
 }
 
-// 新增：本地存储操作函数
+// New: Local storage operation functions
 function getSavedIds() {
   try {
     return JSON.parse(localStorage.getItem('saved_article_ids') || '[]');
@@ -104,7 +104,7 @@ export default function NewsCard({ news, onVote }) {
   const [isHeadline, setIsHeadline] = useState(false);
   const [isTrash, setIsTrash] = useState(false);
 
-  // 从news对象中提取数据
+  // Extract data from news object
   const { id, title, link, date, source, vote_count, keywords } = news;
 
   // Like or undo
@@ -135,7 +135,7 @@ export default function NewsCard({ news, onVote }) {
     }
   };
 
-  // 保存/取消保存
+  // Save/unsave
   const onSaveClick = () => {
     let savedIds = getSavedIds();
     if (isSaved) {
@@ -160,19 +160,19 @@ export default function NewsCard({ news, onVote }) {
 
   return (
     <div className={`news-card${isHeadline ? " headline" : ""}${isTrash ? " trash" : ""}`}>
-      {/* 来源和时间 */}
+      {/* Source and time */}
       <div className="meta">
         <span style={{ color: "var(--highlight-color)" }}>✅</span> {source} 
         <span style={{ margin: "0 0.5rem" }}>🕒</span> {formatRelativeTime(date)}
         
-        {/* 评分信息 */}
+        {/* Rating info */}
         {vote_count > 0 && (
           <span style={{ margin: "0 0.5rem", color: "var(--highlight-color)" }}>
             👍 {vote_count}
           </span>
         )}
         
-        {/* 关键词显示 */}
+        {/* Keywords display */}
         {keywords && (
           <span style={{ 
             margin: "0 0.5rem", 
@@ -185,7 +185,7 @@ export default function NewsCard({ news, onVote }) {
         )}
       </div>
 
-      {/* 标题 */}
+      {/* Title */}
       <h3 className="title">
         <a href={link} target="_blank" rel="noopener noreferrer">
           # {title}
@@ -193,7 +193,7 @@ export default function NewsCard({ news, onVote }) {
         {isHeadline && <span className="badge">HEADLINE</span>}
       </h3>
 
-      {/* 操作按钮 */}
+      {/* Action buttons */}
       <div className="actions">
         <button
           onClick={goToArticle}
@@ -351,7 +351,7 @@ export default function NewsCard({ news, onVote }) {
   );
 }
 
-// 骨架屏组件
+// Skeleton component
 export function NewsCardSkeleton() {
   return (
     <div className="news-card skeleton">

@@ -135,10 +135,10 @@ def fetch_from_rss() -> List[Dict]:
 
                 items.append({
                     "title": entry.title,
-                    "content": content,  # 完整内容用于AI摘要
-                    "summary": summary,  # 简短摘要用于显示
+                    "content": content,  # Full content for AI summary
+                    "summary": summary,  # Brief summary for display
                     "link": entry.link,
-                    "date": formatted_date,  # 使用格式化的ISO日期字符串
+                    "date": formatted_date,  # Use formatted ISO date string
                     "source": source_name
                 })
                 
@@ -148,6 +148,6 @@ def fetch_from_rss() -> List[Dict]:
             logger.error(f"Failed to fetch {source_name}: {e}")
     
     logger.info(f"Total articles fetched from RSS: {len(items)}")
-    # 最后加上全局排序
+    # Finally add global sorting
     items.sort(key=lambda x: dateparser.parse(x["date"]), reverse=True)
     return items

@@ -159,7 +159,7 @@ export default function Home() {
   const handleVote = async (title, delta) => {
     try {
       await voteNews(title, delta);
-      // 重新加载新闻以更新投票数
+      // Reload news to update vote count
       resetAndLoadNews();
     } catch (error) {
       console.error('Error voting:', error);
