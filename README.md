@@ -112,7 +112,6 @@ Notes
 - Cached summaries remain available for offline reading
 - Bookmark data is stored locally in the browser
 
-<<<<<<< HEAD
 1. **API Dependencies**: Need to configure OpenAI API key
 2. **Network Requests**: First summary generation requires network connection
 3. **Caching Mechanism**: Summary results will be cached in browser local storage
