@@ -1,17 +1,13 @@
-OneMinNews – AI-Powered News Aggregator with LLM-Based AI Agent
+# Simple News – AI-Powered News Aggregator with LLM-Based AI Agent
 
-Overview
+## Overview
 --------
-OneMinNews is a scalable news aggregation application designed to automatically digest, summarize,
+Simple News is a scalable news aggregation application designed to automatically digest, summarize,
 and prioritize large volumes of news content. At its core is an **AI AGENT** powered by a fine-tuned
 large language model that ingests up to ~30,000 news articles per day, generates concise summaries,
 and assigns importance scores to support rapid understanding and downstream decision-making.
 
-The system combines modern web technologies with a distributed LLM training and inference pipeline,
-delivering both a clean user-facing reading experience and a robust backend suitable for research
-and analytics workflows.
-
-AI Agent Architecture
+## AI Agent Architecture
 ---------------------
 The **AI AGENT** is built around a 7B-parameter instruction-tuned language model adapted using
 parameter-efficient fine-tuning (PEFT) on ~24K programmatically generated article–summary pairs.
