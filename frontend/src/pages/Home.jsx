@@ -75,10 +75,10 @@ export default function Home() {
   const observerRef = useRef(null);
   const LIMIT = 10;
 
-  // 来源选项
+  // Source options
   const sourceOptions = [
     { value: '', label: 'All Sources' },
-    // 美国主流媒体
+    // American mainstream media
     { value: 'The New York Times', label: 'The New York Times' },
     { value: 'The Washington Post', label: 'The Washington Post' },
     { value: 'Los Angeles Times', label: 'Los Angeles Times' },
@@ -88,21 +88,21 @@ export default function Home() {
     { value: 'Fox News', label: 'Fox News' },
     { value: 'CNBC', label: 'CNBC' },
     { value: 'Axios', label: 'Axios' },
-    // 国际新闻机构
+    // International news agencies
     { value: 'Reuters', label: 'Reuters' },
     { value: 'Associated Press', label: 'Associated Press' },
     { value: 'Bloomberg', label: 'Bloomberg' },
-    // 英国媒体
+    // British media
     { value: 'BBC News', label: 'BBC News' },
     { value: 'The Guardian', label: 'The Guardian' },
     { value: 'The Telegraph', label: 'The Telegraph' },
     { value: 'Financial Times', label: 'Financial Times' },
     { value: 'Sky News', label: 'Sky News' },
     { value: 'The Independent', label: 'The Independent' },
-    // 欧洲媒体
+    // European media
     { value: 'Euronews', label: 'Euronews' },
     { value: 'Deutsche Welle', label: 'Deutsche Welle' },
-    // 中东媒体
+    // Middle Eastern media
     { value: 'Al Jazeera', label: 'Al Jazeera' },
   ];
 
@@ -170,7 +170,7 @@ export default function Home() {
     <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
       <LoginButton />
       
-      {/* 标题和描述 */}
+      {/* Title and description */}
       <div
         style={{
           textAlign: "center",
@@ -195,14 +195,14 @@ export default function Home() {
         </p>
       </div>
 
-      {/* 过滤器区域 */}
+      {/* Filter area */}
       <div style={{
         marginBottom: "2rem",
         display: "flex",
         gap: "1rem",
         flexWrap: "wrap",
       }}>
-        {/* 来源过滤器 */}
+        {/* Source filter */}
         <div style={{ position: "relative" }}>
           <button
             onClick={() => setShowSourceMenu(!showSourceMenu)}
@@ -288,7 +288,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 新闻列表 */}
+      {/* News list */}
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         {newsList.map((news, index) => (
           <div key={`${news.id}-${index}`}>
@@ -300,7 +300,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 加载更多指示器 */}
+      {/* Load more indicator */}
       {loading && (
         <div style={{
           textAlign: "center",
@@ -312,7 +312,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 无限滚动观察器 */}
+      {/* Infinite scroll observer */}
       <div ref={observerRef} style={{ height: "20px" }} />
     </div>
   );
