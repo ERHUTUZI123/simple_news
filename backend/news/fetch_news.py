@@ -28,6 +28,9 @@ from dateutil import parser as dateparser
 from dateutil import tz
 # logging module is used to record events and errors
 import logging
+from bs4 import BeautifulSoup
+import requests
+from news_readers import nyc
 
 # create a logger
 # write .getLogger(__name__) to let logs show their origins
@@ -114,30 +117,19 @@ def fetch_from_rss() -> List[Dict]:
                     continue
 
                 # define content and summary
-                content = ""
-                summary = ""
-                
-                # 1. prioritize complete content
-                if hasattr(entry, "content") and entry.content:
-                    content = entry.content[0].value
-                    logger.debug(f"{source_name} - Using content field, length: {len(content)}")
-                # 2. get summary if no content
-                elif hasattr(entry, "summary") and entry.summary:
-                    content = entry.summary
-                    logger.debug(f"{source_name} - Using summary as content, length: {len(content)}")
-                # 3. if neither then skip
-                else:
-                    logger.warning(f"{source_name} - No content or summary found for: {entry.title}")
-                    continue
-                
-                # ensure content is non-empty
-                if not content or not str(content).strip():
-                    logger.warning(f"{source_name} - Empty content for: {entry.title}")
-                    continue
-                
-                # create summary for display
-                summary = content[:600] if len(content) > 600 else content
-
+                news_url = str(getattr(entry, 'link'))
+                # news is from bbc
+                if news_url.startswith('https://www.bbc.com/news/articles/'):
+                    article = soup.find_all('p', attrs={"class": "sc-9a00e533-0 eZyhnA"})
+                    content = ""
+                    for para in article:
+                        soup = BeautifulSoup(str(para), 'html.parser')
+                        text = soup.get_text(strip=True)
+                        content += text
+                # news is from nyc
+                elif news_url.startswith('https://www.nytimes.com/'):
+                    content = nyc.fetch_news(news_url)  
+            
                 # format date to ISO
                 formatted_date = published_dt_utc.isoformat()
 
