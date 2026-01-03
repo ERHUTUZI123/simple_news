@@ -1,0 +1,13 @@
+{
+  "dtype": "fp16",
+  "replace_with_kernel_inject": true,
+  "tensor_parallel": {
+    "tp_size": 1
+  },
+  "enable_cuda_graph": false,
+  "max_out_tokens": 512,
+  "injection_policy": {
+    "BertLayer": "mlp"
+  }
+}
+

@@ -275,7 +275,7 @@ Importance score (0.0-1.0):"""
         # Fallback heuristic
         return min(1.0, len(article) / 1000)
 
-def process_article_batch(articles: List[str]) -> List[Dict[str, any]]:
+def process_article_batch(articles: List[str]) -> List[Dict[str, Any]]:
     """
     Process a batch of articles with both summarization and scoring.
     Returns structured outputs for downstream integration.
