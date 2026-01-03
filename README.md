@@ -22,7 +22,7 @@ Key characteristics:
 The agent is exposed via a FastAPI service, enabling real-time interaction with frontend clients
 and external systems.
 
-Key Features
+## Key Features
 ------------
 1. AI Summary Reading Page
    - Access:
@@ -54,7 +54,7 @@ Key Features
    - One-click access to **AI AGENT** summaries or original sources
    - Export curated reading lists with summaries and metadata
 
-Technical Stack
+## Technical Stack
 ---------------
 Frontend
 - Framework: React 18 + React Router
@@ -77,14 +77,14 @@ Backend & AI Agent
     - GET /news/article?title={title}
     - GET /news/article/{id}
 
-Data Management
+## Data Management
 ---------------
 - Local caching of **AI AGENT** summaries to minimize repeated inference
 - High-throughput batching for streaming news data
 - Real-time synchronization of bookmark state across views
 - Export support in Markdown and TXT formats
 
-Getting Started
+## Getting Started
 ---------------
 Run Locally:
 
@@ -101,7 +101,7 @@ Access
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
-Notes
+## Notes
 -----
 - Requires OpenAI API key configuration (if enabled)
 - Initial summary generation requires network access
@@ -113,86 +113,3 @@ Notes
 3. **Caching Mechanism**: Summary results will be cached in browser local storage
 4. **Error Handling**: Mock data will be displayed when API fails
 5. **Data Persistence**: Bookmark data is saved in browser localStorage
-
-### Future Improvements
-
-
----
-
-## Scalable News Summarization & Rating AI Agent (Backend)
-
-This project features a scalable news summarization and rating AI agent designed to automatically digest and prioritize high volumes of news content. The system leverages a 7B-parameter instruction-tuned language model (LLM) using parameter-efficient fine-tuning on ~24K article–summary pairs, and is built for distributed training and inference with PyTorch and DeepSpeed. It ingests ~30,000 articles per day, summarizes them, and produces an importance score for downstream decision-making or research dashboards.
-
-### Backend Tech Stack
-- **Python** (core language)
-- **FastAPI** (real-time API)
-- **PyTorch** (deep learning framework)
-- **DeepSpeed** (distributed training/inference)
-- **HuggingFace Transformers** (LLM integration)
-- **Efficient batching & caching** (for low-latency, high-throughput inference)
-- **Structured outputs** (for downstream integration)
-
-### Key Features
-- Distributed, scalable summarization and scoring pipeline
-- Real-time API endpoints for summarization and importance scoring
-- Efficient batching and caching to handle streaming data
-- Model integration via HuggingFace and DeepSpeed
-
-### Example API Usage
-
-**Summarize a single article:**
-```
-POST /summarize
-{
-	"article": "<news article text>"
-}
-```
-Response:
-```
-{
-	"summary": "...",
-	"score": 0.87
-}
-```
-
-**Batch summarization:**
-```
-POST /batch_summarize
-{
-	"articles": ["article1 text", "article2 text", ...]
-}
-```
-Response:
-```
-{
-	"summaries": ["...", "..."],
-	"scores": [0.87, 0.65]
-}
-```
-
-### Running the API
-
-1. Install dependencies:
-	 ```
-	 pip install -r backend/requirements.txt
-	 ```
-2. Start the FastAPI server:
-	 ```
-	 uvicorn backend.app.api:app --reload
-	 ```
-
-### Model & Inference
-- Model is loaded via HuggingFace Transformers and optionally accelerated with DeepSpeed for distributed inference.
-- Summarization and scoring are batched and cached for efficiency.
-
----
-=======
-Future Improvements
--------------------
-- Additional summary and reasoning formats
-- Cloud-based user and bookmark synchronization
-- Reading history and behavioral analytics
-- Bookmark classification, search, and filtering
-- Offline-first reading mode
-- Extended AI AGENT reasoning and RAG-based retrieval
->>>>>>> edf1ad577c9dd272a837f5be3188b081bb2e90d2
