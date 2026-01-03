@@ -129,11 +129,73 @@ npm run dev
 
 ### Future Improvements
 
-- [ ] Support Markdown rendering
-- [ ] Add more summary format options
-- [ ] Implement user bookmark synchronization to backend
-- [ ] Add reading history record
-- [ ] Support offline reading mode
-- [ ] Add bookmark classification feature
-- [ ] Support bookmark search and filtering
-- [ ] Implement bookmark data cloud synchronization 
+
+---
+
+## Scalable News Summarization & Rating AI Agent (Backend)
+
+This project features a scalable news summarization and rating AI agent designed to automatically digest and prioritize high volumes of news content. The system leverages a 7B-parameter instruction-tuned language model (LLM) using parameter-efficient fine-tuning on ~24K article–summary pairs, and is built for distributed training and inference with PyTorch and DeepSpeed. It ingests ~30,000 articles per day, summarizes them, and produces an importance score for downstream decision-making or research dashboards.
+
+### Backend Tech Stack
+- **Python** (core language)
+- **FastAPI** (real-time API)
+- **PyTorch** (deep learning framework)
+- **DeepSpeed** (distributed training/inference)
+- **HuggingFace Transformers** (LLM integration)
+- **Efficient batching & caching** (for low-latency, high-throughput inference)
+- **Structured outputs** (for downstream integration)
+
+### Key Features
+- Distributed, scalable summarization and scoring pipeline
+- Real-time API endpoints for summarization and importance scoring
+- Efficient batching and caching to handle streaming data
+- Model integration via HuggingFace and DeepSpeed
+
+### Example API Usage
+
+**Summarize a single article:**
+```
+POST /summarize
+{
+	"article": "<news article text>"
+}
+```
+Response:
+```
+{
+	"summary": "...",
+	"score": 0.87
+}
+```
+
+**Batch summarization:**
+```
+POST /batch_summarize
+{
+	"articles": ["article1 text", "article2 text", ...]
+}
+```
+Response:
+```
+{
+	"summaries": ["...", "..."],
+	"scores": [0.87, 0.65]
+}
+```
+
+### Running the API
+
+1. Install dependencies:
+	 ```
+	 pip install -r backend/requirements.txt
+	 ```
+2. Start the FastAPI server:
+	 ```
+	 uvicorn backend.app.api:app --reload
+	 ```
+
+### Model & Inference
+- Model is loaded via HuggingFace Transformers and optionally accelerated with DeepSpeed for distributed inference.
+- Summarization and scoring are batched and cached for efficiency.
+
+---

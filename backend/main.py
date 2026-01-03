@@ -1,3 +1,10 @@
+"""
+main.py
+
+This file starts the original OneMinNews backend API. For the scalable news summarization and rating AI agent API, use:
+    uvicorn backend.app.api:app --reload
+or see backend/start_api.sh
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os

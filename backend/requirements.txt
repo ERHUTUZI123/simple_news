@@ -1,5 +1,16 @@
 fastapi
 uvicorn
+pydantic
+torch
+deepspeed
+transformers
+scikit-learn
+aiohttp
+httpx
+cachetools
+python-multipart
+gunicorn
+uvicorn
 sqlalchemy
 python-dotenv
 feedparser
