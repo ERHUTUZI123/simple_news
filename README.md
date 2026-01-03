@@ -1,139 +1,122 @@
-# OneMinNews - Tech News Aggregator
+OneMinNews – AI-Powered News Aggregator with LLM-Based AI Agent
 
-## Overview
+Overview
+--------
+OneMinNews is a scalable news aggregation application designed to automatically digest, summarize,
+and prioritize large volumes of news content. At its core is an **AI AGENT** powered by a fine-tuned
+large language model that ingests up to ~30,000 news articles per day, generates concise summaries,
+and assigns importance scores to support rapid understanding and downstream decision-making.
 
-OneMinNews is a news aggregation application that provides AI-powered summaries and bookmark management, allowing users to quickly understand news highlights and manage their personal collections.
+The system combines modern web technologies with a distributed LLM training and inference pipeline,
+delivering both a clean user-facing reading experience and a robust backend suitable for research
+and analytics workflows.
 
-## New Features: AI Summary Reading Page
+AI Agent Architecture
+---------------------
+The **AI AGENT** is built around a 7B-parameter instruction-tuned language model adapted using
+parameter-efficient fine-tuning (PEFT) on ~24K programmatically generated article–summary pairs.
 
-### Page Paths
-- `/article/:id` - Access by article ID
-- `/summary/:slug` - Access by article title
+Key characteristics:
+- Distributed training and inference using PyTorch and DeepSpeed
+- HuggingFace Transformers for model integration and deployment
+- Efficient batching and caching to support high-throughput, low-latency inference
+- Automated news ingestion, summarization, and importance scoring
+- Structured outputs designed for dashboards, analytics, or research pipelines
 
-### Features
+The agent is exposed via a FastAPI service, enabling real-time interaction with frontend clients
+and external systems.
 
-#### 1. Page Structure
-- **Top Navigation**: Logo + Back to Home button
-- **Article Information**: Source, publish time, title
-- **AI Summary**: Support for detailed/brief version toggle
-- **Auxiliary Functions**: Original link, bookmark, share
+Key Features
+------------
+1. AI Summary Reading Page
+   - Access:
+     - /article/:id – Access by article ID
+     - /summary/:slug – Access by article title
+   - Features:
+     - **AI AGENT**-generated summaries with detailed / brief toggle
+     - Importance-aware summarization for rapid prioritization
+     - Original article link, bookmarking, and sharing
+     - Local caching to reduce latency and repeated inference calls
+   - Design:
+     - Minimalist black-and-white theme focused on reading
+     - Monospace font for clarity and consistency
+     - Responsive layout with subtle micro-animations
 
-#### 2. Core Features
-- **AI Summary Generation**: Click button to generate AI summary
-- **Summary Type Toggle**: Switch between detailed and brief versions
-- **Local Caching**: Summary results cached in localStorage
-- **Bookmark Function**: Save interesting articles
-- **Share Function**: Support native sharing or copy link
+2. Bookmarks Page
+   - Access: /saved
+   - Features:
+     - View, manage, and remove saved articles
+     - Real-time synchronization of bookmark state across pages
+     - Export bookmarks as Markdown (.md) or plain text (.txt)
+     - Undo removal with Toast-based feedback
+   - User Experience:
+     - Smooth card animations and mobile-friendly design
+     - Empty state guidance for new users
 
-#### 3. Visual Design
-- **Minimalist Style**: Black and white color scheme, focused on reading experience
-- **Code Font**: Use monospace font to improve readability
-- **Responsive Design**: Adapt to various screen sizes
-- **Micro-animations**: fadeIn animation enhances user experience
+3. Quick Actions
+   - Bookmark articles from homepage cards or summary pages
+   - One-click access to **AI AGENT** summaries or original sources
+   - Export curated reading lists with summaries and metadata
 
-## New Features: Bookmarks Page
+Technical Stack
+---------------
+Frontend
+- Framework: React 18 + React Router
+- Styling: CSS variables, responsive design
+- State & Storage: localStorage for bookmarks and summary caching
 
-### Page Path
-- `/saved` - Bookmarks page
+Backend & AI Agent
+- API Framework: FastAPI
+- Language: Python
+- Database Layer: SQLAlchemy
+- LLM Stack:
+  - PyTorch for model training and inference
+  - DeepSpeed for distributed, memory-efficient execution
+  - HuggingFace Transformers for model loading and integration
+  - OpenAI API (optional / fallback) for summary generation
+- Functionality:
+  - Automated news scraping and ingestion
+  - High-throughput summarization and rating
+  - REST APIs:
+    - GET /news/article?title={title}
+    - GET /news/article/{id}
 
-### Features
+Data Management
+---------------
+- Local caching of **AI AGENT** summaries to minimize repeated inference
+- High-throughput batching for streaming news data
+- Real-time synchronization of bookmark state across views
+- Export support in Markdown and TXT formats
 
-#### 1. Page Structure
-- **Page Title**: # My Saved Articles
-- **Bookmark Count**: Display current bookmark count
-- **Export Function**: Support Markdown and TXT format export
-- **Bookmark List**: Consistent structure with homepage news cards
+Getting Started
+---------------
+Run Locally:
 
-#### 2. Core Features
-- **Bookmark Management**: View, remove bookmarked articles
-- **State Synchronization**: Real-time synchronization of bookmark status across all pages
-- **Export Function**: Support .md and .txt format export
-- **Undo Function**: Support undo operation after removing bookmarks
-- **Quick Access**: One-click jump to article summary page
-
-#### 3. Interactive Experience
-- **Toast Notifications**: Operation feedback and undo prompts
-- **Animation Effects**: Card fade-in animation
-- **Responsive Design**: Mobile adaptation
-- **Empty State Prompt**: Guide users to bookmark articles
-
-### Usage
-
-#### Bookmark Articles
-1. Click the **"⭐ Save"** button on any news card on the homepage
-2. Click the **"⭐ Save"** button on the AI summary reading page
-3. Bookmark status will automatically sync across all pages
-
-#### Manage Bookmarks
-1. Click **"Saved"** in the navigation bar to enter the bookmarks page
-2. View all bookmarked articles
-3. Click **"🗑️ Remove"** to delete unwanted articles
-4. After removal, you can restore via the **"Undo"** button in the Toast
-
-#### Export Bookmarks
-1. Click **"📂 Export All (.md)"** or **"📄 Export as TXT"** on the bookmarks page
-2. Files will be automatically downloaded to local
-3. Contains article title, source, time, link and summary information
-
-#### Quick Access
-- Click **"📖 Read Summary"** to jump to the AI summary reading page
-- Click **"🔗 View Original"** to open the original article in a new tab
-
-### Technical Implementation
-
-#### Frontend Tech Stack
-- React 18 + React Router
-- CSS variables for theme switching
-- localStorage for local storage
-- Responsive design
-
-#### Backend API
-- FastAPI + SQLAlchemy
-- OpenAI GPT-4 for summary generation
-- News data scraping and storage
-
-#### New API Endpoints
-- `GET /news/article?title={title}` - Get article by title
-- `GET /news/article/{id}` - Get article by ID
-
-#### Data Storage
-- **Local Storage**: Use localStorage to save bookmark data
-- **Data Synchronization**: Real-time synchronization of bookmark status across all pages
-- **Export Format**: Support Markdown and plain text formats
-
-### Development
-
-#### Start Project
-```bash
-# Start backend
+Backend
 cd backend
 python main.py
 
-# Start frontend
+Frontend
 cd frontend
 npm run dev
-```
 
-#### Access Addresses
+Access
 - Frontend: http://localhost:5175
 - Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
+- API Docs: http://localhost:8000/docs
 
-### Notes
+Notes
+-----
+- Requires OpenAI API key configuration (if enabled)
+- Initial summary generation requires network access
+- Cached summaries remain available for offline reading
+- Bookmark data is stored locally in the browser
 
-1. **API Dependencies**: Need to configure OpenAI API key
-2. **Network Requests**: First summary generation requires network connection
-3. **Caching Mechanism**: Summary results will be cached in browser local storage
-4. **Error Handling**: Mock data will be displayed when API fails
-5. **Data Persistence**: Bookmark data is saved in browser localStorage
-
-### Future Improvements
-
-- [ ] Support Markdown rendering
-- [ ] Add more summary format options
-- [ ] Implement user bookmark synchronization to backend
-- [ ] Add reading history record
-- [ ] Support offline reading mode
-- [ ] Add bookmark classification feature
-- [ ] Support bookmark search and filtering
-- [ ] Implement bookmark data cloud synchronization 
+Future Improvements
+-------------------
+- Additional summary and reasoning formats
+- Cloud-based user and bookmark synchronization
+- Reading history and behavioral analytics
+- Bookmark classification, search, and filtering
+- Offline-first reading mode
+- Extended AI AGENT reasoning and RAG-based retrieval
