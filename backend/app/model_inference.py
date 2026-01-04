@@ -15,9 +15,9 @@ import os
 # high-level wrapper for common tasks (create a chain: input -> tokenizer -> model -> post-processing)
 # pipeline is a high-level wrapper for common tasks (create a chain: input -> tokenizer -> model -> post-processing)
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from cachetools import LRUCache, TTLCache
 # LRUCache evicts least recently used items when full
 # TTLCache evicts items after a time-to-live 
+from cachetools import LRUCache, TTLCache
 from functools import lru_cache
 import deepspeed
 from typing import List, Dict, Optional
