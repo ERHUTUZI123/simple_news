@@ -5,11 +5,19 @@ Production-ready distributed inference system for a 7B-parameter instruction-tun
 Handles loading the LLM with HuggingFace Transformers, efficient batching, caching, and distributed 
 inference with DeepSpeed for high-throughput processing of ~30,000 articles per day.
 """
+# Pytorch
 import torch
+# os ops
 import os
+# transformers is huggingface library for pre-trained models
+# AutoTokenizer converts text <-> numbers for the model
+# AutoModelForCausalLM is language model that generates text sequentially
+# high-level wrapper for common tasks (create a chain: input -> tokenizer -> model -> post-processing)
+# pipeline is a high-level wrapper for common tasks (create a chain: input -> tokenizer -> model -> post-processing)
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from transformers import BitsAndBytesConfig
 from cachetools import LRUCache, TTLCache
+# LRUCache evicts least recently used items when full
+# TTLCache evicts items after a time-to-live 
 from functools import lru_cache
 import deepspeed
 from typing import List, Dict, Optional
